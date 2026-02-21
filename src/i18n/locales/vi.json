@@ -1,0 +1,82 @@
+{
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "retry": "Thử lại",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "done": "Hoàn thành",
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "settings": "Cài đặt",
+    "language": "Ngôn ngữ",
+    "yes": "Có",
+    "no": "Không"
+  },
+  "navigation": {
+    "home": "Trang chủ",
+    "ble": "Thiết bị BLE",
+    "settings": "Cài đặt",
+    "profile": "Hồ sơ"
+  },
+  "home": {
+    "title": "Love Alarm",
+    "subtitle": "Khám phá kết nối lân cận",
+    "welcome": "Chào mừng đến Love Alarm",
+    "description": "Tìm người trong phạm vi tín hiệu của bạn",
+    "start_scanning": "Bắt đầu quét",
+    "stop_scanning": "Dừng quét"
+  },
+  "ble": {
+    "title": "Thiết bị BLE",
+    "scanning": "Đang quét thiết bị...",
+    "no_devices": "Không tìm thấy thiết bị",
+    "device_found": "Tìm thấy thiết bị",
+    "connect": "Kết nối",
+    "disconnect": "Ngắt kết nối",
+    "connected": "Đã kết nối",
+    "disconnected": "Đã ngắt kết nối",
+    "signal_strength": "Cường độ tín hiệu",
+    "device_id": "ID thiết bị",
+    "device_name": "Tên thiết bị",
+    "services": "Dịch vụ",
+    "characteristics": "Đặc tính",
+    "permission_required": "Cần quyền Bluetooth",
+    "permission_message": "Vui lòng cấp quyền Bluetooth để quét thiết bị lân cận.",
+    "bluetooth_off": "Bluetooth đang tắt",
+    "bluetooth_off_message": "Vui lòng bật Bluetooth để sử dụng tính năng này.",
+    "scan_timeout": "Quét hoàn thành",
+    "devices_nearby": "{{count}} thiết bị lân cận"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "language": "Ngôn ngữ",
+    "language_select": "Chọn ngôn ngữ",
+    "notifications": "Thông báo",
+    "privacy": "Quyền riêng tư",
+    "about": "Giới thiệu",
+    "version": "Phiên bản {{version}}",
+    "theme": "Giao diện",
+    "dark_mode": "Chế độ tối",
+    "light_mode": "Chế độ sáng",
+    "system_mode": "Mặc định hệ thống",
+    "bluetooth": "Bluetooth",
+    "bluetooth_desc": "Quản lý kết nối Bluetooth",
+    "range": "Phạm vi phát hiện",
+    "range_desc": "Đặt phạm vi cảnh báo yêu"
+  },
+  "permissions": {
+    "bluetooth": "Quyền Bluetooth",
+    "bluetooth_desc": "Cần thiết để phát hiện Love Alarm lân cận",
+    "location": "Quyền vị trí",
+    "location_desc": "Cần thiết để quét Bluetooth trên Android",
+    "grant": "Cấp quyền",
+    "denied": "Quyền bị từ chối",
+    "denied_message": "Vui lòng bật quyền trong cài đặt thiết bị của bạn."
+  }
+}

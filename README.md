@@ -1,97 +1,156 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# 💗 Love Alarm - React Native CLI Project
 
-# Getting Started
+A production-ready React Native CLI project with BLE, NativeWind (Tailwind CSS), and i18n support.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 🏗 Architecture
 
-## Step 1: Start Metro
+```
+LoveAlarm/
+├── src/
+│   ├── components/          # Reusable UI components
+│   ├── screens/             # App screens
+│   │   ├── HomeScreen.tsx   # Main screen with BLE radar animation
+│   │   ├── BLEScreen.tsx    # BLE device scanner & list  
+│   │   ├── SettingsScreen.tsx  # Language & theme settings
+│   │   └── DeviceDetailScreen.tsx  # BLE device details
+│   ├── navigation/
+│   │   └── AppNavigator.tsx # Stack + Bottom tab navigation
+│   ├── services/
+│   │   └── ble/
+│   │       └── BleService.ts  # BLE singleton service (iOS + Android)
+│   ├── store/
+│   │   ├── bleStore.ts      # Zustand BLE state
+│   │   └── appStore.ts      # Zustand app state (language, theme)
+│   ├── hooks/
+│   │   └── useBLE.ts        # Custom BLE hook with auto-timeout
+│   ├── i18n/
+│   │   ├── index.ts         # i18next configuration
+│   │   └── locales/
+│   │       ├── en.json      # English translations
+│   │       ├── vi.json      # Vietnamese translations
+│   │       └── zh.json      # Chinese translations
+│   ├── types/
+│   │   └── index.ts         # TypeScript types & navigation params
+│   └── global.css           # NativeWind CSS entry
+├── android/                 # Android native code
+├── ios/                     # iOS native code  
+├── tailwind.config.js       # Tailwind / NativeWind config
+├── babel.config.js          # Babel with path aliases
+├── metro.config.js          # Metro with NativeWind
+└── tsconfig.json            # TypeScript with path aliases
+```
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## 🛠 Tech Stack
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+| Category | Library | Purpose |
+|----------|---------|---------|
+| Framework | React Native CLI | Core framework |
+| Language | TypeScript | Type safety |
+| Styling | NativeWind v4 + Tailwind CSS | Utility-first CSS |
+| BLE | react-native-ble-plx | Bluetooth Low Energy |
+| i18n | i18next + react-i18next | Internationalization |
+| Navigation | React Navigation v6 | App navigation |
+| State | Zustand | Lightweight state management |
+| Bundler | Metro | JS bundler |
 
-```sh
-# Using npm
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js >= 18
+- React Native CLI: `npm install -g @react-native/cli`
+- Android Studio (for Android)
+- Xcode (for iOS, macOS only)
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# iOS only: install pods
+cd ios && pod install && cd ..
+```
+
+### Running the App
+
+```bash
+# Start Metro bundler
 npm start
 
-# OR using Yarn
-yarn start
-```
-
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
+# Run on Android
 npm run android
 
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+# Run on iOS (macOS only)  
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## 📱 Features
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+### 🔵 BLE (Bluetooth Low Energy)
+- Auto-request permissions on startup (Android 12+ and Android < 12)
+- Scan for nearby BLE devices with 10-second auto-timeout
+- Display device name, RSSI signal strength with visual indicators
+- Connect/disconnect to devices
+- View GATT services and characteristics
+- iOS NSBluetooth permissions pre-configured in Info.plist
 
-## Step 3: Modify your app
+### 🎨 Styling (NativeWind / Tailwind CSS)
+- Dark theme with primary pink color palette
+- Animated pulse radar effect on Home screen
+- Signal strength color indicators (green/yellow/red)
+- Responsive design for all screen sizes
 
-Now that you have successfully run the app, let's make changes!
+### 🌍 i18n (Internationalization)
+- **English** 🇬🇧 - Default
+- **Vietnamese** 🇻🇳 - Tiếng Việt  
+- **Chinese** 🇨🇳 - 中文
+- Auto-detects device language on first launch
+- Change language in Settings screen
+- Uses i18next with react-native-localize
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+### 📁 Path Aliases
+Import using `@/` aliases (configured in both tsconfig.json and babel.config.js):
+```typescript
+import {useBLE} from '@hooks/useBLE';
+import {bleService} from '@services/ble/BleService';
+import {LANGUAGES} from '@i18n';
+```
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## 🔧 Permissions
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+### Android (AndroidManifest.xml)
+- `BLUETOOTH`, `BLUETOOTH_ADMIN` (Android < 12)
+- `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT`, `BLUETOOTH_ADVERTISE` (Android 12+)
+- `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION` (required for BLE scan)
 
-## Congratulations! :tada:
+### iOS (Info.plist)
+- `NSBluetoothAlwaysUsageDescription`
+- `NSBluetoothPeripheralUsageDescription`
+- `NSLocationWhenInUseUsageDescription`
 
-You've successfully run and modified your React Native App. :partying_face:
+## ➕ Adding a New Language
 
-### Now what?
+1. Create `src/i18n/locales/<lang-code>.json`
+2. Add to `resources` object in `src/i18n/index.ts`
+3. Add to `LANGUAGES` array in `src/i18n/index.ts`
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+## 📦 Adding New Screens
 
-# Troubleshooting
+1. Create screen in `src/screens/MyScreen.tsx`
+2. Add route to `src/types/index.ts` navigation params
+3. Register in `src/navigation/AppNavigator.tsx`
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+### 📁 Terminate PID
+```typescript
+netstat -ano | findstr 8081
+taskkill /PID 11580 (PID) /F 
 
-# Learn More
+npx react-native start --reset-cache
+npx react-native run-android  // run in new terminal
+npx react-native log-android  // check log
+```
 
-To learn more about React Native, take a look at the following resources:
+---
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Built with ♥ using React Native CLI • NativeWind • react-native-ble-plx • i18next • Zustand

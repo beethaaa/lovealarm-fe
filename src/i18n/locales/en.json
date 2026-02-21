@@ -1,0 +1,82 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "search": "Search",
+    "filter": "Filter",
+    "settings": "Settings",
+    "language": "Language",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "navigation": {
+    "home": "Home",
+    "ble": "BLE Devices",
+    "settings": "Settings",
+    "profile": "Profile"
+  },
+  "home": {
+    "title": "Love Alarm",
+    "subtitle": "Discover nearby connections",
+    "welcome": "Welcome to Love Alarm",
+    "description": "Find people within your signal range",
+    "start_scanning": "Start Scanning",
+    "stop_scanning": "Stop Scanning"
+  },
+  "ble": {
+    "title": "BLE Devices",
+    "scanning": "Scanning for devices...",
+    "no_devices": "No devices found",
+    "device_found": "Device Found",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "signal_strength": "Signal Strength",
+    "device_id": "Device ID",
+    "device_name": "Device Name",
+    "services": "Services",
+    "characteristics": "Characteristics",
+    "permission_required": "Bluetooth permission required",
+    "permission_message": "Please grant Bluetooth permission to scan for nearby devices.",
+    "bluetooth_off": "Bluetooth is turned off",
+    "bluetooth_off_message": "Please enable Bluetooth to use this feature.",
+    "scan_timeout": "Scan completed",
+    "devices_nearby": "{{count}} device(s) nearby"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "language_select": "Select Language",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "about": "About",
+    "version": "Version {{version}}",
+    "theme": "Theme",
+    "dark_mode": "Dark Mode",
+    "light_mode": "Light Mode",
+    "system_mode": "System Default",
+    "bluetooth": "Bluetooth",
+    "bluetooth_desc": "Manage Bluetooth connections",
+    "range": "Detection Range",
+    "range_desc": "Set your alarm detection range"
+  },
+  "permissions": {
+    "bluetooth": "Bluetooth Permission",
+    "bluetooth_desc": "Required to detect nearby Love Alarms",
+    "location": "Location Permission",
+    "location_desc": "Required for Bluetooth scanning on Android",
+    "grant": "Grant Permission",
+    "denied": "Permission Denied",
+    "denied_message": "Please enable the permission in your device settings."
+  }
+}

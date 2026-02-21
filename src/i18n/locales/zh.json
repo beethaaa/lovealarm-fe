@@ -1,0 +1,82 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "retry": "重试",
+    "cancel": "取消",
+    "confirm": "确认",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "back": "返回",
+    "next": "下一步",
+    "done": "完成",
+    "search": "搜索",
+    "filter": "筛选",
+    "settings": "设置",
+    "language": "语言",
+    "yes": "是",
+    "no": "否"
+  },
+  "navigation": {
+    "home": "首页",
+    "ble": "BLE设备",
+    "settings": "设置",
+    "profile": "个人资料"
+  },
+  "home": {
+    "title": "Love Alarm",
+    "subtitle": "发现附近的连接",
+    "welcome": "欢迎使用Love Alarm",
+    "description": "在您的信号范围内寻找人",
+    "start_scanning": "开始扫描",
+    "stop_scanning": "停止扫描"
+  },
+  "ble": {
+    "title": "BLE设备",
+    "scanning": "正在扫描设备...",
+    "no_devices": "未找到设备",
+    "device_found": "找到设备",
+    "connect": "连接",
+    "disconnect": "断开连接",
+    "connected": "已连接",
+    "disconnected": "已断开",
+    "signal_strength": "信号强度",
+    "device_id": "设备ID",
+    "device_name": "设备名称",
+    "services": "服务",
+    "characteristics": "特征",
+    "permission_required": "需要蓝牙权限",
+    "permission_message": "请授予蓝牙权限以扫描附近设备。",
+    "bluetooth_off": "蓝牙已关闭",
+    "bluetooth_off_message": "请启用蓝牙以使用此功能。",
+    "scan_timeout": "扫描完成",
+    "devices_nearby": "附近{{count}}个设备"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "language_select": "选择语言",
+    "notifications": "通知",
+    "privacy": "隐私",
+    "about": "关于",
+    "version": "版本 {{version}}",
+    "theme": "主题",
+    "dark_mode": "深色模式",
+    "light_mode": "浅色模式",
+    "system_mode": "系统默认",
+    "bluetooth": "蓝牙",
+    "bluetooth_desc": "管理蓝牙连接",
+    "range": "检测范围",
+    "range_desc": "设置您的警报检测范围"
+  },
+  "permissions": {
+    "bluetooth": "蓝牙权限",
+    "bluetooth_desc": "需要检测附近的Love Alarm",
+    "location": "位置权限",
+    "location_desc": "Android上蓝牙扫描所需",
+    "grant": "授予权限",
+    "denied": "权限被拒绝",
+    "denied_message": "请在设备设置中启用该权限。"
+  }
+}
