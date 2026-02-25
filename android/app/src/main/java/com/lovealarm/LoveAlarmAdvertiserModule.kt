@@ -59,12 +59,21 @@ class LoveAlarmAdvertiserModule(reactContext: ReactApplicationContext) :
             .setConnectable(false)
             .build()
 
-        val uuidString = "a1b2c3d4-e5f6-4711-8222-abcdef123456"
+        val uuidString = "00001920-0000-1000-8000-00805f9b34fb"
         val serviceUuid = ParcelUuid(UUID.fromString(uuidString))
 
         Log.d(TAG, "Service UUID: $uuidString")
 
-        val manufacturerBytes = userId.toByteArray(Charsets.UTF_8)
+        val uuid = try {
+            UUID.fromString(userId)
+        } catch (e: Exception) {
+            Log.e(TAG, "Invalid UUID: $userId")
+            return
+        }
+        val bb = java.nio.ByteBuffer.wrap(ByteArray(16))
+        bb.putLong(uuid.mostSignificantBits)
+        bb.putLong(uuid.leastSignificantBits)
+        val manufacturerBytes = bb.array()
 
         Log.d(TAG, "Manufacturer data length: ${manufacturerBytes.size}")
         Log.d(TAG, "Manufacturer data (hex): ${
@@ -74,7 +83,7 @@ class LoveAlarmAdvertiserModule(reactContext: ReactApplicationContext) :
         val data = AdvertiseData.Builder()
             .addServiceUuid(serviceUuid)
             .addManufacturerData(
-                0x1234,
+                0x1920,
                 manufacturerBytes
             )
             .setIncludeDeviceName(false)

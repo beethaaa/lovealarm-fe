@@ -1,0 +1,240 @@
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 264241152 bytes. Error detail: G1 virtual space
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   This process is running with CompressedOops enabled, and the Java Heap may be blocking the growth of the native heap
+# Possible solutions:
+#   Reduce memory load on the system
+#   Increase physical memory or swap space
+#   Check if swap backing store is full
+#   Decrease Java heap size (-Xmx/-Xms)
+#   Decrease number of Java threads
+#   Decrease Java thread stack sizes (-Xss)
+#   Set larger code cache with -XX:ReservedCodeCacheSize=
+#   JVM is running with Zero Based Compressed Oops mode in which the Java heap is
+#     placed in the first 32GB address space. The Java Heap base address is the
+#     maximum limit for the native heap growth. Please use -XX:HeapBaseMinAddress
+#     to set the Java Heap base and to place the Java Heap above 32GB virtual address.
+# This output file may be truncated or incomplete.
+#
+#  Out of Memory Error (os_windows.cpp:3713), pid=28588, tid=21892
+#
+# JRE version:  (21.0.8+9) (build )
+# Java VM: OpenJDK 64-Bit Server VM (21.0.8+9-LTS, mixed mode, sharing, tiered, compressed oops, compressed class ptrs, g1 gc, windows-amd64)
+# No core dump will be written. Minidumps are not enabled by default on client versions of Windows
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: com.google.prefab.cli.AppKt --build-system cmake --platform android --abi arm64-v8a --os-version 24 --stl c++_shared --ndk-version 27 --output C:\\Users\\admin\\AppData\\Local\\Temp\\agp-prefab-staging8603659177004076024\\staged-cli-output D:\\Love Alarm\\LoveAlarm\\android\\app\\build\\intermediates\\cxx\\refs\\react-native-nitro-modules\\3c2u6r1s C:\\Users\\admin\\.gradle\\caches\\9.0.0\\transforms\\6674e6cc609acce3f4c1e3e62b9ca47c\\transformed\\react-android-0.84.0-debug\\prefab C:\\Users\\admin\\.gradle\\caches\\9.0.0\\transforms\\2a154e3ea4e67fbf20e53383d94bbdf7\\transformed\\hermes-android-250829098.0.7-debug\\prefab C:\\Users\\admin\\.gradle\\caches\\9.0.0\\transforms\\e2575a32666c9d6ebbf516280d8f962f\\transformed\\fbjni-0.7.0\\prefab
+
+Host: 11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz, 12 cores, 15G,  Windows 11 , 64 bit Build 26100 (10.0.26100.7705)
+Time: Wed Feb 25 16:20:56 2026 SE Asia Standard Time elapsed time: 0.008572 seconds (0d 0h 0m 0s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00000259a175f920):  JavaThread "Unknown thread" [_thread_in_vm, id=21892, stack(0x0000007cfd300000,0x0000007cfd400000) (1024K)]
+
+Stack: [0x0000007cfd300000,0x0000007cfd400000]
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [jvm.dll+0x6deaf9]
+V  [jvm.dll+0x8bccc3]
+V  [jvm.dll+0x8bf07e]
+V  [jvm.dll+0x8bf763]
+V  [jvm.dll+0x287836]
+V  [jvm.dll+0x6db315]
+V  [jvm.dll+0x6ced8a]
+V  [jvm.dll+0x361ecb]
+V  [jvm.dll+0x369a96]
+V  [jvm.dll+0x3bbe66]
+V  [jvm.dll+0x3bc138]
+V  [jvm.dll+0x3356ac]
+V  [jvm.dll+0x33639b]
+V  [jvm.dll+0x884fd9]
+V  [jvm.dll+0x3c9021]
+V  [jvm.dll+0x86e203]
+V  [jvm.dll+0x45cfae]
+V  [jvm.dll+0x45ec31]
+C  [jli.dll+0x52ab]
+C  [ucrtbase.dll+0x37b0]
+C  [KERNEL32.DLL+0x2e8d7]
+C  [ntdll.dll+0x8c40c]
+
+
+---------------  P R O C E S S  ---------------
+
+Threads class SMR info:
+_java_thread_list=0x00007fff9d6d1188, length=0, elements={
+}
+
+Java Threads: ( => current thread )
+Total: 0
+
+Other Threads:
+  0x00000259a17c5370 WorkerThread "GC Thread#0"                     [id=25728, stack(0x0000007cfd400000,0x0000007cfd500000) (1024K)]
+  0x00000259a17d7cb0 ConcurrentGCThread "G1 Main Marker"            [id=24224, stack(0x0000007cfd500000,0x0000007cfd600000) (1024K)]
+  0x00000259a17d86c0 WorkerThread "G1 Conc#0"                       [id=10744, stack(0x0000007cfd600000,0x0000007cfd700000) (1024K)]
+
+[error occurred during error reporting (printing all threads), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007fff9cdc8677]
+VM state: not at safepoint (not fully initialized)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x00007fff9d7454f8] Heap_lock - owner thread: 0x00000259a175f920
+
+Heap address: 0x0000000704400000, size: 4028 MB, Compressed Oops mode: Zero based, Oop shift amount: 3
+
+CDS archive(s) mapped at: [0x0000000000000000-0x0000000000000000-0x0000000000000000), size 0, SharedBaseAddress: 0x0000000800000000, ArchiveRelocationMode: 1.
+Narrow klass base: 0x0000000000000000, Narrow klass shift: 0, Narrow klass range: 0x0
+
+GC Precious Log:
+ CardTable entry size: 512
+ Card Set container configuration: InlinePtr #cards 4 size 8 Array Of Cards #cards 16 size 48 Howl #buckets 8 coarsen threshold 3686 Howl Bitmap #cards 512 size 80 coarsen threshold 460 Card regions per heap region 1 cards per card region 4096
+
+Heap:
+ garbage-first heap   total 0K, used 0K [0x0000000704400000, 0x0000000800000000)
+  region size 2048K, 0 young (0K), 0 survivors (0K)
+
+[error occurred during error reporting (printing heap information), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007fff9d1b82f9]
+GC Heap History (0 events):
+No events
+
+Dll operation events (1 events):
+Event: 0.005 Loaded shared library C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin\java.dll
+
+Deoptimization events (0 events):
+No events
+
+Classes loaded (0 events):
+No events
+
+Classes unloaded (0 events):
+No events
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (0 events):
+No events
+
+ZGC Phase Switch (0 events):
+No events
+
+VM Operations (0 events):
+No events
+
+Memory protections (0 events):
+No events
+
+Nmethod flushes (0 events):
+No events
+
+Events (0 events):
+No events
+
+
+Dynamic libraries:
+0x00007ff72bcd0000 - 0x00007ff72bcde000 	C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin\java.exe
+0x00007ff853100000 - 0x00007ff853368000 	C:\Windows\SYSTEM32\ntdll.dll
+0x00007ff852990000 - 0x00007ff852a59000 	C:\Windows\System32\KERNEL32.DLL
+0x00007ff850930000 - 0x00007ff850d21000 	C:\Windows\System32\KERNELBASE.dll
+0x00007ff84fb10000 - 0x00007ff84fc5b000 	C:\Windows\System32\ucrtbase.dll
+0x00007ff820890000 - 0x00007ff8208ab000 	C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin\VCRUNTIME140.dll
+0x00007ff820b80000 - 0x00007ff820b98000 	C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin\jli.dll
+0x00007ff852b20000 - 0x00007ff852ce6000 	C:\Windows\System32\USER32.dll
+0x00007ff833a00000 - 0x00007ff833c93000 	C:\Windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.7824_none_3e0870b2e3345462\COMCTL32.dll
+0x00007ff84fcf0000 - 0x00007ff84fd17000 	C:\Windows\System32\win32u.dll
+0x00007ff853070000 - 0x00007ff85309b000 	C:\Windows\System32\GDI32.dll
+0x00007ff852f40000 - 0x00007ff852fe9000 	C:\Windows\System32\msvcrt.dll
+0x00007ff84f9e0000 - 0x00007ff84fb0b000 	C:\Windows\System32\gdi32full.dll
+0x00007ff850010000 - 0x00007ff8500b3000 	C:\Windows\System32\msvcp_win.dll
+0x00007ff851640000 - 0x00007ff851671000 	C:\Windows\System32\IMM32.DLL
+0x00007ff84ac80000 - 0x00007ff84ac8c000 	C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin\vcruntime140_1.dll
+0x00007ff80d940000 - 0x00007ff80d9cd000 	C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin\msvcp140.dll
+0x00007fff9ca80000 - 0x00007fff9d827000 	C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin\server\jvm.dll
+0x00007ff851ba0000 - 0x00007ff851c54000 	C:\Windows\System32\ADVAPI32.dll
+0x00007ff852770000 - 0x00007ff852816000 	C:\Windows\System32\sechost.dll
+0x00007ff850f20000 - 0x00007ff851038000 	C:\Windows\System32\RPCRT4.dll
+0x00007ff850ea0000 - 0x00007ff850f14000 	C:\Windows\System32\WS2_32.dll
+0x00007ff84f130000 - 0x00007ff84f18e000 	C:\Windows\SYSTEM32\POWRPROF.dll
+0x00007ff845120000 - 0x00007ff845155000 	C:\Windows\SYSTEM32\WINMM.dll
+0x00007ff848560000 - 0x00007ff84856b000 	C:\Windows\SYSTEM32\VERSION.dll
+0x00007ff84f110000 - 0x00007ff84f124000 	C:\Windows\SYSTEM32\UMPDC.dll
+0x00007ff84e740000 - 0x00007ff84e75b000 	C:\Windows\SYSTEM32\kernel.appcore.dll
+0x00007ff83b510000 - 0x00007ff83b51a000 	C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin\jimage.dll
+0x00007ff84d850000 - 0x00007ff84da92000 	C:\Windows\SYSTEM32\DBGHELP.DLL
+0x00007ff851040000 - 0x00007ff8513c6000 	C:\Windows\System32\combase.dll
+0x00007ff852df0000 - 0x00007ff852ec7000 	C:\Windows\System32\OLEAUT32.dll
+0x00007ff8324b0000 - 0x00007ff8324eb000 	C:\Windows\SYSTEM32\dbgcore.DLL
+0x00007ff84fd20000 - 0x00007ff84fdc5000 	C:\Windows\System32\bcryptPrimitives.dll
+0x00007ff820320000 - 0x00007ff82033f000 	C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin\java.dll
+
+JVMTI agents: none
+
+dbghelp: loaded successfully - version: 4.0.5 - missing functions: none
+symbol engine: initialized successfully - sym options: 0x614 - pdb path: .;C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin;C:\Windows\SYSTEM32;C:\Windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.7824_none_3e0870b2e3345462;C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin\server
+
+VM Arguments:
+java_command: com.google.prefab.cli.AppKt --build-system cmake --platform android --abi arm64-v8a --os-version 24 --stl c++_shared --ndk-version 27 --output C:\\Users\\admin\\AppData\\Local\\Temp\\agp-prefab-staging8603659177004076024\\staged-cli-output D:\\Love Alarm\\LoveAlarm\\android\\app\\build\\intermediates\\cxx\\refs\\react-native-nitro-modules\\3c2u6r1s C:\\Users\\admin\\.gradle\\caches\\9.0.0\\transforms\\6674e6cc609acce3f4c1e3e62b9ca47c\\transformed\\react-android-0.84.0-debug\\prefab C:\\Users\\admin\\.gradle\\caches\\9.0.0\\transforms\\2a154e3ea4e67fbf20e53383d94bbdf7\\transformed\\hermes-android-250829098.0.7-debug\\prefab C:\\Users\\admin\\.gradle\\caches\\9.0.0\\transforms\\e2575a32666c9d6ebbf516280d8f962f\\transformed\\fbjni-0.7.0\\prefab
+java_class_path (initial): C:\\Users\\admin\\.gradle\\caches\\modules-2\\files-2.1\\com.google.prefab\\cli\\2.1.0\\aa32fec809c44fa531f01dcfb739b5b3304d3050\\cli-2.1.0-all.jar
+Launcher Type: SUN_STANDARD
+
+[Global flags]
+     intx CICompilerCount                          = 4                                         {product} {ergonomic}
+     uint ConcGCThreads                            = 3                                         {product} {ergonomic}
+     uint G1ConcRefinementThreads                  = 10                                        {product} {ergonomic}
+   size_t G1HeapRegionSize                         = 2097152                                   {product} {ergonomic}
+    uintx GCDrainStackTargetSize                   = 64                                        {product} {ergonomic}
+   size_t InitialHeapSize                          = 264241152                                 {product} {ergonomic}
+   size_t MarkStackSize                            = 4194304                                   {product} {ergonomic}
+   size_t MaxHeapSize                              = 4223664128                                {product} {ergonomic}
+   size_t MinHeapDeltaBytes                        = 2097152                                   {product} {ergonomic}
+   size_t MinHeapSize                              = 8388608                                   {product} {ergonomic}
+    uintx NonNMethodCodeHeapSize                   = 5839372                                {pd product} {ergonomic}
+    uintx NonProfiledCodeHeapSize                  = 122909434                              {pd product} {ergonomic}
+    uintx ProfiledCodeHeapSize                     = 122909434                              {pd product} {ergonomic}
+    uintx ReservedCodeCacheSize                    = 251658240                              {pd product} {ergonomic}
+     bool SegmentedCodeCache                       = true                                      {product} {ergonomic}
+   size_t SoftMaxHeapSize                          = 4223664128                             {manageable} {ergonomic}
+     bool UseCompressedOops                        = true                           {product lp64_product} {ergonomic}
+     bool UseG1GC                                  = true                                      {product} {ergonomic}
+     bool UseLargePagesIndividualAllocation        = false                                  {pd product} {ergonomic}
+
+Logging:
+Log output configuration:
+ #0: stdout all=warning uptime,level,tags foldmultilines=false
+ #1: stderr all=off uptime,level,tags foldmultilines=false
+
+Environment Variables:
+JAVA_HOME=C:\Program Files\Amazon Corretto\jdk21.0.8_9
+PATH=D:\Love Alarm\LoveAlarm\node_modules\.bin;D:\Love Alarm\LoveAlarm\node_modules\.bin;D:\Love Alarm\node_modules\.bin;D:\node_modules\.bin;C:\Program Files\nodejs\node_modules\npm\node_modules\@npmcli\run-script\lib\node-gyp-bin;C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin;C:\Program Files\Amazon Corretto\jdk1.8.0_462\bin;C:\Program Files\Common Files\Oracle\Java\javapath;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\Cloudflare\Cloudflare WARP\;C:\Program Files\Docker\Docker\resources\bin;D:\App\ant\apache-ant-1.10.15-bin\apache-ant-1.10.15\bin;C:\Program Files\nodejs\;C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin;D:\App\apache-maven-3.9.11-bin\apache-maven-3.9.11\bin;D:\App\mongosh-2.6.0-win32-x64\mongosh-2.6.0-win32-x64\bin;C:\Users\admin\AppData\Local\Programs\Python\Python313\Scripts\;C:\Users\admin\AppData\Local\Programs\Python\Python313\;C:\Users\admin\AppData\Local\Programs\Python\Launcher\;C:\Users\admin\AppData\Local\Microsoft\WindowsApps;C:\Users\admin\AppData\Local\Programs\Microsoft VS Code\bin;D:\App\ant\apache-ant-1.10.15-bin\apache-ant-1.10.15\bin;C:\Users\admin\AppData\Roaming\npm;C:\Users\admin\AppData\Local\Programs\Ollama;C:\Program Files\Amazon Corretto\jdk21.0.8_9\bin;D:\App\apache-maven-3.9.11-bin\apache-maven-3.9.11\bin;C:\Users\admin\AppData\Local\Programs\Antigravity\bin;C:\Users\admin\AppData\Local\Android\Sdk\platform-tools
+USERNAME=admin
+OS=Windows_NT
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 141 Stepping 1, GenuineIntel
+TMP=C:\Users\admin\AppData\Local\Temp
+TEMP=C:\Users\admin\AppData\Local\Temp
+
+
+
+
+Periodic native trim disabled
+
+---------------  S Y S T E M  ---------------
+
+OS:
+ Windows 11 , 64 bit Build 26100 (10.0.26100.7705)
+OS uptime: 1 days 8:16 hours
+Hyper-V role detected
+
+CPU: total 12 (initial active 12) (6 cores per cpu, 2 threads per core) family 6 model 141 stepping 1 microcode 0x50, cx8, cmov, fxsr, ht, mmx, 3dnowpref, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, lzcnt, tsc, tscinvbit, avx, avx2, aes, erms, clmul, bmi1, bmi2, adx, avx512f, avx512dq, avx512cd, avx512bw, avx512vl, sha, fma, vzeroupper, avx512_vpopcntdq, avx512_vpclmulqdq, avx512_vaes, avx512_vnni, clflush, clflushopt, clwb, avx512_vbmi2, avx512_vbmi, hv, rdtscp, rdpid, fsrm, gfni, avx512_bitalg, f16c, cet_ibt, cet_ss, avx512_ifma
+Processor Information for the first 12 processors :
+  Max Mhz: 2688, Current Mhz: 2688, Mhz Limit: 2688
+
+Memory: 4k page, system-wide physical 16105M (1044M free)
+TotalPageFile size 47307M (AvailPageFile size 147M)
+current process WorkingSet (physical memory assigned to process): 12M, peak: 12M
+current process commit charge ("private bytes"): 64M, peak: 316M
+
+vm_info: OpenJDK 64-Bit Server VM (21.0.8+9-LTS) for windows-amd64 JRE (21.0.8+9-LTS), built on 2025-07-09T19:22:31Z by "Administrator" with MS VC++ 16.10 / 16.11 (VS2019)
+
+END.
