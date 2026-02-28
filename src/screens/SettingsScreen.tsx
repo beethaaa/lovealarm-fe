@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { LANGUAGES } from '../i18n';
 import { useAppStore } from '../store/appStore';
 
-// Color palette
 const COLORS = {
   bg: '#0f172a',
   surface: '#1e293b',
@@ -110,7 +109,6 @@ const SettingsScreen = () => {
           ))}
         </SettingSection>
 
-        {/* Appearance Section */}
         <SettingSection title={t('settings.theme')}>
           {(
             [
@@ -138,7 +136,7 @@ const SettingsScreen = () => {
               activeOpacity={0.7}
             >
               <Text style={styles.themeEmoji}>{item.emoji}</Text>
-              <Text style={[styles.settingLabel, { flex: 1 }]}>
+              <Text style={[styles.settingLabel]}>
                 {item.label}
               </Text>
               {theme === item.key && (
@@ -150,7 +148,6 @@ const SettingsScreen = () => {
           ))}
         </SettingSection>
 
-        {/* Bluetooth Section */}
         <SettingSection title={t('settings.bluetooth')}>
           <SettingRow
             emoji="🔵"
@@ -160,7 +157,6 @@ const SettingsScreen = () => {
           />
         </SettingSection>
 
-        {/* About Section */}
         <SettingSection title={t('settings.about')}>
           <SettingRow emoji="ℹ️" label={t('settings.about')} />
           <SettingRow
@@ -170,7 +166,6 @@ const SettingsScreen = () => {
           />
         </SettingSection>
 
-        {/* App Info Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerHeart}>💗</Text>
           <Text style={styles.footerApp}>Love Alarm</Text>

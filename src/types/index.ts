@@ -1,7 +1,6 @@
 // Navigation types
 export type RootStackParamList = {
   Main: undefined;
-  DeviceDetail: { deviceId: string; deviceName?: string };
   Permissions: undefined;
 };
 

@@ -8,7 +8,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
 import BLEScreen from '../screens/BLEScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import DeviceDetailScreen from '../screens/DeviceDetailScreen';
 
 import { RootStackParamList, BottomTabParamList } from '../types/index';
 
@@ -80,8 +79,6 @@ const BottomTabs = () => {
 
 // Root Navigator
 const AppNavigator = () => {
-  const { t } = useTranslation();
-
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -96,14 +93,6 @@ const AppNavigator = () => {
           name="Main"
           component={BottomTabs}
           options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="DeviceDetail"
-          component={DeviceDetailScreen}
-          options={({ route }) => ({
-            title: route.params.deviceName || t('ble.device_name'),
-            headerBackTitle: t('common.back'),
-          })}
         />
       </Stack.Navigator>
     </NavigationContainer>

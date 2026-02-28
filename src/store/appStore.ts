@@ -4,15 +4,12 @@ import { changeLanguage, getCurrentLanguage } from '@i18n';
 type Theme = 'light' | 'dark' | 'system';
 
 interface AppState {
-  // Language
   language: string;
   setLanguage: (lang: string) => void;
 
-  // Theme
   theme: Theme;
   setTheme: (theme: Theme) => void;
 
-  // App state
   isInitialized: boolean;
   setIsInitialized: (value: boolean) => void;
 }

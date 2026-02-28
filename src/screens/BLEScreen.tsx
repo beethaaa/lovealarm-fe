@@ -6,152 +6,82 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StatusBar,
-  Alert,
   StyleSheet,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
 import { State } from 'react-native-ble-plx';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { useBLE } from '../hooks/useBLE';
-import { BleDevice } from '../store/bleStore';
-import { RootStackParamList } from '../types/index';
+import { useLoveAlarm, LoveAlarmUser } from '../hooks/useLoveAlarm';
+import COLOR_PALETTE from '../styles/colorPalette';
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-// Color palette
 const COLORS = {
-  bg: '#0f172a',
-  surface: '#1e293b',
-  surfaceDeep: '#0f172a',
-  border: '#334155',
-  borderDeep: '#1e2d40',
-  primary: '#ec4899',
-  primaryBg: '#831843',
-  textPrimary: '#ffffff',
-  textSecondary: '#94a3b8',
-  textMuted: '#475569',
+  bg: '#0A0A0A',
+  surface: '#17050A',
+  surfaceDeep: '#050102',
+  border: '#3D0E1E',
+  primary: COLOR_PALETTE.brightPink,
+  primaryBg: COLOR_PALETTE.roseRed,
+  textPrimary: '#FFFFFF',
+  textSecondary: COLOR_PALETTE.cherryBlossomPink,
+  textMuted: COLOR_PALETTE.amaranthPink,
   green: '#22c55e',
-  greenBg: '#14532d',
   yellow: '#eab308',
   red: '#ef4444',
 };
 
-// Signal strength helper
-const getSignalBars = (rssi: number | null): string => {
-  if (!rssi) return '○○○';
-  if (rssi > -60) return '●●●';
-  if (rssi > -80) return '●●○';
-  return '●○○';
-};
-
 const getSignalColor = (rssi: number | null): string => {
   if (!rssi) return COLORS.textMuted;
-  if (rssi > -60) return COLORS.green;
-  if (rssi > -80) return COLORS.yellow;
-  return COLORS.red;
+  if (rssi > -60) return COLOR_PALETTE.pink;
+  if (rssi > -80) return COLOR_PALETTE.mimiPink;
+  return COLOR_PALETTE.lavenderBlush;
 };
 
 // Device Card Component
-const DeviceCard = ({
-  device,
-  onPress,
-  onConnect,
-}: {
-  device: BleDevice;
-  onPress: () => void;
-  onConnect: () => void;
-}) => {
-  const { t } = useTranslation();
-  const signalColor = getSignalColor(device.rssi);
-  const signalBars = getSignalBars(device.rssi);
+const DeviceCard = ({ user }: { user: LoveAlarmUser }) => {
+  const signalColor = getSignalColor(user.rssi);
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={styles.deviceCard}
-      activeOpacity={0.75}
-    >
+    <View style={styles.deviceCard}>
       <View style={styles.deviceCardInner}>
-        {/* Icon */}
         <View style={styles.deviceIconWrap}>
-          <Text style={styles.deviceIconText}>
-            {device.isConnected ? '🔗' : '📱'}
-          </Text>
+          <Text style={styles.deviceIconText}>💌</Text>
         </View>
-
-        {/* Info */}
         <View style={styles.deviceInfo}>
           <Text style={styles.deviceName} numberOfLines={1}>
-            {device.name || 'Unknown Device'}
+            Secret Admirer
           </Text>
           <Text style={styles.deviceId} numberOfLines={1}>
-            {device.id}
+            ID: {user.bleSessionUuid.substring(0, 8)}...
           </Text>
           <View style={styles.signalRow}>
-            <Text style={[styles.signalBars, { color: signalColor }]}>
-              {signalBars}
-            </Text>
             <Text style={styles.rssiText}>
-              {device.rssi ? `${device.rssi} dBm` : 'N/A'}
+              Signal Strength: {user.rssi ? `${user.rssi} dBm` : 'N/A'}
             </Text>
           </View>
         </View>
 
-        {/* Status + Connect Button */}
-        <View style={styles.deviceActions}>
-          {device.isConnected ? (
-            <View style={styles.connectedBadge}>
-              <Text style={styles.connectedBadgeText}>
-                {t('ble.connected')}
-              </Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              onPress={onConnect}
-              style={styles.connectButton}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.connectButtonText}>{t('ble.connect')}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        <View style={[styles.signalDot, { backgroundColor: signalColor }]} />
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
 // Empty state
 const EmptyState = ({
   isScanning,
-  hasPermissions,
   bluetoothState,
 }: {
   isScanning: boolean;
-  hasPermissions: boolean;
   bluetoothState: State;
 }) => {
-  const { t } = useTranslation();
 
   if (bluetoothState !== State.PoweredOn) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyEmoji}>🔵</Text>
-        <Text style={styles.emptyTitle}>{t('ble.bluetooth_off')}</Text>
+        <Text style={styles.emptyEmoji}>💔</Text>
+        <Text style={styles.emptyTitle}>Bluetooth is Offline</Text>
         <Text style={styles.emptySubtitle}>
-          {t('ble.bluetooth_off_message')}
+          Please turn on Bluetooth to connect with nearby hearts.
         </Text>
-      </View>
-    );
-  }
-
-  if (!hasPermissions) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyEmoji}>🔒</Text>
-        <Text style={styles.emptyTitle}>{t('ble.permission_required')}</Text>
-        <Text style={styles.emptySubtitle}>{t('ble.permission_message')}</Text>
       </View>
     );
   }
@@ -160,11 +90,11 @@ const EmptyState = ({
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyEmoji}>📡</Text>
       <Text style={styles.emptyTitle}>
-        {isScanning ? t('ble.scanning') : t('ble.no_devices')}
+        {isScanning ? 'Syncing...' : 'No Hearts Nearby'}
       </Text>
       {!isScanning && (
         <Text style={styles.emptySubtitle}>
-          Tap the scan button to search for nearby devices
+          Tap "OPEN LOVE ALARM" to start receiving signals.
         </Text>
       )}
     </View>
@@ -172,60 +102,25 @@ const EmptyState = ({
 };
 
 const BLEScreen = () => {
-  const { t } = useTranslation();
-  const navigation = useNavigation<NavigationProp>();
   const {
     isScanning,
-    devices,
+    nearbyUsers,
     bluetoothState,
-    hasPermissions,
-    startScan,
-    stopScan,
-    connectToDevice,
-    disconnectFromDevice,
-  } = useBLE();
-
-  const handleConnectDevice = useCallback(
-    async (device: BleDevice) => {
-      if (device.isConnected) {
-        Alert.alert(t('ble.disconnect'), `Disconnect from ${device.name}?`, [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('ble.disconnect'),
-            style: 'destructive',
-            onPress: () => disconnectFromDevice(device.id),
-          },
-        ]);
-      } else {
-        await connectToDevice(device.id);
-      }
-    },
-    [connectToDevice, disconnectFromDevice, t],
-  );
+    startLoveAlarm,
+    stopLoveAlarm,
+  } = useLoveAlarm();
 
   const renderDevice = useCallback(
-    ({ item }: { item: BleDevice }) => (
-      <DeviceCard
-        device={item}
-        onPress={() =>
-          navigation.navigate('DeviceDetail', {
-            deviceId: item.id,
-            deviceName: item.name || undefined,
-          })
-        }
-        onConnect={() => handleConnectDevice(item)}
-      />
-    ),
-    [navigation, handleConnectDevice],
+    ({ item }: { item: LoveAlarmUser }) => <DeviceCard user={item} />,
+    [],
   );
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
-      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{t('ble.title')}</Text>
+        <Text style={styles.headerTitle}>Love Radar</Text>
         <View style={styles.headerStatus}>
           <View
             style={[
@@ -237,16 +132,15 @@ const BLEScreen = () => {
           />
           <Text style={styles.headerSubtitle}>
             {isScanning
-              ? t('ble.scanning')
-              : t('ble.devices_nearby', { count: devices.length })}
+              ? 'Scanning area for signals...'
+              : `${nearbyUsers.length} connection(s) nearby`}
           </Text>
         </View>
       </View>
 
-      {/* Scan button */}
       <View style={styles.scanButtonWrap}>
         <TouchableOpacity
-          onPress={isScanning ? stopScan : () => startScan()}
+          onPress={isScanning ? stopLoveAlarm : startLoveAlarm}
           style={[
             styles.scanButton,
             isScanning ? styles.scanButtonStop : styles.scanButtonStart,
@@ -261,24 +155,19 @@ const BLEScreen = () => {
             />
           )}
           <Text style={styles.scanButtonText}>
-            {isScanning ? t('home.stop_scanning') : t('home.start_scanning')}
+            {isScanning ? 'STOP SYNCING' : 'OPEN LOVE ALARM'}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Device list */}
       <FlatList
-        data={devices}
-        keyExtractor={item => item.id}
+        data={nearbyUsers}
+        keyExtractor={item => item.bleSessionUuid}
         renderItem={renderDevice}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <EmptyState
-            isScanning={isScanning}
-            hasPermissions={hasPermissions}
-            bluetoothState={bluetoothState}
-          />
+          <EmptyState isScanning={isScanning} bluetoothState={bluetoothState} />
         }
       />
     </View>
@@ -300,7 +189,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: COLORS.textPrimary,
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '900',
+    textShadowColor: COLORS.primaryBg,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   headerStatus: {
     flexDirection: 'row',
@@ -316,41 +208,47 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     color: COLORS.textSecondary,
     fontSize: 14,
+    fontWeight: '500',
   },
   scanButtonWrap: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    paddingHorizontal: 24,
+    marginBottom: 24,
   },
   scanButton: {
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: 30,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   scanButtonStart: {
     backgroundColor: COLORS.primary,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 8,
   },
   scanButtonStop: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.primaryBg,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   scanButtonText: {
     color: COLORS.textPrimary,
-    fontWeight: 'bold',
+    fontWeight: '900',
     fontSize: 15,
+    letterSpacing: 1,
   },
   activityIndicator: {
-    marginRight: 8,
+    marginRight: 12,
   },
   listContent: {
     flexGrow: 1,
     paddingBottom: 20,
   },
-  // Device Card
   deviceCard: {
-    marginHorizontal: 16,
+    marginHorizontal: 24,
     marginBottom: 12,
     backgroundColor: COLORS.surface,
     borderRadius: 16,
@@ -366,10 +264,10 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: COLORS.surfaceDeep,
+    backgroundColor: 'rgba(255, 77, 109, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   deviceIconText: {
     fontSize: 22,
@@ -380,60 +278,34 @@ const styles = StyleSheet.create({
   deviceName: {
     color: COLORS.textPrimary,
     fontWeight: 'bold',
-    fontSize: 15,
+    fontSize: 16,
+    marginBottom: 4,
   },
   deviceId: {
     color: COLORS.textMuted,
-    fontSize: 11,
-    marginTop: 2,
+    fontSize: 12,
   },
   signalRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
-  },
-  signalBars: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginRight: 4,
+    marginTop: 6,
   },
   rssiText: {
-    color: COLORS.textMuted,
-    fontSize: 11,
+    color: COLORS.textSecondary,
+    fontSize: 13,
   },
-  deviceActions: {
-    alignItems: 'flex-end',
+  signalDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginLeft: 16,
   },
-  connectedBadge: {
-    backgroundColor: COLORS.greenBg,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 999,
-    marginBottom: 8,
-  },
-  connectedBadgeText: {
-    color: COLORS.green,
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  connectButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 999,
-    marginBottom: 8,
-  },
-  connectButtonText: {
-    color: COLORS.textPrimary,
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  // Empty state
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
+    marginTop: 60,
   },
   emptyEmoji: {
     fontSize: 48,
@@ -442,13 +314,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: COLORS.textPrimary,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '800',
     textAlign: 'center',
   },
   emptySubtitle: {
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginTop: 8,
-    fontSize: 14,
+    marginTop: 12,
+    fontSize: 15,
+    lineHeight: 22,
   },
 });
