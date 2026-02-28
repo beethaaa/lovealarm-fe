@@ -9,6 +9,6 @@ const COLOR_PALETTE = {
   pink: '#FFC2D1',
   cherryBlossomPinkLight: '#FFB2C5',
   amaranthPink: '#FFA2B9',
-}
+};
 
-export default COLOR_PALETTE
+export default COLOR_PALETTE;

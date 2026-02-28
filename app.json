@@ -1,4 +1,8 @@
 {
   "name": "LoveAlarm",
-  "displayName": "LoveAlarm"
+  "displayName": "LoveAlarm",
+  "plugins": [
+    "expo-asset",
+    "expo-font"
+  ]
 }

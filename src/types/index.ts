@@ -1,5 +1,6 @@
 // Navigation types
 export type RootStackParamList = {
+  Login: undefined;
   Main: undefined;
   Permissions: undefined;
 };
