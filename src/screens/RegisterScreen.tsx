@@ -15,41 +15,33 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import COLOR_PALETTE from '../styles/colorPalette';
 import { authApi } from '../services/authService';
-import { useAppStore } from '../store/appStore';
 
-const LoginScreen = ({ navigation }: any) => {
+const RegisterScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [secureText, setSecureText] = useState(true);
-  const setLogin = useAppStore(state => state.setLogin);
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
+  const handleRegister = async () => {
+    if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
       Alert.alert('Thông báo', 'Vui lòng điền đầy đủ thông tin');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Thông báo', 'Mật khẩu xác nhận không khớp');
       return;
     }
 
     setLoading(true);
     try {
-      const responseData = await authApi.login(email, password);
-      const token =
-        (typeof responseData === 'string' ? responseData : null) ||
-        responseData?.access_token ||
-        responseData?.accessToken ||
-        responseData?.token ||
-        responseData?.data?.token;
-
-      if (token) {
-        await setLogin(token);
-      } else {
-        Alert.alert(
-          'Lỗi dữ liệu',
-          'Đăng nhập thành công nhưng không tìm thấy mã xác thực.',
-        );
-      }
+      await authApi.register(email, password);
+      Alert.alert('Thành công', 'Tài khoản đã được tạo thành công!', [
+        { text: 'Đăng nhập ngay', onPress: () => navigation.navigate('Login') },
+      ]);
     } catch (error: any) {
-      Alert.alert('Đăng nhập thất bại', error.message || 'Lỗi kết nối máy chủ');
+      Alert.alert('Đăng ký thất bại', error.message || 'Lỗi kết nối máy chủ');
     } finally {
       setLoading(false);
     }
@@ -70,6 +62,8 @@ const LoginScreen = ({ navigation }: any) => {
             resizeMode="contain"
           />
         </View>
+
+        <Text style={styles.subtitle}>Tạo tài khoản</Text>
 
         <View style={styles.inputContainer}>
           <View style={styles.inputWrapper}>
@@ -111,28 +105,39 @@ const LoginScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.forgotBtn}>
-            <Text style={styles.forgotText}>Quên mật khẩu?</Text>
-          </TouchableOpacity>
+          <View style={styles.inputWrapper}>
+            <MaterialCommunityIcons
+              name="lock-check-outline"
+              size={22}
+              color={COLOR_PALETTE.brightPink}
+            />
+            <TextInput
+              placeholder="Xác nhận mật khẩu"
+              placeholderTextColor="rgba(255,255,255,0.4)"
+              style={styles.input}
+              secureTextEntry={secureText}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+          </View>
         </View>
 
         <TouchableOpacity
-          style={[styles.loginButton, { opacity: loading ? 0.7 : 1 }]}
-          onPress={handleLogin}
+          style={styles.registerButton}
+          onPress={handleRegister}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text style={styles.loginButtonText}>Đăng nhập</Text>
+            <Text style={styles.buttonText}>Sign Up</Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Chưa có tài khoản? </Text>
-          {/* Đảm bảo onPress gọi đến đúng tên route trong Navigator */}
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.signUpText}>Đăng ký ngay</Text>
+          <Text style={styles.footerText}>Bạn đã có tài khoản? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.loginText}>Đăng nhập</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -141,66 +146,61 @@ const LoginScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000', // Đã đổi từ transparent sang màu đen thuần
-  },
+  container: { flex: 1, backgroundColor: 'transparent' },
   overlay: {
     flex: 1,
     alignItems: 'center',
     paddingHorizontal: 35,
-    paddingTop: 80,
+    paddingTop: 60,
   },
   title: {
     fontSize: 36,
     fontWeight: 'bold',
     color: COLOR_PALETTE.brightPink,
     letterSpacing: 4,
-    marginBottom: 15,
+    marginTop: 20,
   },
   heartContainer: {
     width: '100%',
-    height: 250,
+    height: 180,
+    marginTop: 70,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 30,
   },
-  heartImage: {
-    width: '300%',
-    height: '300%',
+  heartImage: { width: '400%', height: '400%' },
+  subtitle: {
+    color: COLOR_PALETTE.brightPink,
+    fontSize: 18,
+    marginVertical: 15,
+    fontWeight: '500',
   },
-  inputContainer: {
-    width: '100%',
-    marginTop: 10,
-  },
+  inputContainer: { width: '100%' },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
     height: 55,
     borderWidth: 1.5,
     borderColor: COLOR_PALETTE.roseRed,
     borderRadius: 15,
-    backgroundColor: 'rgba(255, 77, 109, 0.08)', // Giữ nguyên màu hồng nhạt bạn thích
+    backgroundColor: 'rgba(255, 77, 109, 0.08)',
     paddingHorizontal: 15,
-    marginBottom: 15,
+    marginBottom: 12,
   },
-  input: { flex: 1, color: 'white', paddingHorizontal: 10, fontSize: 16 },
-  forgotBtn: { alignSelf: 'flex-end', marginTop: -5, marginBottom: 25 },
-  forgotText: { color: 'rgba(255,255,255,0.6)', fontSize: 14 },
-  loginButton: {
+  input: { flex: 1, color: 'white', paddingHorizontal: 10 },
+  registerButton: {
     width: '100%',
     height: 55,
     borderRadius: 30,
     backgroundColor: COLOR_PALETTE.brightPink,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 20,
     elevation: 5,
   },
-  loginButtonText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
-  footer: { flexDirection: 'row', marginTop: 40 },
+  buttonText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+  footer: { flexDirection: 'row', marginTop: 30 },
   footerText: { color: 'rgba(255,255,255,0.7)' },
-  signUpText: { color: COLOR_PALETTE.brightPink, fontWeight: 'bold' },
+  loginText: { color: COLOR_PALETTE.brightPink, fontWeight: 'bold' },
 });
 
-export default LoginScreen;
+export default RegisterScreen;
