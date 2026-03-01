@@ -28,4 +28,12 @@ export const authApi = {
       throw new Error(errorMessage);
     }
   },
+  logout: async () => {
+    try {
+      await axios.post(`${SERVER_URL}/auth/logout`);
+    } catch (error) {
+      console.error('Logout API error:', error);
+      // Vẫn tiếp tục cho phép logout ở client dù API lỗi
+    }
+  },
 };

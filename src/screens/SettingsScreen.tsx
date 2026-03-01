@@ -6,10 +6,12 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
+  Alert, // Thêm Alert để hiển thị thông báo xác nhận
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGES } from '../i18n';
 import { useAppStore } from '../store/appStore';
+import { authApi } from '../services/authService'; // Đảm bảo đã import authApi
 
 const COLORS = {
   bg: '#0f172a',
@@ -42,6 +44,7 @@ const SettingRow = ({
   onPress,
   children,
   isLast = false,
+  danger = false,
 }: {
   emoji: string;
   label: string;
@@ -49,6 +52,7 @@ const SettingRow = ({
   onPress?: () => void;
   children?: React.ReactNode;
   isLast?: boolean;
+  danger?: boolean;
 }) => (
   <TouchableOpacity
     onPress={onPress}
@@ -59,7 +63,9 @@ const SettingRow = ({
     <View style={styles.settingIconWrap}>
       <Text style={styles.settingIcon}>{emoji}</Text>
     </View>
-    <Text style={styles.settingLabel}>{label}</Text>
+    <Text style={[styles.settingLabel, danger && { color: '#ff4d6d' }]}>
+      {label}
+    </Text>
     {children || (
       <>
         {value && <Text style={styles.settingValue}>{value}</Text>}
@@ -71,7 +77,41 @@ const SettingRow = ({
 
 const SettingsScreen = () => {
   const { t } = useTranslation();
-  const { language, setLanguage, theme, setTheme } = useAppStore();
+  const { language, setLanguage, theme, setTheme, setLogout } = useAppStore(); // Lấy setLogout từ store
+
+  // Logic xử lý khi nhấn nút Logout
+  const handleLogout = () => {
+    Alert.alert(
+      // t('settings.logout_title') || 'Đăng xuất',
+      // t('settings.logout_confirm') ||
+      //   'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?',
+      'Đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?',
+      [
+        {
+          // text: t('common.cancel') || 'Hủy',
+          text: 'Hủy',
+          style: 'cancel',
+        },
+        {
+          // text: t('settings.logout_button') || 'Đăng xuất',
+          text: 'Đăng xuất',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Gọi API logout lên server (nếu cần theo hình image_be24f2.png)
+              await authApi.logout?.();
+            } catch (error) {
+              console.log('Logout API error:', error);
+            } finally {
+              // Xóa token trong AsyncStorage và cập nhật isLoggedIn về false
+              await setLogout();
+            }
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -109,6 +149,7 @@ const SettingsScreen = () => {
           ))}
         </SettingSection>
 
+        {/* Theme Section */}
         <SettingSection title={t('settings.theme')}>
           {(
             [
@@ -136,9 +177,7 @@ const SettingsScreen = () => {
               activeOpacity={0.7}
             >
               <Text style={styles.themeEmoji}>{item.emoji}</Text>
-              <Text style={[styles.settingLabel]}>
-                {item.label}
-              </Text>
+              <Text style={[styles.settingLabel]}>{item.label}</Text>
               {theme === item.key && (
                 <View style={styles.checkBadge}>
                   <Text style={styles.checkBadgeText}>✓</Text>
@@ -148,6 +187,7 @@ const SettingsScreen = () => {
           ))}
         </SettingSection>
 
+        {/* Bluetooth Section */}
         <SettingSection title={t('settings.bluetooth')}>
           <SettingRow
             emoji="🔵"
@@ -157,11 +197,25 @@ const SettingsScreen = () => {
           />
         </SettingSection>
 
+        {/* About Section */}
         <SettingSection title={t('settings.about')}>
           <SettingRow emoji="ℹ️" label={t('settings.about')} />
           <SettingRow
             emoji="📱"
             label={t('settings.version', { version: '1.0.0' })}
+            isLast={true}
+          />
+        </SettingSection>
+
+        {/* MỤC LOGOUT MỚI THÊM */}
+        {/* <SettingSection title={t('settings.account') || 'Tài khoản'}> */}
+        <SettingSection title={'Đăng xuất'}>
+          <SettingRow
+            emoji="🚪"
+            // label={t('settings.logout') || 'Đăng xuất'}
+            label={'Đăng xuất  '}
+            onPress={handleLogout}
+            danger={true}
             isLast={true}
           />
         </SettingSection>
@@ -252,7 +306,6 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 20,
   },
-  // Language row
   langFlag: {
     fontSize: 24,
     marginRight: 12,
@@ -264,12 +317,10 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: 12,
   },
-  // Theme row
   themeEmoji: {
     fontSize: 20,
     marginRight: 12,
   },
-  // Check badge
   checkBadge: {
     width: 24,
     height: 24,
@@ -283,7 +334,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
-  // Footer
   footer: {
     alignItems: 'center',
     paddingBottom: 40,

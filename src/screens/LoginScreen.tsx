@@ -25,7 +25,6 @@ const LoginScreen = () => {
   const setLogin = useAppStore(state => state.setLogin);
 
   const handleLogin = async () => {
-    // 1. Kiểm tra đầu vào cơ bản
     if (!email.trim() || !password.trim()) {
       Alert.alert('Thông báo', 'Vui lòng điền đầy đủ thông tin');
       return;
@@ -33,37 +32,24 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      // 2. Gọi API Login
       const responseData = await authApi.login(email, password);
-
-      // LOG DEBUG: Dòng này cực kỳ quan trọng để bạn nhìn thấy Backend trả về cái gì ở Terminal
-      console.log('--- LOGIN RESPONSE DATA ---', responseData);
-
-      // 3. Lấy token với nhiều trường hợp (vét cạn)
-      // Lưu ý: Nếu responseData chính là chuỗi token (string), nó sẽ lấy luôn
       const token =
         (typeof responseData === 'string' ? responseData : null) ||
         responseData?.access_token ||
         responseData?.accessToken ||
         responseData?.token ||
-        responseData?.data?.token ||
-        responseData?.data?.access_token;
+        responseData?.data?.token;
 
       if (token) {
-        console.log('Token tìm thấy:', token);
         await setLogin(token);
-        // Sau lệnh này, AppNavigator sẽ tự động đổi màn hình nhờ vào logic isLoggedIn
       } else {
-        // Trường hợp đăng nhập đúng (200 OK) nhưng cấu trúc JSON không có token
-        console.error('Không tìm thấy token trong cấu trúc:', responseData);
         Alert.alert(
           'Lỗi dữ liệu',
-          'Đăng nhập thành công nhưng server trả về cấu trúc không hợp lệ.',
+          'Đăng nhập thành công nhưng không tìm thấy mã xác thực.',
         );
       }
     } catch (error: any) {
-      // 4. Xử lý lỗi (Sai pass, Server die, Timeout...)
-      console.error('Login Error:', error);
+      // Alert.alert('Đăng nhập thất bại', error.message || 'Lỗi kết nối máy chủ');
       Alert.alert('Đăng nhập thất bại', error.message || 'Lỗi kết nối máy chủ');
     } finally {
       setLoading(false);
@@ -75,21 +61,25 @@ const LoginScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <Image
-        source={require('../assets/LoginPage.png')}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      />
-
       <View style={styles.overlay}>
+        {/* 1. LOVE ALARM */}
         <Text style={styles.title}>LOVE ALARM</Text>
 
+        {/* 2. IMG */}
+        <View style={styles.heartContainer}>
+          <Image
+            source={require('../assets/LoginPage.png')}
+            style={styles.heartImage}
+            resizeMode="contain"
+          />
+        </View>
+
+        {/* 3. INPUT */}
         <View style={styles.inputContainer}>
-          {/* Input Email */}
           <View style={styles.inputWrapper}>
             <MaterialCommunityIcons
               name="email-outline"
-              size={20}
+              size={22}
               color={COLOR_PALETTE.brightPink}
             />
             <TextInput
@@ -99,15 +89,13 @@ const LoginScreen = () => {
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
-              keyboardType="email-address"
             />
           </View>
 
-          {/* Input Password */}
           <View style={styles.inputWrapper}>
             <MaterialCommunityIcons
               name="lock-outline"
-              size={20}
+              size={22}
               color={COLOR_PALETTE.brightPink}
             />
             <TextInput
@@ -120,14 +108,19 @@ const LoginScreen = () => {
             />
             <TouchableOpacity onPress={() => setSecureText(!secureText)}>
               <Ionicons
-                name={secureText ? 'eye-outline' : 'eye-off-outline'}
+                name={secureText ? 'eye-off-outline' : 'eye-outline'}
                 size={20}
-                color="rgba(255,255,255,0.6)"
+                color="white"
               />
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity style={styles.forgotBtn}>
+            <Text style={styles.forgotText}>Quên mật khẩu?</Text>
+          </TouchableOpacity>
         </View>
 
+        {/* 4. BUTTON */}
         <TouchableOpacity
           style={[styles.loginButton, { opacity: loading ? 0.7 : 1 }]}
           onPress={handleLogin}
@@ -136,14 +129,14 @@ const LoginScreen = () => {
           {loading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text style={styles.loginButtonText}>LOGIN</Text>
+            <Text style={styles.loginButtonText}>Đăng nhập</Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
+          <Text style={styles.footerText}>Chưa có tài khoản? </Text>
           <TouchableOpacity>
-            <Text style={styles.signUpText}>Sign Up</Text>
+            <Text style={styles.signUpText}>Đăng ký ngay</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -151,29 +144,37 @@ const LoginScreen = () => {
   );
 };
 
-// ... Styles giữ nguyên như cũ ...
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  backgroundImage: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    opacity: 0.9,
-  },
   overlay: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 35,
+    paddingTop: 80,
   },
   title: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 50,
+    color: COLOR_PALETTE.brightPink,
     letterSpacing: 4,
+    marginBottom: 15,
   },
-  inputContainer: { width: '100%', gap: 15 },
+  heartContainer: {
+    width: '100%',
+    height: 250,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // marginBottom: 10,
+    marginTop: 40,
+  },
+  heartImage: {
+    width: '300%',
+    height: '300%',
+  },
+  inputContainer: {
+    width: '100%',
+    marginTop: 10,
+  },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -182,22 +183,25 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: COLOR_PALETTE.roseRed,
     borderRadius: 15,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     paddingHorizontal: 15,
+    marginBottom: 15,
   },
   input: { flex: 1, color: 'white', paddingHorizontal: 10, fontSize: 16 },
+  forgotBtn: { alignSelf: 'flex-end', marginTop: -5, marginBottom: 25 },
+  forgotText: { color: 'rgba(255,255,255,0.6)', fontSize: 14 },
   loginButton: {
     width: '100%',
     height: 55,
-    borderRadius: 27,
-    marginTop: 40,
+    borderRadius: 30,
     backgroundColor: COLOR_PALETTE.brightPink,
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 5,
   },
   loginButtonText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
-  footer: { flexDirection: 'row', marginTop: 30 },
-  footerText: { color: '#bbb' },
+  footer: { flexDirection: 'row', marginTop: 40 },
+  footerText: { color: 'rgba(255,255,255,0.7)' },
   signUpText: { color: COLOR_PALETTE.brightPink, fontWeight: 'bold' },
 });
 
