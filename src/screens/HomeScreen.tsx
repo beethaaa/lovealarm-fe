@@ -14,6 +14,7 @@ import { State } from 'react-native-ble-plx';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLoveAlarm } from '@hooks/useLoveAlarm';
 import COLOR_PALETTE from '@/styles/colorPalette';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const COLORS = {
   bg: '#0A0A0A',
@@ -32,20 +33,48 @@ const COLORS = {
 const PulseRing = ({
   delay = 0,
   isActive,
+  size = 240,
+  staticOpacity = 0.25,
 }: {
   delay?: number;
   isActive: boolean;
+  size?: number;
+  staticOpacity?: number;
 }) => {
-  const scale = React.useRef(new Animated.Value(0)).current;
-  const opacity = React.useRef(new Animated.Value(1)).current;
+  const scale = React.useRef(new Animated.Value(1)).current;
+  const opacity = React.useRef(new Animated.Value(staticOpacity)).current;
+  const animRef = React.useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
+    if (animRef.current) {
+      animRef.current.stop();
+      animRef.current = null;
+    }
+
     if (!isActive) {
-      scale.setValue(0);
-      opacity.setValue(0);
+      const staticAnim = Animated.parallel([
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: staticOpacity,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]);
+      animRef.current = staticAnim;
+      staticAnim.start(() => {
+        animRef.current = null;
+      });
       return;
     }
-    const anim = Animated.loop(
+
+    scale.setValue(0);
+    opacity.setValue(0.8);
+
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.delay(delay),
         Animated.parallel([
@@ -74,13 +103,27 @@ const PulseRing = ({
         ]),
       ]),
     );
-    anim.start();
-    return () => anim.stop();
-  }, [isActive, delay, scale, opacity]);
+    animRef.current = loop;
+    loop.start();
+
+    return () => {
+      animRef.current?.stop();
+      animRef.current = null;
+    };
+  }, [isActive, delay, scale, opacity, staticOpacity]);
 
   return (
     <Animated.View
-      style={[styles.pulseRing, { opacity, transform: [{ scale }] }]}
+      style={[
+        styles.pulseRing,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          opacity,
+          transform: [{ scale }],
+        },
+      ]}
     />
   );
 };
@@ -96,14 +139,56 @@ const HomeScreen = () => {
 
   const [tokenInput, setTokenInput] = useState('');
 
+  const heartScale = React.useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!isScanning) {
+      heartScale.setValue(1);
+      return;
+    }
+    const beat = Animated.loop(
+      Animated.sequence([
+        Animated.timing(heartScale, {
+          toValue: 1.1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heartScale, {
+          toValue: 1.0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heartScale, {
+          toValue: 1.05,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heartScale, {
+          toValue: 1.0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.delay(600),
+      ]),
+    );
+    beat.start();
+    return () => beat.stop();
+  }, [isScanning, heartScale]);
+
   const handleSaveToken = async () => {
     try {
       if (tokenInput.trim() !== '') {
         await AsyncStorage.setItem('token', tokenInput.trim());
-        Alert.alert('Success', `Token saved: ${await AsyncStorage.getItem('token')}`);
+        Alert.alert(
+          'Success',
+          `Token saved: ${await AsyncStorage.getItem('token')}`,
+        );
       } else {
         await AsyncStorage.removeItem('token');
-        Alert.alert('Success', `Token cleared: ${await AsyncStorage.getItem('token')}`);
+        Alert.alert(
+          'Success',
+          `Token cleared: ${await AsyncStorage.getItem('token')}`,
+        );
       }
     } catch (e) {
       console.error('Error saving token', e);
@@ -128,10 +213,14 @@ const HomeScreen = () => {
       >
         <View style={styles.header}>
           <Text style={styles.brandText}>LOVE ALARM</Text>
-          <Text style={styles.welcomeText}>Heart Sync</Text>
-          <Text style={styles.descriptionText}>
-            Find the one whose heart beats for yours within a 10-meter radius.
-          </Text>
+          <View style={styles.welcomeTextContainer}>
+            <Icon
+              name="radio-outline"
+              size={20}
+              color={COLOR_PALETTE.cherryBlossomPink}
+            />
+            <Text style={styles.welcomeText}>Are you crushing on anyone?</Text>
+          </View>
         </View>
 
         <View style={styles.tokenContainer}>
@@ -149,20 +238,44 @@ const HomeScreen = () => {
 
         <View style={styles.radarContainer}>
           <View style={styles.radarInner}>
-            <PulseRing delay={0} isActive={isScanning} />
-            <PulseRing delay={800} isActive={isScanning} />
-            <PulseRing delay={1600} isActive={isScanning} />
+            <PulseRing
+              delay={1600}
+              isActive={isScanning}
+              size={160}
+              staticOpacity={0.65}
+            />
+            <PulseRing
+              delay={800}
+              isActive={isScanning}
+              size={220}
+              staticOpacity={0.45}
+            />
+            <PulseRing
+              delay={0}
+              isActive={isScanning}
+              size={280}
+              staticOpacity={0.2}
+            />
 
             <View
               style={[
                 styles.centerCircle,
-                {
-                  backgroundColor: isScanning ? COLORS.primary : COLORS.surface,
-                },
                 isScanning && styles.centerCircleActive,
               ]}
             >
-              <Text style={styles.heartEmoji}>💗</Text>
+              <Animated.View
+                style={[
+                  { transform: [{ scale: heartScale }] },
+                  styles.heartGlow,
+                ]}
+              >
+                <Icon
+                  style={styles.heartIcon}
+                  name="heart"
+                  size={72}
+                  color={COLOR_PALETTE.cherryBlossomPink}
+                />
+              </Animated.View>
             </View>
           </View>
         </View>
@@ -208,7 +321,7 @@ const HomeScreen = () => {
                   style={styles.deviceRow}
                 >
                   <View style={styles.deviceIcon}>
-                    <Text style={styles.deviceIconText}>💌</Text>
+                    <Icon name="mail" size={22} color={COLORS.primary} />
                   </View>
                   <View style={styles.deviceInfo}>
                     <Text style={styles.deviceName}>Secret Admirer</Text>
@@ -271,23 +384,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 4,
+    marginBottom: 16,
+  },
+  welcomeTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: COLOR_PALETTE.cherryBlossomPinkLight,
+    borderRadius: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    gap: 16,
   },
   welcomeText: {
     color: COLORS.textPrimary,
-    fontSize: 32,
-    fontWeight: '900',
-    marginTop: 8,
+    fontSize: 14,
+    fontWeight: '600',
     textShadowColor: COLORS.primaryDark,
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 10,
-  },
-  descriptionText: {
-    color: COLORS.textSecondary,
-    fontSize: 14,
-    marginTop: 12,
-    textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: 16,
   },
   radarContainer: {
     alignItems: 'center',
@@ -295,38 +411,45 @@ const styles = StyleSheet.create({
     marginVertical: 40,
   },
   radarInner: {
-    width: 200,
-    height: 200,
+    width: 300,
+    height: 300,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pulseRing: {
     position: 'absolute',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    borderWidth: 1.5,
-    borderColor: COLORS.primaryLight,
+    borderWidth: 3,
+    borderColor: COLOR_PALETTE.cherryBlossomPink,
+    shadowColor: COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 8,
   },
   centerCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
   centerCircleActive: {
-    borderColor: COLORS.primaryLight,
-    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 25,
     elevation: 20,
   },
-  heartEmoji: {
-    fontSize: 36,
+  heartGlow: {
+    shadowColor: COLOR_PALETTE.cherryBlossomPink,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  heartIcon: {
+    textShadowColor: COLOR_PALETTE.cherryBlossomPink,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
   },
   statusCard: {
     marginHorizontal: 24,
@@ -414,7 +537,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 77, 109, 0.15)', // primary light transparent
+    backgroundColor: 'rgba(255, 77, 109, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
