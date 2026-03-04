@@ -189,7 +189,7 @@ const GNB: React.FC<GNBProps> = ({
           styles.itemAbsolute,
           {
             left: SCAN_POS.x - SCAN_SIZE / 2,
-            top: SCAN_POS.y - SCAN_SIZE / 2,
+            top: SCAN_POS.y - SCAN_SIZE / 2 - 20,
             width: SCAN_SIZE,
             height: SCAN_SIZE,
           },
