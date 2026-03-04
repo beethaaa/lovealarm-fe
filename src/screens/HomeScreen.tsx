@@ -128,14 +128,25 @@ const PulseRing = ({
   );
 };
 
-const HomeScreen = () => {
+interface HomeScreenProps {
+  isScanning?: boolean;
+  startLoveAlarm?: () => void;
+  stopLoveAlarm?: () => void;
+}
+
+const HomeScreen = (props: HomeScreenProps) => {
+  // useLoveAlarm provides BLE data; isScanning/start/stop can be overridden from parent
   const {
-    isScanning,
+    isScanning: isScanningHook,
     nearbyUsers,
     bluetoothState,
-    startLoveAlarm,
-    stopLoveAlarm,
+    startLoveAlarm: startHook,
+    stopLoveAlarm: stopHook,
   } = useLoveAlarm();
+
+  const isScanning = props.isScanning ?? isScanningHook;
+  const startLoveAlarm = props.startLoveAlarm ?? startHook;
+  const stopLoveAlarm = props.stopLoveAlarm ?? stopHook;
 
   const [tokenInput, setTokenInput] = useState('');
 
@@ -211,18 +222,6 @@ const HomeScreen = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text style={styles.brandText}>LOVE ALARM</Text>
-          <View style={styles.welcomeTextContainer}>
-            <Icon
-              name="radio-outline"
-              size={20}
-              color={COLOR_PALETTE.cherryBlossomPink}
-            />
-            <Text style={styles.welcomeText}>Are you crushing on anyone?</Text>
-          </View>
-        </View>
-
         <View style={styles.tokenContainer}>
           <TextInput
             style={styles.tokenInput}
@@ -234,6 +233,14 @@ const HomeScreen = () => {
           <TouchableOpacity style={styles.saveButton} onPress={handleSaveToken}>
             <Text style={styles.saveButtonText}>Save</Text>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.header}>
+          {/* <Text style={styles.brandText}>LOVE ALARM</Text> */}
+          <View style={styles.welcomeTextContainer}>
+            <Icon name="radio-outline" size={24} color={COLOR_PALETTE.pink} />
+            <Text style={styles.welcomeText}>Are you crushing on anyone?</Text>
+          </View>
         </View>
 
         <View style={styles.radarContainer}>
@@ -272,7 +279,7 @@ const HomeScreen = () => {
                 <Icon
                   style={styles.heartIcon}
                   name="heart"
-                  size={72}
+                  size={80}
                   color={COLOR_PALETTE.cherryBlossomPink}
                 />
               </Animated.View>
@@ -280,7 +287,7 @@ const HomeScreen = () => {
           </View>
         </View>
 
-        <View style={styles.statusCard}>
+        {/* <View style={styles.statusCard}>
           <View style={styles.statusRow}>
             <View style={styles.statusLeft}>
               <View
@@ -308,7 +315,7 @@ const HomeScreen = () => {
               )}
             </View>
           </View>
-        </View>
+        </View> */}
 
         {nearbyUsers.length > 0 && (
           <View style={styles.devicesContainer}>
@@ -343,21 +350,6 @@ const HomeScreen = () => {
             })}
           </View>
         )}
-
-        <View style={styles.scanButtonContainer}>
-          <TouchableOpacity
-            onPress={isScanning ? stopLoveAlarm : startLoveAlarm}
-            style={[
-              styles.scanButton,
-              isScanning ? styles.scanButtonStop : styles.scanButtonStart,
-            ]}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.scanButtonText}>
-              {isScanning ? 'STOP SYNCING' : 'OPEN LOVE ALARM'}
-            </Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </View>
   );
@@ -372,6 +364,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 320,
   },
   header: {
     paddingHorizontal: 24,
@@ -390,12 +383,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: COLOR_PALETTE.cherryBlossomPinkLight,
+    backgroundColor: '#0A0A0A',
     borderRadius: 16,
     paddingHorizontal: 24,
-    paddingVertical: 16,
-    gap: 16,
+    paddingVertical: 14,
+    gap: 12,
+    boxShadow: 'inset 0px -1px 4px 0px #FFB2C5',
   },
   welcomeText: {
     color: COLORS.textPrimary,
@@ -420,10 +413,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderWidth: 3,
     borderColor: COLOR_PALETTE.cherryBlossomPink,
-    shadowColor: COLORS.primaryDark,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
     elevation: 8,
   },
   centerCircle: {
@@ -602,7 +591,7 @@ const styles = StyleSheet.create({
   tokenContainer: {
     flexDirection: 'row',
     marginHorizontal: 24,
-    marginTop: 16,
+    marginTop: 64,
     marginBottom: -16,
     alignItems: 'center',
     justifyContent: 'center',

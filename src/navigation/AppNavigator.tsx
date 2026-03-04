@@ -1,97 +1,91 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useTranslation } from 'react-i18next';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 
 import HomeScreen from '../screens/HomeScreen';
 import BLEScreen from '../screens/BLEScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
-import { RootStackParamList, BottomTabParamList } from '../types/index';
+import GNB, { GNBProps } from '../components/GNB';
+import { useLoveAlarm } from '../hooks/useLoveAlarm';
+import { RootStackParamList } from '../types/index';
+
+type TabKey = NonNullable<GNBProps['activeTab']>;
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<BottomTabParamList>();
 
-// Tab Icon - defined outside of render to avoid recreation
-const makeTabIcon =
-  (emoji: string) =>
-  ({ focused }: { focused: boolean; color: string; size: number }) =>
-    (
-      <View style={[styles.tabIcon, focused ? styles.tabIconFocused : null]}>
-        <Text style={styles.tabEmoji}>{emoji}</Text>
-      </View>
-    );
+const MainTabsWithGNB = () => {
+  const [activeTab, setActiveTab] = useState<TabKey>('home');
 
-// Bottom Tab Navigator
-const BottomTabs = () => {
-  const { t } = useTranslation();
+  const { isScanning, startLoveAlarm, stopLoveAlarm } = useLoveAlarm();
+
+  const handleScan = () => {
+    if (isScanning) {
+      stopLoveAlarm();
+    } else {
+      startLoveAlarm();
+    }
+    setActiveTab('home');
+  };
+
+  const handleTabPress = (tab: TabKey) => {
+    if (tab !== 'scan') {
+      setActiveTab(tab);
+    }
+  };
+
+  const renderScreen = () => {
+    switch (activeTab) {
+      case 'matched':
+        return <BLEScreen />;
+      case 'profile':
+        return <BLEScreen />;
+      case 'settings':
+        return <SettingsScreen />;
+      case 'home':
+      default:
+        return (
+          <HomeScreen
+            isScanning={isScanning}
+            startLoveAlarm={startLoveAlarm}
+            stopLoveAlarm={stopLoveAlarm}
+          />
+        );
+    }
+  };
 
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#0f172a',
-          borderTopColor: '#1e293b',
-          borderTopWidth: 1,
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 65,
-        },
-        tabBarActiveTintColor: '#ec4899',
-        tabBarInactiveTintColor: '#64748b',
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginTop: 2,
-        },
-      }}
-    >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarLabel: t('navigation.home'),
-          tabBarIcon: makeTabIcon('🏠'),
-        }}
+    <View style={styles.root}>
+      <View style={styles.screenArea}>{renderScreen()}</View>
+
+      <GNB
+        activeTab={activeTab}
+        isScanning={isScanning}
+        onHome={() => handleTabPress('home')}
+        onMatched={() => handleTabPress('matched')}
+        onScan={handleScan}
+        onProfile={() => handleTabPress('profile')}
+        onSettings={() => handleTabPress('settings')}
       />
-      <Tab.Screen
-        name="BLE"
-        component={BLEScreen}
-        options={{
-          tabBarLabel: t('navigation.ble'),
-          tabBarIcon: makeTabIcon('📡'),
-        }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          tabBarLabel: t('navigation.settings'),
-          tabBarIcon: makeTabIcon('⚙️'),
-        }}
-      />
-    </Tab.Navigator>
+    </View>
   );
 };
 
-// Root Navigator
 const AppNavigator = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: '#0f172a' },
+          headerStyle: { backgroundColor: '#0A0A0A' },
           headerTitleStyle: { color: '#f8fafc', fontWeight: '700' },
           headerTintColor: '#ec4899',
-          contentStyle: { backgroundColor: '#0f172a' },
+          contentStyle: { backgroundColor: '#0A0A0A' },
         }}
       >
         <Stack.Screen
           name="Main"
-          component={BottomTabs}
+          component={MainTabsWithGNB}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
@@ -102,17 +96,11 @@ const AppNavigator = () => {
 export default AppNavigator;
 
 const styles = StyleSheet.create({
-  tabIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  root: {
+    flex: 1,
+    backgroundColor: '#0A0A0A',
   },
-  tabIconFocused: {
-    backgroundColor: 'rgba(236,72,153,0.15)',
-  },
-  tabEmoji: {
-    fontSize: 20,
+  screenArea: {
+    flex: 1,
   },
 });
