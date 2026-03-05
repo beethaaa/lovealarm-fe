@@ -77,34 +77,26 @@ const SettingRow = ({
 
 const SettingsScreen = () => {
   const { t } = useTranslation();
-  const { language, setLanguage, theme, setTheme, setLogout } = useAppStore(); // Lấy setLogout từ store
+  const { language, setLanguage, theme, setTheme, setLogout } = useAppStore();
 
-  // Logic xử lý khi nhấn nút Logout
   const handleLogout = () => {
     Alert.alert(
-      // t('settings.logout_title') || 'Đăng xuất',
-      // t('settings.logout_confirm') ||
-      //   'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?',
       'Đăng xuất',
       'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?',
       [
         {
-          // text: t('common.cancel') || 'Hủy',
           text: 'Hủy',
           style: 'cancel',
         },
         {
-          // text: t('settings.logout_button') || 'Đăng xuất',
           text: 'Đăng xuất',
           style: 'destructive',
           onPress: async () => {
             try {
-              // Gọi API logout lên server (nếu cần theo hình image_be24f2.png)
               await authApi.logout?.();
             } catch (error) {
-              console.log('Logout API error:', error);
+              console.error('Logout API error:', error);
             } finally {
-              // Xóa token trong AsyncStorage và cập nhật isLoggedIn về false
               await setLogout();
             }
           },

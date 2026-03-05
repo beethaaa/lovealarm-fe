@@ -11,7 +11,6 @@ const { LoveAlarmAdvertiser } = NativeModules;
 
 const getToken = async () => {
   const token = await AsyncStorage.getItem('token');
-  console.log('Token:', token);
   return token;
 };
 
@@ -21,17 +20,23 @@ export interface LoveAlarmUser {
   lastSeen: number;
 }
 
+export interface ScanResult {
+  name: string;
+  interests: string[];
+  userId: string;
+  avatarUrl: string;
+  gender: number;
+}
+
 const manager = new BleManager();
 
 export const useLoveAlarm = () => {
   const [isScanning, setIsScanning] = useState(false);
-  const [nearbyUsers, setNearbyUsers] = useState<Record<string, LoveAlarmUser>>(
-    {},
-  );
+  const [nearbyUsers, setNearbyUsers] = useState<ScanResult[]>([]);
   const [bluetoothState, setBluetoothState] = useState<State>(State.Unknown);
   const [sessionUuid, setSessionUuid] = useState<string | null>(null);
 
-  const nearbyUsersRef = useRef<Record<string, LoveAlarmUser>>({});
+  const bleMapRef = useRef<Record<string, LoveAlarmUser>>({});
   const isScanningRef = useRef(false);
 
   useEffect(() => {
@@ -41,11 +46,9 @@ export const useLoveAlarm = () => {
     return () => subscription.remove();
   }, []);
 
-  // Update ref to avoid stale closures in setInterval
   useEffect(() => {
-    nearbyUsersRef.current = nearbyUsers;
     isScanningRef.current = isScanning;
-  }, [nearbyUsers, isScanning]);
+  }, [isScanning]);
 
   const requestBlePermissions = async () => {
     if (Platform.OS !== 'android') return true;
@@ -78,12 +81,11 @@ export const useLoveAlarm = () => {
     const bleSessionUuid = generateUUID();
     setSessionUuid(bleSessionUuid);
     setIsScanning(true);
-    setNearbyUsers({});
+    setNearbyUsers([]);
 
     try {
       if (LoveAlarmAdvertiser && (await getToken())) {
         LoveAlarmAdvertiser.startAdvertising(bleSessionUuid);
-        console.log('Advertising started:', bleSessionUuid);
       } else {
         console.warn('LoveAlarmAdvertiser native module not linked');
       }
@@ -100,21 +102,16 @@ export const useLoveAlarm = () => {
           },
         },
       );
-
-      console.log('Session registered with Backend');
     } catch (e) {
-      console.log('Advertising/Session error:', e);
+      console.error('Advertising/Session error:', e);
     }
 
-    console.log('Starting scan...');
     manager.startDeviceScan(
       [SERVICE_UUID],
       { allowDuplicates: true },
       (error, device) => {
-        console.log('Device found:', device);
-
         if (error) {
-          console.log('Error', error);
+          console.error('Error', error);
           return;
         }
 
@@ -131,7 +128,7 @@ export const useLoveAlarm = () => {
             } else if (buffer.length === 16) {
               uuidBuf = buffer;
             } else {
-              return; 
+              return;
             }
 
             const hex = uuidBuf.toString('hex');
@@ -143,46 +140,39 @@ export const useLoveAlarm = () => {
               20,
             )}-${hex.substring(20)}`;
 
-            // Ignore external devices with invalid UUID format
             const uuidRegex =
               /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             if (!uuidRegex.test(foundbleSessionUuid)) return;
-
-            // Ignore our own device returning in the scan
             if (
               foundbleSessionUuid.toLowerCase() === bleSessionUuid.toLowerCase()
             ) {
               return;
             }
 
-            setNearbyUsers(prev => ({
-              ...prev,
-              [foundbleSessionUuid]: {
-                bleSessionUuid: foundbleSessionUuid,
-                rssi: device.rssi || -100,
-                lastSeen: Date.now(),
-              },
-            }));
+            bleMapRef.current[foundbleSessionUuid] = {
+              bleSessionUuid: foundbleSessionUuid,
+              rssi: device.rssi ?? -100,
+              lastSeen: Date.now(),
+            };
           } catch (err) {
-            console.log('Parse error:', err);
+            console.error('Parse error:', err);
           }
         }
       },
     );
-
-    console.log('hi');
   }, []);
 
   const stopLoveAlarm = useCallback(async () => {
     manager.stopDeviceScan();
     setIsScanning(false);
+    setNearbyUsers([]);
+    bleMapRef.current = {};
 
     if (LoveAlarmAdvertiser) {
       try {
         await LoveAlarmAdvertiser.stopAdvertising();
-        console.log('Advertising stopped');
       } catch (error) {
-        console.log('Failed to stop advertising', error);
+        console.error('Failed to stop advertising', error);
       }
     }
   }, []);
@@ -192,48 +182,36 @@ export const useLoveAlarm = () => {
       if (!isScanningRef.current) return;
 
       const now = Date.now();
-      const active = Object.values(nearbyUsersRef.current).filter(
-        u => now - u.lastSeen < 5000,
-      );
-
-      const updatedUsers = { ...nearbyUsersRef.current };
-      let stateChanged = false;
-      Object.keys(updatedUsers).forEach(key => {
-        if (now - updatedUsers[key].lastSeen >= 5000) {
-          delete updatedUsers[key];
-          stateChanged = true;
+      Object.keys(bleMapRef.current).forEach(key => {
+        if (now - bleMapRef.current[key].lastSeen >= 5000) {
+          delete bleMapRef.current[key];
         }
       });
-      if (stateChanged) {
-        setNearbyUsers(updatedUsers);
+
+      const active = Object.values(bleMapRef.current);
+
+      if (active.length === 0) {
+        setNearbyUsers([]);
+        return;
       }
 
-      if (active.length > 0) {
-        try {
-          await axios.post(
-            `${SERVER_URL}/api/suggest-friends`,
-            {
-              bleUuids: active.map(u => u.bleSessionUuid),
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${await getToken()}`,
-              },
-            },
-          );
-          console.log('Sent to server:', active.length, 'users');
-        } catch (e) {
-          console.log('Server error sync users:', e);
-        }
+      try {
+        const res = await axios.post(
+          `${SERVER_URL}/api/suggest-friends`,
+          { bleUuids: active.map(u => u.bleSessionUuid) },
+          { headers: { Authorization: `Bearer ${await getToken()}` } },
+        );
+        setNearbyUsers(res.data.users);
+      } catch (e) {
+        console.error('Server error sync users:', e);
       }
     }, 3000);
-
     return () => clearInterval(interval);
   }, []);
 
   return {
     isScanning,
-    nearbyUsers: Object.values(nearbyUsers),
+    nearbyUsers,
     bluetoothState,
     sessionUuid,
     startLoveAlarm,

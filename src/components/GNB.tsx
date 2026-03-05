@@ -11,7 +11,6 @@ import Icon from 'react-native-vector-icons/Ionicons';
 
 const { width: W } = Dimensions.get('window');
 
-// ─── Layout constants ─────────────────────────────────────────────────────────
 const GNB_HEIGHT = 280;
 const ITEM_SIZE = 54;
 const SCAN_SIZE = 88;
@@ -20,9 +19,6 @@ const SCAN_POS = { x: W / 2, y: 200 };
 
 const CIRCLE_RADIUS = 115;
 
-// Calculate a point on the circle around the heart button.
-// Standard math angle: 90° = up, 0° = right, 180° = left, 270° = down.
-// Screen y increases downward, so we negate sin.
 function circlePos(angleDeg: number) {
   const rad = (angleDeg * Math.PI) / 180;
   return {
@@ -222,7 +218,7 @@ const GNB: React.FC<GNBProps> = ({
             <Icon
               name="heart"
               size={44}
-              color={isScanning ? '#FF88AA' : '#F5C9C6'}
+              color={isScanning ? '#FF88AA' : '#ffd1c2'}
             />
           </TouchableOpacity>
         </Animated.View>
@@ -282,9 +278,9 @@ const styles = StyleSheet.create({
   },
 
   scanButtonActive: {
-    backgroundColor: '#2A0E1A',
+    backgroundColor: 'black',
     ...({
-      boxShadow: 'inset 0px -2px 12px 0px #FF4477',
+      boxShadow: 'inset 0px -2px 12px 0px pink',
     } as ViewStyle),
   },
 });

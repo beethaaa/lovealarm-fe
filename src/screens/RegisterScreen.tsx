@@ -187,7 +187,6 @@ const PinkInput = ({
 
   return (
     <View style={styles.fieldGroup}>
-      {/* Label with icon */}
       <Animated.View style={styles.fieldLabelRow}>
         <Icon
           name={icon}
@@ -199,7 +198,6 @@ const PinkInput = ({
         </Animated.Text>
       </Animated.View>
 
-      {/* Input row */}
       <Animated.View
         style={[
           styles.fieldInputRow,
@@ -233,7 +231,6 @@ const PinkInput = ({
   );
 };
 
-// ─── Progress bar ─────────────────────────────────────────────────────────────
 const ProgressBar = ({ step }: { step: number }) => {
   const progress = useRef(new Animated.Value(0.5)).current;
   useEffect(() => {
@@ -255,7 +252,6 @@ const ProgressBar = ({ step }: { step: number }) => {
   );
 };
 
-// ─── Register Screen ──────────────────────────────────────────────────────────
 const RegisterScreen = ({ navigation }: any) => {
   const [step, setStep] = useState(0);
   const [email, setEmail] = useState('');

@@ -1,20 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   ScrollView,
   Animated,
   StatusBar,
   StyleSheet,
-  TextInput,
-  Alert,
+  Image,
 } from 'react-native';
-import { State } from 'react-native-ble-plx';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLoveAlarm } from '@hooks/useLoveAlarm';
+import { useLoveAlarm, ScanResult } from '@hooks/useLoveAlarm';
 import COLOR_PALETTE from '@/styles/colorPalette';
 import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
+
+const TYPEWRITER_TEXT = 'Are you crushing on anyone...';
 
 const COLORS = {
   bg: '#0A0A0A',
@@ -132,25 +131,67 @@ interface HomeScreenProps {
   isScanning?: boolean;
   startLoveAlarm?: () => void;
   stopLoveAlarm?: () => void;
+  nearbyUsers?: ScanResult[];
 }
 
 const HomeScreen = (props: HomeScreenProps) => {
-  // useLoveAlarm provides BLE data; isScanning/start/stop can be overridden from parent
-  const {
-    isScanning: isScanningHook,
-    nearbyUsers,
-    bluetoothState,
-    startLoveAlarm: startHook,
-    stopLoveAlarm: stopHook,
-  } = useLoveAlarm();
+  const { isScanning: isScanningHook, nearbyUsers: nearbyUsersHook } =
+    useLoveAlarm();
 
   const isScanning = props.isScanning ?? isScanningHook;
-  const startLoveAlarm = props.startLoveAlarm ?? startHook;
-  const stopLoveAlarm = props.stopLoveAlarm ?? stopHook;
-
-  const [tokenInput, setTokenInput] = useState('');
+  const nearbyUsers = props.nearbyUsers ?? nearbyUsersHook;
 
   const heartScale = React.useRef(new Animated.Value(1)).current;
+
+  const [displayedText, setDisplayedText] = useState('');
+  const [showBanner, setShowBanner] = useState(false);
+  const bannerOpacity = useRef(new Animated.Value(0)).current;
+  const typewriterRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const charIndexRef = useRef(0);
+
+  useEffect(() => {
+    if (isScanning) {
+      charIndexRef.current = 0;
+      setDisplayedText('');
+      setShowBanner(true);
+      bannerOpacity.setValue(0);
+      Animated.timing(bannerOpacity, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }).start();
+
+      const type = () => {
+        if (charIndexRef.current <= TYPEWRITER_TEXT.length) {
+          setDisplayedText(TYPEWRITER_TEXT.slice(0, charIndexRef.current));
+          charIndexRef.current += 1;
+          typewriterRef.current = setTimeout(type, 55);
+        }
+      };
+      typewriterRef.current = setTimeout(type, 200);
+    } else {
+      if (typewriterRef.current) {
+        clearTimeout(typewriterRef.current);
+        typewriterRef.current = null;
+      }
+      Animated.timing(bannerOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        setShowBanner(false);
+        setDisplayedText('');
+        charIndexRef.current = 0;
+      });
+    }
+
+    return () => {
+      if (typewriterRef.current) {
+        clearTimeout(typewriterRef.current);
+        typewriterRef.current = null;
+      }
+    };
+  }, [isScanning, bannerOpacity]);
 
   useEffect(() => {
     if (!isScanning) {
@@ -186,34 +227,55 @@ const HomeScreen = (props: HomeScreenProps) => {
     return () => beat.stop();
   }, [isScanning, heartScale]);
 
-  const handleSaveToken = async () => {
-    try {
-      if (tokenInput.trim() !== '') {
-        await AsyncStorage.setItem('token', tokenInput.trim());
-        Alert.alert(
-          'Success',
-          `Token saved: ${await AsyncStorage.getItem('token')}`,
-        );
-      } else {
-        await AsyncStorage.removeItem('token');
-        Alert.alert(
-          'Success',
-          `Token cleared: ${await AsyncStorage.getItem('token')}`,
-        );
+  const userPositionsRef = useRef<
+    Record<string, { angle: number; ring: number }>
+  >({});
+  const userOpacitiesRef = useRef<Record<string, Animated.Value>>({});
+
+  useEffect(() => {
+    const activeIds = new Set((nearbyUsers || []).map(u => u.userId));
+
+    Object.keys(userPositionsRef.current).forEach(id => {
+      if (!activeIds.has(id)) {
+        delete userPositionsRef.current[id];
+        delete userOpacitiesRef.current[id];
       }
-    } catch (e) {
-      console.error('Error saving token', e);
-      Alert.alert('Error', 'Failed to save token');
-    }
-  };
+    });
 
-  const isBluetoothOn = bluetoothState === State.PoweredOn;
+    (nearbyUsers || []).forEach((user, index) => {
+      if (!userPositionsRef.current[user.userId]) {
+        const ring = index % 3;
+        const existing = Object.values(userPositionsRef.current).map(
+          p => p.angle,
+        );
+        let angle = 0;
+        let best = -1;
+        for (let attempt = 0; attempt < 30; attempt++) {
+          const candidate = Math.random() * 2 * Math.PI;
+          const minDist = existing.length
+            ? Math.min(...existing.map(a => Math.abs(a - candidate)))
+            : Infinity;
+          if (minDist > best) {
+            best = minDist;
+            angle = candidate;
+          }
+        }
+        userPositionsRef.current[user.userId] = { angle, ring };
 
-  const getRssiSignal = (rssi: number) => {
-    if (rssi > -60) return { label: 'Strong', color: COLOR_PALETTE.pink };
-    if (rssi > -80) return { label: 'Good', color: COLOR_PALETTE.mimiPink };
-    return { label: 'Weak', color: COLOR_PALETTE.lavenderBlush };
-  };
+        const opacity = new Animated.Value(0);
+        userOpacitiesRef.current[user.userId] = opacity;
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }).start();
+      }
+    });
+  }, [nearbyUsers]);
+
+  const BUBBLE_SIZE = 48;
+  const RADAR_CENTER = 150;
+  const RING_RADII = [80, 110, 140];
 
   return (
     <View style={styles.container}>
@@ -222,26 +284,14 @@ const HomeScreen = (props: HomeScreenProps) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.tokenContainer}>
-          <TextInput
-            style={styles.tokenInput}
-            placeholder="Enter token..."
-            placeholderTextColor={COLORS.textMuted}
-            value={tokenInput}
-            onChangeText={setTokenInput}
-          />
-          <TouchableOpacity style={styles.saveButton} onPress={handleSaveToken}>
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.header}>
-          {/* <Text style={styles.brandText}>LOVE ALARM</Text> */}
-          <View style={styles.welcomeTextContainer}>
-            <Icon name="radio-outline" size={24} color={COLOR_PALETTE.pink} />
-            <Text style={styles.welcomeText}>Are you crushing on anyone?</Text>
-          </View>
-        </View>
+        {showBanner && (
+          <Animated.View style={[styles.header, { opacity: bannerOpacity }]}>
+            <View style={styles.welcomeTextContainer}>
+              <Icon name="radio-outline" size={24} color={COLOR_PALETTE.pink} />
+              <Text style={styles.welcomeText}>{displayedText}</Text>
+            </View>
+          </Animated.View>
+        )}
 
         <View style={styles.radarContainer}>
           <View style={styles.radarInner}>
@@ -284,6 +334,49 @@ const HomeScreen = (props: HomeScreenProps) => {
                 />
               </Animated.View>
             </View>
+
+            {isScanning &&
+              (nearbyUsers || []).map(user => {
+                const pos = userPositionsRef.current[user.userId];
+                const opacityAnim = userOpacitiesRef.current[user.userId];
+                if (!pos || !opacityAnim) return null;
+
+                const radius = RING_RADII[pos.ring];
+                const cx =
+                  RADAR_CENTER + radius * Math.cos(pos.angle) - BUBBLE_SIZE / 2;
+                const cy =
+                  RADAR_CENTER + radius * Math.sin(pos.angle) - BUBBLE_SIZE / 2;
+
+                return (
+                  <Animated.View
+                    key={user.userId}
+                    style={[
+                      styles.userBubbleWrapper,
+                      { left: cx, top: cy, opacity: opacityAnim },
+                    ]}
+                  >
+                    <LinearGradient
+                      colors={['#FFF6E4', '#FFECC9', '#F6889A']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.userBubbleGradient}
+                    >
+                      {user.avatarUrl ? (
+                        <Image
+                          source={{ uri: user.avatarUrl }}
+                          style={styles.userBubbleImage}
+                        />
+                      ) : (
+                        <View style={styles.userBubbleFallback}>
+                          <Text style={styles.userBubbleInitial}>
+                            {user.name?.[0]?.toUpperCase() ?? '?'}
+                          </Text>
+                        </View>
+                      )}
+                    </LinearGradient>
+                  </Animated.View>
+                );
+              })}
           </View>
         </View>
 
@@ -316,40 +409,6 @@ const HomeScreen = (props: HomeScreenProps) => {
             </View>
           </View>
         </View> */}
-
-        {nearbyUsers.length > 0 && (
-          <View style={styles.devicesContainer}>
-            <Text style={styles.devicesTitle}>Sparks around you</Text>
-            {nearbyUsers.slice(0, 3).map((user, index) => {
-              const signal = getRssiSignal(user.rssi);
-              return (
-                <View
-                  key={user.bleSessionUuid || index}
-                  style={styles.deviceRow}
-                >
-                  <View style={styles.deviceIcon}>
-                    <Icon name="mail" size={22} color={COLORS.primary} />
-                  </View>
-                  <View style={styles.deviceInfo}>
-                    <Text style={styles.deviceName}>Secret Admirer</Text>
-                    <Text style={styles.deviceRssi}>
-                      Signal Strength: {user.rssi} dBm
-                    </Text>
-                  </View>
-                  <View
-                    style={[styles.signalBadge, { borderColor: signal.color }]}
-                  >
-                    <Text
-                      style={[styles.signalBadgeText, { color: signal.color }]}
-                    >
-                      {signal.label}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
       </ScrollView>
     </View>
   );
@@ -385,6 +444,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0A0A0A',
     borderRadius: 16,
+    marginTop: 40,
     paddingHorizontal: 24,
     paddingVertical: 14,
     gap: 12,
@@ -398,10 +458,19 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 10,
   },
+  cursor: {
+    color: COLOR_PALETTE.pink,
+    fontWeight: '300',
+    opacity: 1,
+  },
   radarContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 40,
   },
   radarInner: {
     width: 300,
@@ -411,7 +480,7 @@ const styles = StyleSheet.create({
   },
   pulseRing: {
     position: 'absolute',
-    borderWidth: 3,
+    borderWidth: 4,
     borderColor: COLOR_PALETTE.cherryBlossomPink,
     elevation: 8,
   },
@@ -619,5 +688,40 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontWeight: '700',
     fontSize: 15,
+  },
+  userBubbleWrapper: {
+    position: 'absolute',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    shadowColor: COLOR_PALETTE.pink,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  userBubbleGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+    padding: 3,
+  },
+  userBubbleImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 21,
+  },
+  userBubbleFallback: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 21,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userBubbleInitial: {
+    color: COLOR_PALETTE.amaranthPink,
+    fontSize: 18,
+    fontWeight: '700',
   },
 });

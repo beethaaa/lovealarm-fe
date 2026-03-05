@@ -22,7 +22,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const MainTabsWithGNB = () => {
   const [activeTab, setActiveTab] = useState<TabKey>('home');
-  const { isScanning, startLoveAlarm, stopLoveAlarm } = useLoveAlarm();
+  const { isScanning, startLoveAlarm, stopLoveAlarm, nearbyUsers } =
+    useLoveAlarm();
 
   const handleScan = () => {
     if (isScanning) {
@@ -54,6 +55,7 @@ const MainTabsWithGNB = () => {
             isScanning={isScanning}
             startLoveAlarm={startLoveAlarm}
             stopLoveAlarm={stopLoveAlarm}
+            nearbyUsers={nearbyUsers}
           />
         );
     }
