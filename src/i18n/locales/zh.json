@@ -68,7 +68,13 @@
     "bluetooth": "蓝牙",
     "bluetooth_desc": "管理蓝牙连接",
     "range": "检测范围",
-    "range_desc": "设置您的警报检测范围"
+    "range_desc": "设置您的警报检测范围",
+    "upgrade_vip": "升级到 VIP",
+    "enable": "启用",
+    "disable": "禁用",
+    "logout": "退出登录",
+    "logout_confirm_title": "退出登录",
+    "logout_confirm_message": "您确定要退出登录吗？"
   },
   "permissions": {
     "bluetooth": "蓝牙权限",

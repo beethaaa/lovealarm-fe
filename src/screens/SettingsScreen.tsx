@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,90 +6,65 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
-  Alert, // Thêm Alert để hiển thị thông báo xác nhận
+  Switch,
+  Alert,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { LANGUAGES } from '../i18n';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppStore } from '../store/appStore';
-import { authApi } from '../services/authService'; // Đảm bảo đã import authApi
+import { authApi } from '../services/authService';
+import { LANGUAGES, changeLanguage as i18nChangeLanguage } from '../i18n';
 
 const COLORS = {
-  bg: '#0f172a',
-  surface: '#1e293b',
-  surfaceDeep: '#0f172a',
-  border: '#334155',
-  primary: '#ec4899',
+  bg: '#000000',
+  border: '#1a1a1a',
+  primary: '#f472b6',
+  primaryLight: '#fce7f3',
   textPrimary: '#ffffff',
-  textSecondary: '#94a3b8',
-  textMuted: '#475569',
+  textSecondary: '#888888',
+  pillBg: '#1a0a10',
+  pillActive: '#f9a8d4',
+  pillActiveText: '#000000',
+  pillInactiveText: '#aaaaaa',
+  pillSeparator: '#f472b633',
 };
 
-const SettingSection = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <View style={styles.sectionBody}>{children}</View>
-  </View>
-);
-
-const SettingRow = ({
-  emoji,
-  label,
-  value,
-  onPress,
-  children,
-  isLast = false,
-  danger = false,
-}: {
-  emoji: string;
-  label: string;
-  value?: string;
-  onPress?: () => void;
-  children?: React.ReactNode;
-  isLast?: boolean;
-  danger?: boolean;
-}) => (
-  <TouchableOpacity
-    onPress={onPress}
-    disabled={!onPress && !children}
-    style={[styles.settingRow, !isLast && styles.settingRowBorder]}
-    activeOpacity={onPress ? 0.6 : 1}
-  >
-    <View style={styles.settingIconWrap}>
-      <Text style={styles.settingIcon}>{emoji}</Text>
-    </View>
-    <Text style={[styles.settingLabel, danger && { color: '#ff4d6d' }]}>
-      {label}
-    </Text>
-    {children || (
-      <>
-        {value && <Text style={styles.settingValue}>{value}</Text>}
-        {onPress && <Text style={styles.settingChevron}>›</Text>}
-      </>
-    )}
-  </TouchableOpacity>
-);
+// ─── Divider ────────────────────────────────────────────────────────────────
+const Divider = () => <View style={styles.divider} />;
+const ModalDivider = () => <View style={styles.modalDivider} />;
 
 const SettingsScreen = () => {
   const { t } = useTranslation();
   const { language, setLanguage, theme, setTheme, setLogout } = useAppStore();
+  const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
+  const [notificationEnabled, setNotificationEnabled] = useState(true);
+  const isDark = theme === 'dark';
+
+  // Derive current language display name
+  const currentLang = LANGUAGES.find(l => l.code === language) || LANGUAGES[0];
+  const langLabel = currentLang.nativeName;
+
+  const handleLanguageSelect = (code: string) => {
+    setLanguage(code);
+    i18nChangeLanguage(code);
+    setIsLanguageModalVisible(false);
+  };
+
+  const handleToggleDarkMode = (value: boolean) => {
+    setTheme(value ? 'dark' : 'light');
+  };
 
   const handleLogout = () => {
     Alert.alert(
-      'Đăng xuất',
-      'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?',
+      t('settings.logout_confirm_title'),
+      t('settings.logout_confirm_message'),
       [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Hủy',
-          style: 'cancel',
-        },
-        {
-          text: 'Đăng xuất',
+          text: t('settings.logout'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -109,118 +84,155 @@ const SettingsScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
-      {/* Header */}
+      {/* ── Header ── */}
       <View style={styles.header}>
+        <Ionicons name="settings-outline" size={24} color={COLORS.primary} />
         <Text style={styles.headerTitle}>{t('settings.title')}</Text>
       </View>
 
+      <View style={styles.headerDivider} />
+
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Language Section */}
-        <SettingSection title={t('settings.language')}>
-          {LANGUAGES.map((lang: (typeof LANGUAGES)[0], i: number) => (
+        {/* ── Language ── */}
+        <TouchableOpacity
+          style={styles.row}
+          activeOpacity={0.7}
+          onPress={() => setIsLanguageModalVisible(true)}
+        >
+          <Text style={styles.rowLabel}>{t('settings.language')}</Text>
+          <View style={styles.rowRight}>
+            <Text style={styles.rowValue}>{langLabel}</Text>
+            <Text style={styles.chevron}>›</Text>
+          </View>
+        </TouchableOpacity>
+
+        <Divider />
+
+        {/* ── App Notification ── */}
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>{t('settings.notifications')}</Text>
+          <View style={styles.pillToggle}>
             <TouchableOpacity
-              key={lang.code}
-              onPress={() => setLanguage(lang.code)}
               style={[
-                styles.settingRow,
-                i < LANGUAGES.length - 1 && styles.settingRowBorder,
+                styles.pillBtn,
+                notificationEnabled && styles.pillBtnActive,
               ]}
-              activeOpacity={0.7}
+              onPress={() => setNotificationEnabled(true)}
+              activeOpacity={0.8}
             >
-              <Text style={styles.langFlag}>{lang.flag}</Text>
-              <View style={styles.langInfo}>
-                <Text style={styles.settingLabel}>{lang.nativeName}</Text>
-                <Text style={styles.langSubName}>{lang.name}</Text>
-              </View>
-              {language === lang.code && (
-                <View style={styles.checkBadge}>
-                  <Text style={styles.checkBadgeText}>✓</Text>
-                </View>
-              )}
+              <Text
+                style={[
+                  styles.pillBtnText,
+                  notificationEnabled && styles.pillBtnTextActive,
+                ]}
+              >
+                {t('settings.enable')}
+              </Text>
             </TouchableOpacity>
-          ))}
-        </SettingSection>
-
-        {/* Theme Section */}
-        <SettingSection title={t('settings.theme')}>
-          {(
-            [
-              {
-                key: 'light' as const,
-                label: t('settings.light_mode'),
-                emoji: '☀️',
-              },
-              {
-                key: 'dark' as const,
-                label: t('settings.dark_mode'),
-                emoji: '🌙',
-              },
-              {
-                key: 'system' as const,
-                label: t('settings.system_mode'),
-                emoji: '📱',
-              },
-            ] as const
-          ).map((item, i) => (
             <TouchableOpacity
-              key={item.key}
-              onPress={() => setTheme(item.key)}
-              style={[styles.settingRow, i < 2 && styles.settingRowBorder]}
-              activeOpacity={0.7}
+              style={[
+                styles.pillBtn,
+                !notificationEnabled && styles.pillBtnActive,
+              ]}
+              onPress={() => setNotificationEnabled(false)}
+              activeOpacity={0.8}
             >
-              <Text style={styles.themeEmoji}>{item.emoji}</Text>
-              <Text style={[styles.settingLabel]}>{item.label}</Text>
-              {theme === item.key && (
-                <View style={styles.checkBadge}>
-                  <Text style={styles.checkBadgeText}>✓</Text>
-                </View>
-              )}
+              <Text
+                style={[
+                  styles.pillBtnText,
+                  !notificationEnabled && styles.pillBtnTextActive,
+                ]}
+              >
+                {t('settings.disable')}
+              </Text>
             </TouchableOpacity>
-          ))}
-        </SettingSection>
-
-        {/* Bluetooth Section */}
-        <SettingSection title={t('settings.bluetooth')}>
-          <SettingRow
-            emoji="🔵"
-            label={t('settings.bluetooth')}
-            value={t('settings.bluetooth_desc')}
-            isLast={true}
-          />
-        </SettingSection>
-
-        {/* About Section */}
-        <SettingSection title={t('settings.about')}>
-          <SettingRow emoji="ℹ️" label={t('settings.about')} />
-          <SettingRow
-            emoji="📱"
-            label={t('settings.version', { version: '1.0.0' })}
-            isLast={true}
-          />
-        </SettingSection>
-
-        {/* MỤC LOGOUT MỚI THÊM */}
-        {/* <SettingSection title={t('settings.account') || 'Tài khoản'}> */}
-        <SettingSection title={'Đăng xuất'}>
-          <SettingRow
-            emoji="🚪"
-            // label={t('settings.logout') || 'Đăng xuất'}
-            label={'Đăng xuất  '}
-            onPress={handleLogout}
-            danger={true}
-            isLast={true}
-          />
-        </SettingSection>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerHeart}>💗</Text>
-          <Text style={styles.footerApp}>Love Alarm</Text>
-          <Text style={styles.footerSub}>
-            Built with ♥ using React Native CLI
-          </Text>
-          <Text style={styles.footerStack}>BLE • i18n • Zustand</Text>
+          </View>
         </View>
+
+        <Divider />
+
+        {/* ── Dark Mode ── */}
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>{t('settings.dark_mode')}</Text>
+          <Switch
+            value={isDark}
+            onValueChange={handleToggleDarkMode}
+            trackColor={{ false: '#333333', true: COLORS.primary }}
+            thumbColor={isDark ? '#ffffff' : '#888888'}
+          />
+        </View>
+
+        <Divider />
+
+        {/* ── Upgrade to VIP ── */}
+        <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+          <Text style={styles.rowLabel}>{t('settings.upgrade_vip')}</Text>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+
+        <Divider />
+
+        {/* ── Logout ── */}
+        <TouchableOpacity
+          style={styles.row}
+          onPress={handleLogout}
+          activeOpacity={0.7}
+        >
+          <MaterialCommunityIcons
+            name="logout"
+            size={22}
+            color={COLORS.pillActive}
+            style={styles.logoutIcon}
+          />
+          <Text style={styles.logoutLabel}>{t('settings.logout')}</Text>
+        </TouchableOpacity>
       </ScrollView>
+
+      {/* ── Language Modal ── */}
+      <Modal
+        visible={isLanguageModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsLanguageModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsLanguageModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('settings.language')}</Text>
+            <FlatList
+              data={LANGUAGES}
+              keyExtractor={item => item.code}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.langItem}
+                  onPress={() => handleLanguageSelect(item.code)}
+                >
+                  <Text style={styles.langFlag}>{item.flag}</Text>
+                  <Text
+                    style={[
+                      styles.langText,
+                      language === item.code && styles.langTextActive,
+                    ]}
+                  >
+                    {item.nativeName}
+                  </Text>
+                  {language === item.code && (
+                    <Ionicons
+                      name="checkmark"
+                      size={20}
+                      color={COLORS.primary}
+                    />
+                  )}
+                </TouchableOpacity>
+              )}
+              ItemSeparatorComponent={ModalDivider}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -232,122 +244,151 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.bg,
   },
+
+  // Header
   header: {
-    paddingHorizontal: 24,
-    paddingTop: 56,
-    paddingBottom: 24,
-  },
-  headerTitle: {
-    color: COLORS.textPrimary,
-    fontSize: 28,
-    fontWeight: 'bold',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    color: COLORS.primary,
-    fontSize: 11,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    paddingHorizontal: 24,
-    marginBottom: 8,
-  },
-  sectionBody: {
-    backgroundColor: COLORS.surface,
-    marginHorizontal: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingTop: 56,
+    paddingBottom: 20,
+    gap: 10,
   },
-  settingRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  settingIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: COLORS.surfaceDeep,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  settingIcon: {
-    fontSize: 16,
-  },
-  settingLabel: {
+
+  headerTitle: {
     color: COLORS.textPrimary,
-    fontWeight: '500',
-    fontSize: 15,
+    fontSize: 22,
+    fontWeight: 'bold',
   },
-  settingValue: {
+
+  // Header divider
+  headerDivider: {
+    height: 1.5,
+    backgroundColor: '#cccccc',
+    marginHorizontal: 20,
+  },
+
+  // Divider
+  divider: {
+    height: 1,
+    backgroundColor: '#222222',
+    marginHorizontal: 20,
+  },
+
+  // Rows
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    minHeight: 56,
+  },
+  rowLabel: {
+    color: COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  rowValue: {
     color: COLORS.textSecondary,
     fontSize: 14,
-    marginRight: 8,
   },
-  settingChevron: {
+  chevron: {
     color: COLORS.textSecondary,
-    fontSize: 20,
+    fontSize: 22,
+    lineHeight: 24,
   },
-  langFlag: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  langInfo: {
-    flex: 1,
-  },
-  langSubName: {
-    color: COLORS.textMuted,
-    fontSize: 12,
-  },
-  themeEmoji: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  checkBadge: {
-    width: 24,
-    height: 24,
+
+  // Pill toggle
+  pillToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 12,
     backgroundColor: COLORS.primary,
+    padding: 3,
+  },
+  pillBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 70,
   },
-  checkBadgeText: {
-    color: COLORS.textPrimary,
-    fontSize: 12,
-    fontWeight: 'bold',
+  pillBtnActive: {
+    backgroundColor: '#ffffff',
   },
-  footer: {
-    alignItems: 'center',
-    paddingBottom: 40,
-    paddingTop: 16,
+  pillBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  footerHeart: {
-    fontSize: 36,
-    marginBottom: 8,
+  pillBtnTextActive: {
+    color: COLORS.primary,
+    fontWeight: '700',
   },
-  footerApp: {
-    color: COLORS.textPrimary,
-    fontWeight: 'bold',
+
+  // Logout
+  logoutIcon: {
     fontSize: 18,
+    color: COLORS.primary,
+    marginRight: 12,
   },
-  footerSub: {
-    color: COLORS.textMuted,
-    fontSize: 12,
-    marginTop: 4,
+  logoutLabel: {
+    color: COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
   },
-  footerStack: {
-    color: '#1e293b',
-    fontSize: 12,
-    marginTop: 4,
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: '#111111',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  modalTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  langItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+  },
+  langFlag: {
+    fontSize: 20,
+    marginRight: 15,
+  },
+  langText: {
+    color: COLORS.textSecondary,
+    fontSize: 16,
+    flex: 1,
+  },
+  langTextActive: {
+    color: COLORS.textPrimary,
+    fontWeight: 'bold',
+  },
+  modalDivider: {
+    height: 1,
+    backgroundColor: '#222222',
   },
 });

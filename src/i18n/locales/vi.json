@@ -68,7 +68,13 @@
     "bluetooth": "Bluetooth",
     "bluetooth_desc": "Quản lý kết nối Bluetooth",
     "range": "Phạm vi phát hiện",
-    "range_desc": "Đặt phạm vi cảnh báo yêu"
+    "range_desc": "Đặt phạm vi cảnh báo yêu",
+    "upgrade_vip": "Nâng cấp lên VIP",
+    "enable": "Bật",
+    "disable": "Tắt",
+    "logout": "Đăng xuất",
+    "logout_confirm_title": "Đăng xuất",
+    "logout_confirm_message": "Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?"
   },
   "permissions": {
     "bluetooth": "Quyền Bluetooth",

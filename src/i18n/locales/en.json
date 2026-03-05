@@ -68,7 +68,13 @@
     "bluetooth": "Bluetooth",
     "bluetooth_desc": "Manage Bluetooth connections",
     "range": "Detection Range",
-    "range_desc": "Set your alarm detection range"
+    "range_desc": "Set your alarm detection range",
+    "upgrade_vip": "Upgrade to VIP",
+    "enable": "Enable",
+    "disable": "Disable",
+    "logout": "Logout",
+    "logout_confirm_title": "Logout",
+    "logout_confirm_message": "Are you sure you want to log out?"
   },
   "permissions": {
     "bluetooth": "Bluetooth Permission",
