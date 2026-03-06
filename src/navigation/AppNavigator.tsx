@@ -9,6 +9,7 @@ import BLEScreen from '../screens/BLEScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 
 import GNB, { GNBProps } from '../components/GNB';
 import { useLoveAlarm } from '../hooks/useLoveAlarm';
@@ -51,12 +52,13 @@ const MainTabsWithGNB = () => {
       case 'home':
       default:
         return (
-          <HomeScreen
-            isScanning={isScanning}
-            startLoveAlarm={startLoveAlarm}
-            stopLoveAlarm={stopLoveAlarm}
-            nearbyUsers={nearbyUsers}
-          />
+          // <HomeScreen
+          //   isScanning={isScanning}
+          //   startLoveAlarm={startLoveAlarm}
+          //   stopLoveAlarm={stopLoveAlarm}
+          //   nearbyUsers={nearbyUsers}
+          // />
+          <SettingsScreen />
         );
     }
   };
@@ -112,6 +114,7 @@ const AppNavigator = () => {
           <Stack.Group screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           </Stack.Group>
         )}
       </Stack.Navigator>
