@@ -4,6 +4,8 @@ export type RootStackParamList = {
   Register: undefined;
   Main: undefined;
   Permissions: undefined;
+  EditProfile: { user: any };
+  ChangePassword: undefined;
 };
 
 export type BottomTabParamList = {

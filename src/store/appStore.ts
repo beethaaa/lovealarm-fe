@@ -41,6 +41,7 @@ interface AppState {
   isInitialized: boolean;
   setIsInitialized: (value: boolean) => void;
   isLoggedIn: boolean;
+  setIsLoggedIn: (value: boolean) => void;
   userToken: string | null;
   setLogin: (token: string) => Promise<void>;
   setLogout: () => Promise<void>;
@@ -58,6 +59,7 @@ export const useAppStore = create<AppState>(set => ({
   isInitialized: false,
   setIsInitialized: (value: boolean) => set({ isInitialized: value }),
   isLoggedIn: false,
+  setIsLoggedIn: value => set({ isLoggedIn: value }),
   userToken: null,
 
   setLogin: async (token: string) => {

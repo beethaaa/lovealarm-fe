@@ -10,11 +10,16 @@ import SettingsScreen from '../screens/SettingsScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 
+import ProfileScreen from '../screens/ProfileScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
+
 import GNB, { GNBProps } from '../components/GNB';
 import { useLoveAlarm } from '../hooks/useLoveAlarm';
 import { useAppStore } from '../store/appStore';
 import { RootStackParamList } from '../types/index';
 import COLOR_PALETTE from '../styles/colorPalette';
+
 
 type TabKey = NonNullable<GNBProps['activeTab']>;
 
@@ -51,12 +56,13 @@ const MainTabsWithGNB = () => {
       case 'home':
       default:
         return (
-          <HomeScreen
-            isScanning={isScanning}
-            startLoveAlarm={startLoveAlarm}
-            stopLoveAlarm={stopLoveAlarm}
-            nearbyUsers={nearbyUsers}
-          />
+          // <HomeScreen
+          //   isScanning={isScanning}
+          //   startLoveAlarm={startLoveAlarm}
+          //   stopLoveAlarm={stopLoveAlarm}
+          //   nearbyUsers={nearbyUsers}
+          // />
+          <ProfileScreen />
         );
     }
   };
@@ -103,11 +109,26 @@ const AppNavigator = () => {
         }}
       >
         {isLoggedIn ? (
-          <Stack.Screen
-            name="Main"
-            component={MainTabsWithGNB}
-            options={{ headerShown: false }}
-          />
+          <Stack.Group>
+            <Stack.Screen
+              name="Main"
+              component={MainTabsWithGNB}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="EditProfile"
+              component={EditProfileScreen}
+              options={{
+                headerShown: false,
+                animation: 'slide_from_bottom'
+              }}
+            />
+            <Stack.Screen
+              name="ChangePassword"
+              component={ChangePasswordScreen}
+              options={{ headerShown: false }}
+            />
+          </Stack.Group>
         ) : (
           <Stack.Group screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Login" component={LoginScreen} />
