@@ -16,6 +16,7 @@ import {
   Dimensions,
   ScrollView,
   ViewStyle,
+  Keyboard,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import COLOR_PALETTE from '../styles/colorPalette';
@@ -49,6 +50,7 @@ const PinkInput = ({
   onChangeText,
   keyboardType = 'default',
   maxLength,
+  editable = true,
 }: any) => {
   const [focused, setFocused] = useState(false);
   const anim = useRef(new Animated.Value(value ? 1 : 0)).current;
@@ -90,6 +92,7 @@ const PinkInput = ({
           onChangeText={onChangeText}
           keyboardType={keyboardType}
           maxLength={maxLength}
+          editable={editable}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
         />
@@ -237,21 +240,22 @@ const OnboardingScreen = () => {
         keyboardShouldPersistTaps="handled" 
         style={{ flex: 1 }}
       >
-        {/* STEP 0 */}
         <View style={styles.slide}>
           {renderHeader('Bạn tên là gì?', 'Tên này sẽ hiển thị trên hồ sơ của bạn và gợi ý cho mọi người.')}
           <PinkInput label="TÊN HIỂN THỊ" placeholder="Nhập tên của bạn" value={name} onChangeText={setName} />
         </View>
 
-        {/* STEP 1 */}
         <View style={styles.slide}>
           {renderHeader('Thông tin cơ bản', 'Chọn ngày sinh và giới tính để nhận được những gợi ý chuẩn xác nhất.')}
-          <TouchableOpacity activeOpacity={0.8} onPress={() => setShowDatePicker(true)}>
+          <TouchableOpacity activeOpacity={0.8} onPress={() => {
+            Keyboard.dismiss();
+            setShowDatePicker(true);
+          }}>
             <View pointerEvents="none">
-              <PinkInput label="NGÀY SINH" placeholder="DD/MM/YYYY" value={birthday} onChangeText={() => {}} keyboardType="numeric" maxLength={10} />
+              <PinkInput label="NGÀY SINH" placeholder="DD/MM/YYYY" value={birthday} onChangeText={() => {}} keyboardType="numeric" maxLength={10} editable={false} />
             </View>
           </TouchableOpacity>
-          {showDatePicker && (
+          {Platform.OS === 'ios' && showDatePicker && (
             <DateTimePicker
               value={birthdayDate}
               mode="date"
@@ -276,13 +280,11 @@ const OnboardingScreen = () => {
           </View>
         </View>
 
-        {/* STEP 2 */}
         <View style={styles.slide}>
           {renderHeader('Bạn đến từ đâu?', 'Chia sẻ khu vực để bắt sóng với những người xung quanh bạn dễ dàng hơn.')}
           <PinkInput label="VỊ TRÍ / ĐỊA ĐIỂM" placeholder="VD: Hà Nội, Việt Nam" value={location} onChangeText={setLocation} />
         </View>
 
-        {/* STEP 3 */}
         <View style={styles.slide}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
             {renderHeader('Sở thích & Tính cách', 'Hãy để mọi người hiểu thêm về con người thật của bạn.')}
@@ -379,7 +381,16 @@ const OnboardingScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Footer */}
+      {Platform.OS === 'android' && showDatePicker && (
+        <DateTimePicker
+          value={birthdayDate}
+          mode="date"
+          display="spinner"
+          onChange={handleDateChange}
+          maximumDate={new Date()}
+        />
+      )}
+
       <View style={styles.footer}>
         <TouchableOpacity style={[styles.mainBtn, loading && { opacity: 0.6 }]} onPress={handleNext} disabled={loading} activeOpacity={0.85}>
           {loading ? <ActivityIndicator color={COLOR_PALETTE.pink} /> : (

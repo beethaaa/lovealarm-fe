@@ -4,19 +4,19 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 
-import HomeScreen from '../screens/HomeScreen';
-import BLEScreen from '../screens/BLEScreen';
-import SettingsScreen from '../screens/SettingsScreen';
-import LoginScreen from '../screens/LoginScreen';
-import RegisterScreen from '../screens/RegisterScreen';
-import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
-import OnboardingScreen from '../screens/OnboardingScreen';
+import HomeScreen from '@/screens/HomeScreen';
+import BLEScreen from '@/screens/BLEScreen';
+import SettingsScreen from '@/screens/SettingsScreen';
+import LoginScreen from '@/screens/LoginScreen';
+import RegisterScreen from '@/screens/RegisterScreen';
+import ForgotPasswordScreen from '@/screens/ForgotPasswordScreen';
+import OnboardingScreen from '@/screens/OnboardingScreen';
 
-import GNB, { GNBProps } from '../components/GNB';
-import { useLoveAlarm } from '../hooks/useLoveAlarm';
-import { useAppStore } from '../store/appStore';
-import { RootStackParamList } from '../types/index';
-import COLOR_PALETTE from '../styles/colorPalette';
+import GNB, { GNBProps } from '@/components/GNB';
+import { useLoveAlarm } from '@/hooks/useLoveAlarm';
+import { useAppStore } from '@/store/appStore';
+import { RootStackParamList } from '@/types/index';
+import COLOR_PALETTE from '@/styles/colorPalette';
 import { State } from 'react-native-ble-plx';
 
 type TabKey = NonNullable<GNBProps['activeTab']>;

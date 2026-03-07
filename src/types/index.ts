@@ -1,4 +1,3 @@
-// Navigation types
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
@@ -14,12 +13,10 @@ export type BottomTabParamList = {
   Settings: undefined;
 };
 
-// Extend i18n types for type safety
 declare module 'i18next' {
   interface CustomTypeOptions {
     defaultNS: 'translation';
   }
 }
 
-// NativeWind types
 /// <reference types="nativewind/types" />
