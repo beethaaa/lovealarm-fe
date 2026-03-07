@@ -53,4 +53,37 @@ export const authApi = {
       console.error('Logout API error:', error);
     }
   },
+
+  sendOtp: async (email: string) => {
+    try {
+      const response = await axios.post(`${SERVER_URL}/otp/send`, { email });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Gửi OTP thất bại');
+    }
+  },
+
+  verifyOtp: async (email: string, otp: string) => {
+    try {
+      const response = await axios.post(`${SERVER_URL}/otp/verify`, {
+        email,
+        otp,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Xác thực OTP thất bại');
+    }
+  },
+
+  resetPassword: async (email: string, newPassword: string) => {
+    try {
+      const response = await axios.post(`${SERVER_URL}/auth/reset-password`, {
+        email,
+        newPassword,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Đổi mật khẩu thất bại');
+    }
+  },
 };
