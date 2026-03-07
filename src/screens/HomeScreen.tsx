@@ -12,6 +12,7 @@ import { useLoveAlarm, ScanResult } from '@hooks/useLoveAlarm';
 import COLOR_PALETTE from '@/styles/colorPalette';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
+import { State } from 'react-native-ble-plx';
 
 const TYPEWRITER_TEXT = 'Are you crushing on anyone...';
 
@@ -135,7 +136,7 @@ interface HomeScreenProps {
 }
 
 const HomeScreen = (props: HomeScreenProps) => {
-  const { isScanning: isScanningHook, nearbyUsers: nearbyUsersHook } =
+  const { isScanning: isScanningHook, nearbyUsers: nearbyUsersHook, bluetoothState } =
     useLoveAlarm();
 
   const isScanning = props.isScanning ?? isScanningHook;
@@ -277,6 +278,8 @@ const HomeScreen = (props: HomeScreenProps) => {
   const RADAR_CENTER = 150;
   const RING_RADII = [80, 110, 140];
 
+  const isBluetoothOn = bluetoothState === State.PoweredOn;
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
@@ -284,13 +287,18 @@ const HomeScreen = (props: HomeScreenProps) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {showBanner && (
+        {showBanner ? (
           <Animated.View style={[styles.header, { opacity: bannerOpacity }]}>
             <View style={styles.welcomeTextContainer}>
               <Icon name="radio-outline" size={24} color={COLOR_PALETTE.pink} />
               <Text style={styles.welcomeText}>{displayedText}</Text>
             </View>
           </Animated.View>
+        ) : (
+          <View style={styles.bluetoothContainer}>
+            <Icon name="bluetooth" size={24} color={COLOR_PALETTE.pink} />
+            <Text style={styles.welcomeText}>Bluetooth is {isBluetoothOn ? "active": "offline"}</Text>
+          </View>
         )}
 
         <View style={styles.radarContainer}>
@@ -379,36 +387,6 @@ const HomeScreen = (props: HomeScreenProps) => {
               })}
           </View>
         </View>
-
-        {/* <View style={styles.statusCard}>
-          <View style={styles.statusRow}>
-            <View style={styles.statusLeft}>
-              <View
-                style={[
-                  styles.statusDot,
-                  {
-                    backgroundColor: isBluetoothOn
-                      ? COLORS.primary
-                      : COLORS.border,
-                  },
-                ]}
-              />
-              <Text style={styles.statusLabel}>Bluetooth Shield</Text>
-            </View>
-            <Text style={styles.statusValue}>
-              {isBluetoothOn ? 'Active' : 'Offline'}
-            </Text>
-          </View>
-          <View style={styles.statusRow2}>
-            <Text style={styles.statusLabel}>Hearts Nearby</Text>
-            <View style={styles.statusRight}>
-              <Text style={styles.countText}>{nearbyUsers.length}</Text>
-              {isScanning && (
-                <Text style={styles.scanningText}>{' (Syncing...)'}</Text>
-              )}
-            </View>
-          </View>
-        </View> */}
       </ScrollView>
     </View>
   );
@@ -438,7 +416,7 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
     marginBottom: 16,
   },
-  welcomeTextContainer: {
+   welcomeTextContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -448,6 +426,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 14,
     gap: 12,
+    boxShadow: 'inset 0px -1px 4px 0px #FFB2C5',
+  },
+  bluetoothContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0A0A0A',
+    borderRadius: 16,
+    marginTop: 80,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    gap: 12,
+    marginLeft: 56,
+    marginRight: 56,
     boxShadow: 'inset 0px -1px 4px 0px #FFB2C5',
   },
   welcomeText: {

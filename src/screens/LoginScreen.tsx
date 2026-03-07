@@ -204,9 +204,9 @@ const PinkInput = ({
           styles.fieldInputRow,
           { borderColor },
           focused &&
-          ({
-            boxShadow: 'inset 0px -1px 8px 0px rgba(255,194,209,0.08)',
-          } as ViewStyle),
+            ({
+              boxShadow: 'inset 0px -1px 8px 0px rgba(255,194,209,0.08)',
+            } as ViewStyle),
         ]}
       >
         <TextInput

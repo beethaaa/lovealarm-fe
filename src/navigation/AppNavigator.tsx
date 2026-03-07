@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 
 import HomeScreen from '../screens/HomeScreen';
 import BLEScreen from '../screens/BLEScreen';
@@ -16,6 +16,7 @@ import { useLoveAlarm } from '../hooks/useLoveAlarm';
 import { useAppStore } from '../store/appStore';
 import { RootStackParamList } from '../types/index';
 import COLOR_PALETTE from '../styles/colorPalette';
+import { State } from 'react-native-ble-plx';
 
 type TabKey = NonNullable<GNBProps['activeTab']>;
 
@@ -23,10 +24,24 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const MainTabsWithGNB = () => {
   const [activeTab, setActiveTab] = useState<TabKey>('home');
-  const { isScanning, startLoveAlarm, stopLoveAlarm, nearbyUsers } =
-    useLoveAlarm();
+  const {
+    isScanning,
+    startLoveAlarm,
+    stopLoveAlarm,
+    nearbyUsers,
+    bluetoothState,
+  } = useLoveAlarm();
+
+  const isBluetoothOn = bluetoothState === State.PoweredOn;
 
   const handleScan = () => {
+    if (!isBluetoothOn) {
+      Alert.alert(
+        'Oops bluetooth is off!',
+        'Bạn vui lòng bật bluetooth để rung chuông',
+      );
+      return;
+    }
     if (isScanning) {
       stopLoveAlarm();
     } else {
@@ -113,7 +128,10 @@ const AppNavigator = () => {
           <Stack.Group screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPasswordScreen}
+            />
           </Stack.Group>
         )}
       </Stack.Navigator>
