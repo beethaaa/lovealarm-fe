@@ -19,6 +19,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import COLOR_PALETTE from '../styles/colorPalette';
 import { authApi } from '../services/authService';
+import { userService } from '../services/userService';
 import { useAppStore } from '../store/appStore';
 
 const { width: SW } = Dimensions.get('window');
@@ -273,8 +274,21 @@ const LoginScreen = ({ navigation }: any) => {
         res?.token ||
         res?.data?.token;
 
+      let user = res?.data?.user || res?.user;
+
+      if (token && !user?.profile?.name) {
+        // Fallback to fetch user profile if it doesn't exist in login response
+        const userProfile = await userService.getUser(token);
+        if (userProfile && (userProfile.data || userProfile.profile)) {
+          user = userProfile.data || userProfile; // Assuming fallback structure
+        }
+      }
+
+      // Automatically force onboarding if profile name is completely empty
+      const isNewUser = user ? !user?.profile?.name : true;
+
       if (token) {
-        await setLogin(token);
+        await setLogin(token, isNewUser);
       } else {
         Alert.alert('Lỗi dữ liệu', 'Đăng nhập OK nhưng không tìm thấy token.');
       }
@@ -411,11 +425,11 @@ const styles = StyleSheet.create({
   },
   brandBlock: {
     position: 'absolute',
-    left: HX + HEART_D / 2 + 40,
+    left: HX + HEART_D / 2 + 20,
     top: HY - 28,
   },
   brandTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '900',
     color: COLOR_PALETTE.pink,
     letterSpacing: 5,
@@ -425,7 +439,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   brandSub: {
-    fontSize: 14,
+    fontSize: 12,
     color: COLOR_PALETTE.amaranthPink,
     fontWeight: '400',
     opacity: 0.5,

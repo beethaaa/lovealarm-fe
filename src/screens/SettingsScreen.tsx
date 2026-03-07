@@ -405,8 +405,8 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   headerIconWrap: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
     borderRadius: 60,
     backgroundColor: 'black',
     borderWidth: 1,
@@ -420,8 +420,8 @@ const styles = StyleSheet.create({
   },
   pulsingGlow: {
     position: 'absolute',
-    width: 130,
-    height: 130,
+    width: 100,
+    height: 100,
     borderRadius: 70,
     borderWidth: 1.5,
     borderColor: COLOR_PALETTE.pink,
@@ -431,14 +431,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     position: 'absolute',
-    top: 200,
+    top: '20%',
     width: '100%',
     paddingHorizontal: 24,
     paddingBottom: 60,
   },
   headerTitle: {
     position: 'absolute',
-    top: 80,
+    top: '8%',
     right: 32,
     color: COLOR_PALETTE.pink,
     fontSize: 28,

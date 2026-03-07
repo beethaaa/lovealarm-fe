@@ -6,8 +6,11 @@ import {
   Dimensions,
   Animated,
   ViewStyle,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+
+const blurBgHeight = Dimensions.get('window').height * 2; // cover everything
 
 const { width: W } = Dimensions.get('window');
 
@@ -114,6 +117,23 @@ const GNB: React.FC<GNBProps> = ({
 
   return (
     <View style={styles.container} pointerEvents="box-none">
+      <Animated.View
+        pointerEvents={isExpanded ? 'auto' : 'none'}
+        style={[
+          styles.overlay,
+          {
+            opacity: expandAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 0.7],
+            }),
+          },
+        ]}
+      >
+        <TouchableWithoutFeedback onPress={collapse}>
+          <View style={StyleSheet.absoluteFill} />
+        </TouchableWithoutFeedback>
+      </Animated.View>
+
       <View pointerEvents={isExpanded ? 'auto' : 'none'}>
         {SIDE_CONFIGS.map((cfg, i) => {
           const pos = circlePos(cfg.angle);
@@ -237,6 +257,14 @@ const styles = StyleSheet.create({
     right: 0,
     height: GNB_HEIGHT,
     backgroundColor: 'transparent',
+  },
+  overlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: -W,
+    right: -W,
+    height: blurBgHeight,
+    backgroundColor: '#000',
   },
 
   itemAbsolute: {

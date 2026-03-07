@@ -41,8 +41,10 @@ interface AppState {
   isInitialized: boolean;
   setIsInitialized: (value: boolean) => void;
   isLoggedIn: boolean;
+  isOnboarded: boolean;
   userToken: string | null;
-  setLogin: (token: string) => Promise<void>;
+  setIsOnboarded: (value: boolean) => Promise<void>;
+  setLogin: (token: string, isNewUser?: boolean) => Promise<void>;
   setLogout: () => Promise<void>;
   checkLoginStatus: () => Promise<void>;
 }
@@ -58,23 +60,38 @@ export const useAppStore = create<AppState>(set => ({
   isInitialized: false,
   setIsInitialized: (value: boolean) => set({ isInitialized: value }),
   isLoggedIn: false,
+  isOnboarded: false,
   userToken: null,
 
-  setLogin: async (token: string) => {
+  setIsOnboarded: async (value: boolean) => {
+    await AsyncStorage.setItem('isOnboarded', value.toString());
+    set({ isOnboarded: value });
+  },
+
+  setLogin: async (token: string, isNewUser: boolean = false) => {
     await AsyncStorage.setItem('userToken', token);
-    set({ isLoggedIn: true, userToken: token });
+    const onboardValue = (!isNewUser).toString();
+    await AsyncStorage.setItem('isOnboarded', onboardValue);
+    set({ isLoggedIn: true, userToken: token, isOnboarded: !isNewUser });
   },
 
   setLogout: async () => {
     await AsyncStorage.removeItem('userToken');
-    set({ isLoggedIn: false, userToken: null });
+    await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('isOnboarded');
+    set({ isLoggedIn: false, userToken: null, isOnboarded: false });
   },
 
   checkLoginStatus: async () => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
+      const token = await AsyncStorage.getItem('userToken') || await AsyncStorage.getItem('token');
+      const isOnboardedStr = await AsyncStorage.getItem('isOnboarded');
       if (token) {
-        set({ isLoggedIn: true, userToken: token });
+        set({ 
+          isLoggedIn: true, 
+          userToken: token,
+          isOnboarded: isOnboardedStr === 'true'
+        });
       }
     } catch (error) {
       console.error('Error checking login status:', error);

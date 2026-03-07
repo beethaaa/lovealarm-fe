@@ -10,6 +10,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
 
 import GNB, { GNBProps } from '../components/GNB';
 import { useLoveAlarm } from '../hooks/useLoveAlarm';
@@ -94,7 +95,7 @@ const MainTabsWithGNB = () => {
 };
 
 const AppNavigator = () => {
-  const { isLoggedIn, isInitialized, checkLoginStatus } = useAppStore();
+  const { isLoggedIn, isOnboarded, isInitialized, checkLoginStatus } = useAppStore();
 
   useEffect(() => {
     checkLoginStatus();
@@ -119,11 +120,13 @@ const AppNavigator = () => {
         }}
       >
         {isLoggedIn ? (
-          <Stack.Screen
-            name="Main"
-            component={MainTabsWithGNB}
-            options={{ headerShown: false }}
-          />
+          <Stack.Group screenOptions={{ headerShown: false }}>
+            {!isOnboarded ? (
+              <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            ) : (
+              <Stack.Screen name="Main" component={MainTabsWithGNB} />
+            )}
+          </Stack.Group>
         ) : (
           <Stack.Group screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Login" component={LoginScreen} />
