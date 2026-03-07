@@ -10,13 +10,38 @@ import {
     ActivityIndicator,
     Alert,
     StatusBar,
+    ViewStyle,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useNavigation, useRoute } from '@react-navigation/native'; // Thêm useRoute
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 import COLOR_PALETTE from '../styles/colorPalette';
 import { userService } from '../services/userService';
 import { useAppStore } from '../store/appStore';
+
+const formatDate = (raw: string | undefined): string => {
+    if (!raw) return '---';
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return '---';
+    const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    const day = d.getDate();
+    const suffix =
+        day === 1 || day === 21 || day === 31
+            ? 'st'
+            : day === 2 || day === 22
+                ? 'nd'
+                : day === 3 || day === 23
+                    ? 'rd'
+                    : 'th';
+    return `${months[d.getMonth()]}, ${day}${suffix} ${d.getFullYear()}`;
+};
+
+const GENDER_LABELS: Record<number, string> = { 0: 'Male', 1: 'Female', 2: 'Other' };
+
+const TAG_COLORS = ['#A67B86', '#2D4B37', '#4B4633', '#3B3B6B', '#5A3040'];
 
 const ProfileScreen = () => {
     const route = useRoute<any>();
@@ -26,7 +51,6 @@ const ProfileScreen = () => {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    // 1. Lắng nghe dữ liệu cập nhật từ màn hình EditProfile gửi về
     useEffect(() => {
         if (route.params?.updatedUser) {
             setUser(route.params.updatedUser);
@@ -62,7 +86,7 @@ const ProfileScreen = () => {
                 text: 'Đăng xuất',
                 onPress: async () => {
                     await setLogout();
-                }
+                },
             },
         ]);
     };
@@ -78,9 +102,14 @@ const ProfileScreen = () => {
     const profile = user?.profile || {};
     const displayName = profile.name || user?.name || 'User';
     const displayEmail = user?.email || '---';
-    const displayBirthday = profile.birthday || '---';
-    const displayAddress = user?.address || 'Chưa cập nhật';
-    const displayInterests = profile.interest || [];
+    const displayBirthday = formatDate(profile.birthday);
+    const displayInterests: string[] = profile.interest || [];
+    const displayPersonality: string[] = profile.personalityTags || [];
+    const displayGender =
+        profile.gender !== undefined && profile.gender !== null
+            ? GENDER_LABELS[profile.gender] ?? '---'
+            : '---';
+    const displayStartFrom = formatDate(user?.createdAt);
 
     return (
         <View style={styles.root}>
@@ -91,17 +120,30 @@ const ProfileScreen = () => {
                     <Icon name="person-outline" size={20} color={COLOR_PALETTE.pink} />
                     <Text style={styles.headerTitle}>Your Profile</Text>
                 </View>
-                <TouchableOpacity onPress={() => navigation.navigate('EditProfile', { user: user })}>
-                    <Icon name="create-outline" size={24} color={COLOR_PALETTE.pink} />
+
+                <TouchableOpacity
+                    style={styles.editBtn}
+                    onPress={() => navigation.navigate('EditProfile', { user })}
+                    activeOpacity={0.75}
+                >
+                    <Icon name="create-outline" size={20} color={COLOR_PALETTE.pink} style={{ opacity: 0.7 }} />
                 </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.dividerLine} />
+
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+
                 <View style={styles.avatarContainer}>
-                    <View style={styles.avatarWrapper}>
+                    <View style={styles.avatarRing}>
                         <Image
                             source={{
-                                uri: user?.avatarUrl || 'https://i.pinimg.com/736x/8f/11/49/8f114947963d7e5d8a8a2a8a2a8a2a8a.jpg'
+                                uri:
+                                    user?.avatarUrl ||
+                                    'https://i.pinimg.com/736x/8f/11/49/8f114947963d7e5d8a8a2a8a2a8a2a8a.jpg',
                             }}
                             style={styles.avatarImage}
                         />
@@ -116,28 +158,53 @@ const ProfileScreen = () => {
                     <InfoRow label="Your name" value={displayName} />
                     <InfoRow label="Email" value={displayEmail} />
                     <InfoRow label="Date of birth" value={displayBirthday} />
-                    <InfoRow label="Address" value={displayAddress} />
+                    <InfoRow label="Gender" value={displayGender} />
 
-                    <View style={styles.interestRow}>
+                    <View style={styles.tagRow}>
                         <Text style={styles.infoLabel}>Interests</Text>
                         <View style={styles.tagContainer}>
                             {displayInterests.length > 0 ? (
-                                displayInterests.map((item: string, index: number) => (
+                                displayInterests.map((item: string, i: number) => (
                                     <View
-                                        key={index}
+                                        key={i}
                                         style={[
                                             styles.tag,
-                                            { backgroundColor: index % 3 === 0 ? '#A67B86' : index % 3 === 1 ? '#2D4B37' : '#4B4633' }
+                                            { backgroundColor: TAG_COLORS[i % TAG_COLORS.length] },
                                         ]}
                                     >
                                         <Text style={styles.tagText}>{item}</Text>
                                     </View>
                                 ))
                             ) : (
-                                <Text style={{ color: '#555', fontSize: 13 }}>No interests added</Text>
+                                <Text style={styles.emptyTag}>No interests added</Text>
                             )}
                         </View>
                     </View>
+
+                    {displayPersonality.length > 0 && (
+                        <View style={styles.tagRow}>
+                            <Text style={styles.infoLabel}>Personality</Text>
+                            <View style={styles.tagContainer}>
+                                {displayPersonality.map((item: string, i: number) => (
+                                    <View
+                                        key={i}
+                                        style={[
+                                            styles.tag,
+                                            { backgroundColor: '#3B2450' },
+                                        ]}
+                                    >
+                                        <Text style={styles.tagText}>{item}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+                    )}
+                </View>
+
+                <View style={styles.divider} />
+
+                <View style={styles.startFromWrapper}>
+                    <InfoRow label="Start from" value={displayStartFrom} />
                 </View>
 
                 <View style={styles.divider} />
@@ -156,6 +223,8 @@ const ProfileScreen = () => {
                         <Text style={styles.menuText}>Change Password</Text>
                     </TouchableOpacity>
                 </View>
+
+                <View style={{ height: 200 }} />
             </ScrollView>
         </View>
     );
@@ -170,55 +239,126 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: '#0A0A0A' },
-    loadingCenter: { flex: 1, backgroundColor: '#0A0A0A', justifyContent: 'center', alignItems: 'center' },
+    loadingCenter: {
+        flex: 1,
+        backgroundColor: '#0A0A0A',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingTop: 50,
-        paddingBottom: 20,
+        paddingBottom: 18,
     },
     headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     headerTitle: { color: '#FFF', fontSize: 18, fontWeight: '700' },
-    scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
-    avatarContainer: { alignItems: 'center', marginVertical: 30 },
-    avatarWrapper: {
-        width: 140,
-        height: 140,
-        borderRadius: 70,
-        borderWidth: 2,
+    dividerLine: {
+        height: 1.5,
+        backgroundColor: 'rgba(255,255,255,0.25)',
+        marginHorizontal: 20,
+    },
+
+    editBtn: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#17050A',
+        borderWidth: 1.5,
         borderColor: 'rgba(255,194,209,0.3)',
-        padding: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...({ boxShadow: 'inset 0px -1px 3px 0px #ffc2d1' } as ViewStyle),
+    },
+
+    scrollContent: { paddingHorizontal: 20, paddingTop: 10 },
+
+    avatarContainer: { alignItems: 'center', marginVertical: 28 },
+    avatarRing: {
+        width: 130,
+        height: 130,
+        borderRadius: 65,
+        borderWidth: 2,
+        borderColor: 'rgba(255,194,209,0.35)',
+        padding: 4,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    avatarImage: { width: 130, height: 130, borderRadius: 65 },
+    avatarImage: { width: 120, height: 120, borderRadius: 60 },
     cameraBtn: {
         position: 'absolute',
-        bottom: 5,
-        right: 5,
+        bottom: 4,
+        right: 4,
         backgroundColor: '#222',
         width: 30,
         height: 30,
         borderRadius: 15,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#444',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,194,209,0.4)',
     },
-    userName: { color: '#FFF', fontSize: 22, fontWeight: '800', marginTop: 15 },
-    infoSection: { marginTop: 20 },
-    infoRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 },
-    infoLabel: { color: COLOR_PALETTE.pink, opacity: 0.8, fontSize: 14, width: '40%' },
-    infoValue: { color: '#FFF', fontSize: 14, fontWeight: '500', textAlign: 'left', flex: 1 },
-    interestRow: { flexDirection: 'row', marginBottom: 25 },
-    tagContainer: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', flex: 1 },
-    tag: { paddingHorizontal: 15, paddingVertical: 6, borderRadius: 10 },
+    userName: { color: '#FFF', fontSize: 22, fontWeight: '800', marginTop: 14 },
+
+    infoSection: { marginTop: 10 },
+    infoRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 22,
+        alignItems: 'flex-start',
+    },
+    infoLabel: {
+        color: COLOR_PALETTE.pink,
+        opacity: 0.85,
+        fontSize: 14,
+        width: '38%',
+    },
+    infoValue: {
+        color: '#FFF',
+        fontSize: 14,
+        fontWeight: '500',
+        flex: 1,
+    },
+
+    tagRow: {
+        flexDirection: 'row',
+        marginBottom: 22,
+        alignItems: 'flex-start',
+    },
+    tagContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        flex: 1,
+    },
+    tag: {
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        borderRadius: 10,
+    },
     tagText: { color: '#FFF', fontSize: 12, fontWeight: '600' },
-    divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginVertical: 10 },
+    emptyTag: { color: '#555', fontSize: 13 },
+
+    divider: {
+        height: 1.5,
+        backgroundColor: 'rgba(255,255,255,0.22)',
+        marginVertical: 0,
+    },
+    startFromWrapper: {
+        paddingVertical: 15,
+        marginBottom: -20,
+    },
+
     footerActions: { marginTop: 10 },
-    menuItem: { flexDirection: 'row', alignItems: 'center', gap: 15, marginTop: 25 },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 15,
+        marginTop: 22,
+    },
     menuText: { color: '#FFF', fontSize: 15, fontWeight: '600' },
 });
 
