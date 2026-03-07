@@ -114,7 +114,6 @@ const GNB: React.FC<GNBProps> = ({
 
   return (
     <View style={styles.container} pointerEvents="box-none">
-      {/* side buttons */}
       <View pointerEvents={isExpanded ? 'auto' : 'none'}>
         {SIDE_CONFIGS.map((cfg, i) => {
           const pos = circlePos(cfg.angle);

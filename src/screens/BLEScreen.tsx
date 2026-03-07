@@ -7,10 +7,11 @@ import {
   ActivityIndicator,
   StatusBar,
   StyleSheet,
+  Image,
 } from 'react-native';
 import { State } from 'react-native-ble-plx';
 
-import { useLoveAlarm, LoveAlarmUser } from '../hooks/useLoveAlarm';
+import { useLoveAlarm, ScanResult } from '../hooks/useLoveAlarm';
 import COLOR_PALETTE from '../styles/colorPalette';
 
 const COLORS = {
@@ -35,19 +36,25 @@ const getSignalColor = (rssi: number | null): string => {
   return COLOR_PALETTE.lavenderBlush;
 };
 
-// Device Card Component
-const DeviceCard = ({ user }: { user: LoveAlarmUser }) => {
+const DeviceCard = ({ user }: { user: ScanResult }) => {
   const signalColor = getSignalColor(user.rssi);
 
   return (
     <View style={styles.deviceCard}>
       <View style={styles.deviceCardInner}>
         <View style={styles.deviceIconWrap}>
-          <Text style={styles.deviceIconText}>💌</Text>
+          {user.avatarUrl ? (
+            <Image
+              source={{ uri: user.avatarUrl }}
+              style={styles.avatarImage}
+            />
+          ) : (
+            <Text style={styles.deviceIconText}>💌</Text>
+          )}
         </View>
         <View style={styles.deviceInfo}>
           <Text style={styles.deviceName} numberOfLines={1}>
-            Secret Admirer
+            {user.name || 'Secret Admirer'}
           </Text>
           <Text style={styles.deviceId} numberOfLines={1}>
             ID: {user.bleSessionUuid.substring(0, 8)}...
@@ -65,7 +72,6 @@ const DeviceCard = ({ user }: { user: LoveAlarmUser }) => {
   );
 };
 
-// Empty state
 const EmptyState = ({
   isScanning,
   bluetoothState,
@@ -73,7 +79,6 @@ const EmptyState = ({
   isScanning: boolean;
   bluetoothState: State;
 }) => {
-
   if (bluetoothState !== State.PoweredOn) {
     return (
       <View style={styles.emptyContainer}>
@@ -111,7 +116,7 @@ const BLEScreen = () => {
   } = useLoveAlarm();
 
   const renderDevice = useCallback(
-    ({ item }: { item: LoveAlarmUser }) => <DeviceCard user={item} />,
+    ({ item }: { item: ScanResult }) => <DeviceCard user={item} />,
     [],
   );
 
@@ -268,6 +273,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
   },
   deviceIconText: {
     fontSize: 22,

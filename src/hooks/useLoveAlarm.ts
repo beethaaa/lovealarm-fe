@@ -20,7 +20,7 @@ export interface LoveAlarmUser {
   lastSeen: number;
 }
 
-export interface ScanResult {
+export interface ScanResult extends LoveAlarmUser {
   name: string;
   interests: string[];
   userId: string;
@@ -201,7 +201,17 @@ export const useLoveAlarm = () => {
           { bleUuids: active.map(u => u.bleSessionUuid) },
           { headers: { Authorization: `Bearer ${await getToken()}` } },
         );
-        setNearbyUsers(res.data.users);
+        const mergedUsers = res.data.users.map((user: any) => {
+          const bleData = bleMapRef.current[user.bleUuid];
+          return {
+            ...user,
+            // Ensure these properties exist from LoveAlarmUser
+            bleSessionUuid: user.bleUuid || user.bleSessionUuid,
+            rssi: bleData?.rssi ?? -100,
+            lastSeen: bleData?.lastSeen ?? Date.now(),
+          } as ScanResult;
+        });
+        setNearbyUsers(mergedUsers);
       } catch (e) {
         console.error('Server error sync users:', e);
       }
