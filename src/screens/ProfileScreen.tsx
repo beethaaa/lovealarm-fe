@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -13,7 +13,7 @@ import {
     ViewStyle,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import COLOR_PALETTE from '../styles/colorPalette';
 import { userService } from '../services/userService';
@@ -41,21 +41,25 @@ const formatDate = (raw: string | undefined): string => {
 
 const GENDER_LABELS: Record<number, string> = { 0: 'Male', 1: 'Female', 2: 'Other' };
 
-const TAG_COLORS = ['#A67B86', '#2D4B37', '#4B4633', '#3B3B6B', '#5A3040'];
 
 const ProfileScreen = () => {
-    const route = useRoute<any>();
     const navigation = useNavigation<any>();
     const setLogout = useAppStore((state) => state.setLogout);
 
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (route.params?.updatedUser) {
-            setUser(route.params.updatedUser);
-        }
-    }, [route.params?.updatedUser]);
+    const handleLogout = async () => {
+        Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn thoát?', [
+            { text: 'Hủy', style: 'cancel' },
+            {
+                text: 'Đăng xuất',
+                onPress: async () => {
+                    await setLogout();
+                },
+            },
+        ]);
+    };
 
     const fetchProfileData = async () => {
         try {
@@ -75,21 +79,13 @@ const ProfileScreen = () => {
         }
     };
 
-    useEffect(() => {
-        fetchProfileData();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchProfileData();
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []),
+    );
 
-    const handleLogout = async () => {
-        Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn thoát?', [
-            { text: 'Hủy', style: 'cancel' },
-            {
-                text: 'Đăng xuất',
-                onPress: async () => {
-                    await setLogout();
-                },
-            },
-        ]);
-    };
 
     if (loading && !user) {
         return (
@@ -165,13 +161,7 @@ const ProfileScreen = () => {
                         <View style={styles.tagContainer}>
                             {displayInterests.length > 0 ? (
                                 displayInterests.map((item: string, i: number) => (
-                                    <View
-                                        key={i}
-                                        style={[
-                                            styles.tag,
-                                            { backgroundColor: TAG_COLORS[i % TAG_COLORS.length] },
-                                        ]}
-                                    >
+                                    <View key={i} style={styles.tag}>
                                         <Text style={styles.tagText}>{item}</Text>
                                     </View>
                                 ))
@@ -186,14 +176,8 @@ const ProfileScreen = () => {
                             <Text style={styles.infoLabel}>Personality</Text>
                             <View style={styles.tagContainer}>
                                 {displayPersonality.map((item: string, i: number) => (
-                                    <View
-                                        key={i}
-                                        style={[
-                                            styles.tag,
-                                            { backgroundColor: '#3B2450' },
-                                        ]}
-                                    >
-                                        <Text style={styles.tagText}>{item}</Text>
+                                    <View key={i} style={styles.personalityTag}>
+                                        <Text style={styles.tagText}>#{item}</Text>
                                     </View>
                                 ))}
                             </View>
@@ -210,10 +194,6 @@ const ProfileScreen = () => {
                 <View style={styles.divider} />
 
                 <View style={styles.footerActions}>
-                    <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-                        <Icon name="log-out-outline" size={22} color={COLOR_PALETTE.pink} />
-                        <Text style={styles.menuText}>Logout</Text>
-                    </TouchableOpacity>
 
                     <TouchableOpacity
                         style={styles.menuItem}
@@ -221,6 +201,11 @@ const ProfileScreen = () => {
                     >
                         <Icon name="lock-closed-outline" size={22} color={COLOR_PALETTE.pink} />
                         <Text style={styles.menuText}>Change Password</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+                        <Icon name="log-out-outline" size={22} color={COLOR_PALETTE.pink} />
+                        <Text style={styles.menuText}>Logout</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -337,7 +322,18 @@ const styles = StyleSheet.create({
     tag: {
         paddingHorizontal: 14,
         paddingVertical: 6,
-        borderRadius: 10,
+        borderRadius: 20,
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        borderColor: COLOR_PALETTE.salmonPink,
+    },
+    personalityTag: {
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        borderRadius: 20,
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        borderColor: COLOR_PALETTE.salmonPink,
     },
     tagText: { color: '#FFF', fontSize: 12, fontWeight: '600' },
     emptyTag: { color: '#555', fontSize: 13 },

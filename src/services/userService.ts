@@ -31,4 +31,10 @@ export const userService = {
     );
     return response.data;
   },
+
+  getAllInterests: async () => {
+    const headers = await getAuthHeader();
+    const response = await axios.get(`${SERVER_URL}/api/interests/`, { headers });
+    return response.data;
+  },
 };
