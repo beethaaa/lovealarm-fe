@@ -17,7 +17,10 @@ export const userService = {
   updateProfile: async (formData: FormData) => {
     const headers = await getAuthHeader();
     const response = await axios.put(`${SERVER_URL}/api/users/`, formData, {
-      headers,
+      headers: {
+        ...headers,
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return response.data;
   },
@@ -34,7 +37,17 @@ export const userService = {
 
   getAllInterests: async () => {
     const headers = await getAuthHeader();
-    const response = await axios.get(`${SERVER_URL}/api/interests/`, { headers });
+    const response = await axios.get(`${SERVER_URL}/api/interests/`, {
+      headers,
+    });
+    return response.data;
+  },
+
+  getAllPersonalityTags: async () => {
+    const headers = await getAuthHeader();
+    const response = await axios.get(`${SERVER_URL}/api/personality-tags/`, {
+      headers,
+    });
     return response.data;
   },
 };

@@ -21,11 +21,6 @@ import DatePicker from 'react-native-date-picker';
 import COLOR_PALETTE from '../styles/colorPalette';
 import { userService } from '../services/userService';
 
-const AVAILABLE_PERSONALITY = [
-    'Creative', 'Outgoing', 'Introvert', 'Kind',
-    'Ambitious', 'Funny', 'Calm', 'Active', 'Adventurous', 'Romantic',
-];
-
 const GENDER_OPTIONS = [
     { label: 'Male', val: 0 },
     { label: 'Female', val: 1 },
@@ -209,6 +204,7 @@ const EditProfileScreen = () => {
 
     const [loading, setLoading] = useState(false);
     const [allInterests, setAllInterests] = useState<string[]>([]);
+    const [allTags, setAllTags] = useState<string[]>([]);
 
     const [name, setName] = useState(initialUser?.profile?.name || '');
     const [gender, setGender] = useState<number>(initialUser?.profile?.gender ?? 0);
@@ -275,6 +271,25 @@ const EditProfileScreen = () => {
         fetchInterests();
     }, []);
 
+    /* Lấy Personality Tags */
+    useEffect(() => {
+        const fetchTags = async () => {
+            try {
+                const raw = await userService.getAllPersonalityTags();
+                const data = Array.isArray(raw) ? raw : (raw?.tags ?? raw?.data ?? raw?.results ?? []);
+                if (Array.isArray(data)) {
+                    const names: string[] = data.map((d: any) =>
+                        typeof d === 'string' ? d : (d.tag ?? d.name ?? d.title ?? d.label ?? String(d)),
+                    );
+                    setAllTags(names.filter(Boolean));
+                }
+            } catch (e) {
+                console.warn('Could not load personality tags from API', e);
+            }
+        };
+        fetchTags();
+    }, []);
+
     const formatDate = (d: Date) =>
         `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d
             .getDate()
@@ -313,7 +328,7 @@ const EditProfileScreen = () => {
 
             const formData = new FormData();
 
-            // Build the profile object
+            // Profile object
             const updatedProfile = {
                 ...initialUser?.profile,
                 name: name.trim(),
@@ -323,10 +338,10 @@ const EditProfileScreen = () => {
                 personalityTags: selectedTags,
             };
 
-            // Stringify profile and address for FormData according to swagger spec or form-data spec mapping
+            // Stringify profile for FormData according to swagger spec
             formData.append('profile', JSON.stringify(updatedProfile));
-            if (initialUser?.address) {
-                formData.append('address', JSON.stringify(initialUser.address));
+            if (initialUser?.location) {
+                formData.append('location', initialUser.location);
             }
             if (initialUser?.email) {
                 formData.append('email', initialUser.email);
@@ -342,7 +357,11 @@ const EditProfileScreen = () => {
             await userService.updateProfile(formData);
 
             navigation.goBack();
-        } catch (error) {
+        } catch (error: any) {
+            console.error('Update Form Error:', error);
+            if (error.response) {
+                console.error('API Response Error:', error.response.data);
+            }
             Alert.alert('Lỗi', 'Không thể cập nhật thông tin.');
         } finally {
             setLoading(false);
@@ -472,11 +491,11 @@ const EditProfileScreen = () => {
                         placeholder="Search interests..."
                     />
 
-                    {/* Personal Tags — hardcoded FE options + Add */}
+                    {/* Personal Tags — API driven */}
                     <SearchDropdown
                         label="Personal Tags"
                         selected={selectedTags}
-                        allOptions={AVAILABLE_PERSONALITY}
+                        allOptions={allTags}
                         onSelect={(item) =>
                             setSelectedTags((prev) =>
                                 prev.includes(item) ? prev : [...prev, item],
