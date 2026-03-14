@@ -12,7 +12,9 @@ import {
     TouchableWithoutFeedback,
     Keyboard,
     Platform,
+    Image,
 } from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import DatePicker from 'react-native-date-picker';
@@ -222,6 +224,36 @@ const EditProfileScreen = () => {
         initialUser?.profile?.personalityTags || [],
     );
     const [open, setOpen] = useState(false);
+    
+    const [avatarUri, setAvatarUri] = useState<string | null>(initialUser?.avatarUrl || null);
+    const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
+
+    const handleSelectAvatar = async () => {
+        try {
+            const result = await launchImageLibrary({
+                mediaType: 'photo',
+                quality: 0.8,
+                includeBase64: true,
+            });
+
+            if (result.didCancel) return;
+            if (result.errorMessage) {
+                Alert.alert('Lỗi', result.errorMessage);
+                return;
+            }
+
+            const asset = result.assets?.[0];
+            if (asset) {
+                setAvatarUri(asset.uri || null);
+                if (asset.base64) {
+                    setAvatarBase64(`data:${asset.type || 'image/jpeg'};base64,${asset.base64}`);
+                }
+            }
+        } catch (error) {
+            console.error('ImagePicker Error:', error);
+            Alert.alert('Lỗi', 'Không thể chọn ảnh');
+        }
+    };
 
     /* Lấy Interests */
     useEffect(() => {
@@ -278,6 +310,9 @@ const EditProfileScreen = () => {
         try {
             setLoading(true);
 
+            const formData = new FormData();
+            
+            // Build the profile object
             const updatedProfile = {
                 ...initialUser?.profile,
                 name: name.trim(),
@@ -287,12 +322,20 @@ const EditProfileScreen = () => {
                 personalityTags: selectedTags,
             };
 
-            const updateData = {
-                profile: updatedProfile,
-                address: initialUser?.address,
-            };
+            // Stringify profile and address for FormData according to swagger spec or form-data spec mapping
+            formData.append('profile', JSON.stringify(updatedProfile));
+            if (initialUser?.address) {
+                formData.append('address', JSON.stringify(initialUser.address));
+            }
+            
+            // Include base64 avatar if changed
+            if (avatarBase64) {
+                formData.append('avatarUrl', avatarBase64);
+            }
 
-            await userService.updateProfile(updateData);
+            console.log('Sending Update Profile FormData:', formData);
+
+            await userService.updateProfile(formData);
 
             navigation.goBack();
         } catch (error) {
@@ -324,6 +367,21 @@ const EditProfileScreen = () => {
                     contentContainerStyle={styles.container}
                     keyboardShouldPersistTaps="handled"
                 >
+                    {/* Avatar Selection */}
+                    <View style={styles.avatarContainer}>
+                        <TouchableOpacity onPress={handleSelectAvatar} activeOpacity={0.8}>
+                            <Image
+                                source={{
+                                    uri: avatarUri || 'https://i.pinimg.com/736x/8f/11/49/8f114947963d7e5d8a8a2a8a2a8a2a8a.jpg',
+                                }}
+                                style={styles.avatarImage}
+                            />
+                            <View style={styles.cameraIconContainer}>
+                                <Icon name="camera" size={16} color="#FFF" />
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+
                     {/* Full Name */}
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Full Name</Text>
@@ -405,7 +463,7 @@ const EditProfileScreen = () => {
                         onRemove={(item) =>
                             setSelectedInterests((prev) => prev.filter((i) => i !== item))
                         }
-                        chipColor={COLOR_PALETTE.salmonPink}
+                        chipColor={COLOR_PALETTE.pink}
                         allowAdd
                         placeholder="Search interests..."
                     />
@@ -423,7 +481,7 @@ const EditProfileScreen = () => {
                         onRemove={(item) =>
                             setSelectedTags((prev) => prev.filter((i) => i !== item))
                         }
-                        chipColor={COLOR_PALETTE.salmonPink}
+                        chipColor={COLOR_PALETTE.pink}
                         allowAdd
                         placeholder="Search tags..."
                     />
@@ -583,6 +641,31 @@ const styles = StyleSheet.create({
     addBtnText: {
         fontSize: 14,
         fontWeight: '600',
+    },
+    avatarContainer: {
+        alignItems: 'center',
+        marginBottom: 30,
+        marginTop: 10,
+    },
+    avatarImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        borderWidth: 2,
+        borderColor: COLOR_PALETTE.pink,
+    },
+    cameraIconContainer: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: '#222',
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1.5,
+        borderColor: COLOR_PALETTE.pink,
     },
 });
 

@@ -7,7 +7,6 @@ import {
     Image,
     TouchableOpacity,
     ScrollView,
-    ActivityIndicator,
     Alert,
     StatusBar,
     ViewStyle,
@@ -90,7 +89,8 @@ const ProfileScreen = () => {
     if (loading && !user) {
         return (
             <View style={styles.loadingCenter}>
-                <ActivityIndicator size="large" color={COLOR_PALETTE.pink} />
+                {/* Loader could go here if imported, but we removed ActivityIndicator */}
+                <Text style={{color: COLOR_PALETTE.pink}}>Loading...</Text>
             </View>
         );
     }
@@ -143,7 +143,10 @@ const ProfileScreen = () => {
                             }}
                             style={styles.avatarImage}
                         />
-                        <TouchableOpacity style={styles.cameraBtn}>
+                        <TouchableOpacity 
+                            style={styles.cameraBtn}
+                            onPress={() => navigation.navigate('EditProfile', { user })}
+                        >
                             <Icon name="camera" size={14} color="#FFF" />
                         </TouchableOpacity>
                     </View>
@@ -325,7 +328,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: 'transparent',
         borderWidth: 1.5,
-        borderColor: COLOR_PALETTE.salmonPink,
+        borderColor: COLOR_PALETTE.pink,
     },
     personalityTag: {
         paddingHorizontal: 14,
@@ -333,7 +336,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: 'transparent',
         borderWidth: 1.5,
-        borderColor: COLOR_PALETTE.salmonPink,
+        borderColor: COLOR_PALETTE.pink,
     },
     tagText: { color: '#FFF', fontSize: 12, fontWeight: '600' },
     emptyTag: { color: '#555', fontSize: 13 },
