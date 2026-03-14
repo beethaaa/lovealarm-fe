@@ -13,6 +13,7 @@ import {
     Keyboard,
     Platform,
     Image,
+    PermissionsAndroid,
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -225,6 +226,24 @@ const EditProfileScreen = () => {
     const [avatarFile, setAvatarFile] = useState<any>(null);
 
     const handleSelectAvatar = async () => {
+        if (Platform.OS === 'android') {
+            try {
+                const platformVersion = Number(Platform.Version);
+                const permission = platformVersion >= 33 
+                    ? PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES 
+                    : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+                    
+                const granted = await PermissionsAndroid.request(permission);
+                if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+                    Alert.alert('Quyền bị từ chối', 'Bạn cần cấp quyền truy cập thư viện ảnh để đổi avatar.');
+                    return;
+                }
+            } catch (err) {
+                console.warn('Lỗi khi xin quyền:', err);
+                return;
+            }
+        }
+
         try {
             const result = await launchImageLibrary({
                 mediaType: 'photo',
