@@ -201,7 +201,7 @@ export const useLoveAlarm = () => {
           { bleUuids: active.map(u => u.bleSessionUuid) },
           { headers: { Authorization: `Bearer ${await getToken()}` } },
         );
-        const mergedUsers = res.data.users.map((user: any) => {
+        const mergedUsers = res.data.users?.map((user: any) => {
           const bleData = bleMapRef.current[user.bleUuid];
           return {
             ...user,

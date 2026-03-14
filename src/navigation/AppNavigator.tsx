@@ -1,18 +1,22 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 
 import HomeScreen from '@/screens/HomeScreen';
-import BLEScreen from '@/screens/BLEScreen';
+import ChatListScreen from '@/screens/ChatListScreen';
 import SettingsScreen from '@/screens/SettingsScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import RegisterScreen from '@/screens/RegisterScreen';
 import ForgotPasswordScreen from '@/screens/ForgotPasswordScreen';
 import OnboardingScreen from '@/screens/OnboardingScreen';
+import ChatScreen from '@/screens/ChatScreen';
+import { SocketProvider } from '../context/SocketContext';
+import NotificationBanner from '@/components/NotificationBanner';
 
 import GNB, { GNBProps } from '@/components/GNB';
+import TutorialOverlay from '@/components/TutorialOverlay';
 import { useLoveAlarm } from '@/hooks/useLoveAlarm';
 import { useAppStore } from '@/store/appStore';
 import { RootStackParamList } from '@/types/index';
@@ -24,7 +28,7 @@ type TabKey = NonNullable<GNBProps['activeTab']>;
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const MainTabsWithGNB = () => {
-  const [activeTab, setActiveTab] = useState<TabKey>('home');
+  const { activeTab, setActiveTab } = useAppStore();
   const {
     isScanning,
     startLoveAlarm,
@@ -60,9 +64,9 @@ const MainTabsWithGNB = () => {
   const renderScreen = () => {
     switch (activeTab) {
       case 'matched':
-        return <BLEScreen />;
+        return <ChatListScreen />;
       case 'profile':
-        return <BLEScreen />;
+        return <ChatListScreen />;
       case 'settings':
         return <SettingsScreen />;
       case 'home':
@@ -90,12 +94,13 @@ const MainTabsWithGNB = () => {
         onProfile={() => handleTabPress('profile')}
         onSettings={() => handleTabPress('settings')}
       />
+      <TutorialOverlay />
     </View>
   );
 };
 
 const AppNavigator = () => {
-  const { isLoggedIn, isOnboarded, isInitialized, checkLoginStatus } = useAppStore();
+  const { isLoggedIn, isOnboarded, isInitialized, checkLoginStatus, user } = useAppStore();
 
   useEffect(() => {
     checkLoginStatus();
@@ -109,36 +114,43 @@ const AppNavigator = () => {
     );
   }
 
+  console.log('[AppNavigator] Rendering Main Wrapper. isLoggedIn:', isLoggedIn, 'User:', JSON.stringify(user));
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTitleStyle: { color: '#f8fafc', fontWeight: '700' },
-          headerTintColor: '#ec4899',
-          contentStyle: { backgroundColor: '#0A0A0A' },
-        }}
-      >
-        {isLoggedIn ? (
-          <Stack.Group screenOptions={{ headerShown: false }}>
-            {!isOnboarded ? (
-              <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-            ) : (
-              <Stack.Screen name="Main" component={MainTabsWithGNB} />
-            )}
-          </Stack.Group>
-        ) : (
-          <Stack.Group screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen
-              name="ForgotPassword"
-              component={ForgotPasswordScreen}
-            />
-          </Stack.Group>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SocketProvider>
+      <NotificationBanner />
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: { backgroundColor: '#0A0A0A' },
+            headerTitleStyle: { color: '#f8fafc', fontWeight: '700' },
+            headerTintColor: '#ec4899',
+            contentStyle: { backgroundColor: '#0A0A0A' },
+          }}
+        >
+          {isLoggedIn ? (
+            <Stack.Group screenOptions={{ headerShown: false }}>
+              {!isOnboarded ? (
+                <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+              ) : (
+                <>
+                  <Stack.Screen name="Main" component={MainTabsWithGNB} />
+                  <Stack.Screen name="Chat" component={ChatScreen} />
+                </>
+              )}
+            </Stack.Group>
+          ) : (
+            <Stack.Group screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="Register" component={RegisterScreen} />
+              <Stack.Screen
+                name="ForgotPassword"
+                component={ForgotPasswordScreen}
+              />
+            </Stack.Group>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SocketProvider>
   );
 };
 

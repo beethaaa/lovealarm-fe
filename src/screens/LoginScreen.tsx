@@ -19,7 +19,6 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import COLOR_PALETTE from '../styles/colorPalette';
 import { authApi } from '../services/authService';
-import { userService } from '../services/userService';
 import { useAppStore } from '../store/appStore';
 
 const { width: SW } = Dimensions.get('window');
@@ -274,21 +273,16 @@ const LoginScreen = ({ navigation }: any) => {
         res?.token ||
         res?.data?.token;
 
-      let user = res?.data?.user || res?.user;
+      let user = res?.data?.user || res?.user || (res?.data && res?.data?._id ? res.data : null) || res;
+      console.log('[LoginScreen] Login success, user extraction attempt:', JSON.stringify(user));
 
-      if (token && !user?.profile?.name) {
-        // Fallback to fetch user profile if it doesn't exist in login response
-        const userProfile = await userService.getUser(token);
-        if (userProfile && (userProfile.data || userProfile.profile)) {
-          user = userProfile.data || userProfile; // Assuming fallback structure
-        }
-      }
-
-      // Automatically force onboarding if profile name is completely empty
-      const isNewUser = user ? !user?.profile?.name : true;
+      const apiIsFirstLogin = res?.isFirstLogin ?? res?.data?.isFirstLogin;
+      const isNewUser = apiIsFirstLogin !== undefined 
+        ? apiIsFirstLogin 
+        : (user ? !user?.profile?.name : true);
 
       if (token) {
-        await setLogin(token, isNewUser);
+        await setLogin(token, isNewUser, user);
       } else {
         Alert.alert('Lỗi dữ liệu', 'Đăng nhập OK nhưng không tìm thấy token.');
       }
@@ -402,8 +396,6 @@ const LoginScreen = ({ navigation }: any) => {
   );
 };
 
-export default LoginScreen;
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#0A0A0A' },
   scroll: { flexGrow: 1, paddingBottom: 52 },
@@ -416,7 +408,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#17050A',
     alignItems: 'center',
     justifyContent: 'center',
-    ...({ boxShadow: 'inset 0px -1px 3px 0px #ffc2d1' } as ViewStyle),
   },
   heartGlowIcon: {
     textShadowColor: COLOR_PALETTE.pink,
@@ -473,7 +464,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(255,194,209,0.08)',
     marginBottom: 24,
-    ...({ boxShadow: '0px 0px 4px 0px rgba(255,194,209,0.15)' } as ViewStyle),
   },
 
   fieldGroup: { marginBottom: 20 },
@@ -527,7 +517,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 8,
     marginBottom: 4,
-    ...({ boxShadow: 'inset 0px -2px 16px 0px #ffc2d1' } as ViewStyle),
   },
   mainBtnText: {
     color: COLOR_PALETTE.pink,
@@ -564,3 +553,5 @@ const styles = StyleSheet.create({
     textShadowRadius: 6,
   },
 });
+
+export default LoginScreen;

@@ -187,7 +187,6 @@ const OnboardingScreen = () => {
       if (parts.length === 3) isoDate = `${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`;
 
       const payload = {
-        email: 'user@example.com',
         avatarUrl: 'https://example.com/avatar.jpg',
         profile: {
           name,

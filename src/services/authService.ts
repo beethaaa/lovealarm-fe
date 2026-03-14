@@ -14,6 +14,7 @@ export const authApi = {
         },
       );
       await AsyncStorage.setItem('token', response.data.accessToken);
+      console.log("token", response.data.accessToken);
       return response.data;
     } catch (error: any) {
       console.error('Lỗi Axios Login:', error.response?.data || error.message);

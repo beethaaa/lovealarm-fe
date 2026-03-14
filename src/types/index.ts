@@ -5,6 +5,7 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Main: undefined;
   Permissions: undefined;
+  Chat: { targetUser: any; conversationId: string };
 };
 
 export type BottomTabParamList = {

@@ -22,21 +22,21 @@ export const userService = {
       throw new Error(error.response?.data?.message || 'Không thể cập nhật thông tin người dùng');
     }
   },
-  getUser: async (token?: string) => {
+  getProfile: async () => {
     try {
-      let authToken = token || await AsyncStorage.getItem('userToken') || await AsyncStorage.getItem('token');
-      if (!authToken) return null;
-      
-      const response = await axios.get(`${SERVER_URL}/api/users`, {
+      let token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        token = await AsyncStorage.getItem('token');
+      }
+      const response = await axios.get(`${SERVER_URL}/api/users/me`, {
         headers: {
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${token}`,
         },
-        timeout: 10000,
       });
       return response.data;
-    } catch (error) {
-      console.log('Lỗi lấy profile:', error);
-      return null;
+    } catch (error: any) {
+      console.error('Lỗi Axios Get Profile:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Không thể lấy thông tin người dùng');
     }
-  }
+  },
 };

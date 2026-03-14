@@ -7,12 +7,22 @@ import {
   StatusBar,
   StyleSheet,
   Image,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useLoveAlarm, ScanResult } from '@hooks/useLoveAlarm';
 import COLOR_PALETTE from '@/styles/colorPalette';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import { State } from 'react-native-ble-plx';
+import { useSocket } from '@/context/SocketContext';
+import LoveRequestModal from '@/components/LoveRequestModal';
+import ReceivedRequestsModal from '@/components/ReceivedRequestsModal';
+import { loveRequestService } from '@/services/loveRequestService';
+import { chatService } from '@/services/chatService';
+import { userService } from '@/services/userService';
+import { useAppStore } from '@/store/appStore';
+import { useNavigation } from '@react-navigation/native';
 
 const TYPEWRITER_TEXT = 'Are you crushing on anyone...';
 
@@ -143,12 +153,160 @@ const HomeScreen = (props: HomeScreenProps) => {
   const nearbyUsers = props.nearbyUsers ?? nearbyUsersHook;
 
   const heartScale = React.useRef(new Animated.Value(1)).current;
+  const { emit } = useSocket();
 
   const [displayedText, setDisplayedText] = useState('');
   const [showBanner, setShowBanner] = useState(false);
+  const [receivedModalVisible, setReceivedModalVisible] = useState(false);
   const bannerOpacity = useRef(new Animated.Value(0)).current;
   const typewriterRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const charIndexRef = useRef(0);
+  const navigation = useNavigation<any>();
+
+  const { 
+    user: currentUser, 
+    setUser: setCurrentUser,
+    loveRequests,
+    setLoveRequests,
+    setActiveTab
+  } = useAppStore();
+  const [selectedUser, setSelectedUser] = useState<ScanResult | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [_isSending, setIsSending] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const hasId = currentUser?._id;
+      if (!currentUser || !hasId) {
+        try {
+          const res = await userService.getProfile();
+          const userData = (res.data?.user && typeof res.data.user === 'object') ? res.data.user :
+                           (res.data?.data?.user && typeof res.data.data.user === 'object') ? res.data.data.user :
+                           (res.user && typeof res.user === 'object') ? res.user :
+                           (res.data && typeof res.data === 'object' && (res.data._id || res.data.id)) ? res.data :
+                           (res && typeof res === 'object' && (res._id || res.id)) ? res : null;
+          
+          if (userData && (userData._id || userData.id || userData.userId)) {
+            await setCurrentUser(userData);
+          } else {
+            console.error('[HomeScreen] Could not find user object in profile response:', JSON.stringify(res));
+          }
+        } catch (error) {
+          console.error('[HomeScreen] Failed to fetch profile:', error);
+        }
+      }
+    };
+    fetchProfile();
+  }, [currentUser, setCurrentUser]);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const res = await loveRequestService.getLoveRequests();
+        setLoveRequests(res.data || res || []);
+      } catch (error) {
+        console.error('[HomeScreen] Failed to fetch requests:', error);
+      }
+    };
+    if (currentUser) {
+      fetchRequests();
+    }
+  }, [currentUser, setLoveRequests]);
+
+  const handleUserPress = (user: ScanResult) => {
+    console.log('[HomeScreen] User Bubble Pressed. Current User State:', JSON.stringify(currentUser));
+    setSelectedUser(user);
+    setModalVisible(true);
+  };
+
+  const handleSendLoveRequest = async () => {
+    if (!selectedUser || !currentUser) return;
+    setIsSending(true);
+    try {
+      // Create conversation via API POST as requested
+      const currentId = currentUser._id || currentUser.id || currentUser.userId;
+      const conv = await chatService.createConversation([currentId, selectedUser.userId]);
+      const conversationId = conv?._id || conv?.id || conv?.conversation?._id || conv?.conversation?.id || conv?.data?._id || conv?.data?.id;
+
+      if (!conversationId) {
+        console.warn('[HomeScreen] Failed to extract conversationId from:', JSON.stringify(conv));
+        throw new Error('Failed to create conversation session');
+      }
+
+      await loveRequestService.sendLoveRequest(selectedUser.userId);
+      setModalVisible(false);
+      
+      // Emit socket event for real-time notification
+      emit('love-request:send', { 
+        toUserId: selectedUser.userId,
+        conversationId: conversationId
+      });
+
+      navigation.navigate('Chat', {
+        targetUser: {
+          id: selectedUser.userId,
+          name: selectedUser.name,
+          avatarUrl: selectedUser.avatarUrl,
+        },
+        conversationId: conversationId,
+      });
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to send love signal');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleRequestAccepted = async (partner: any) => {
+    try {
+      const currentId = currentUser?._id || currentUser?.id || currentUser?.userId;
+      const partnerId = partner?._id || partner?.id || partner?.userId;
+
+      if (!currentId || !partnerId) {
+        console.warn('[HomeScreen] Missing user ID. Current:', currentId, 'Partner:', partnerId, 'Partner Object:', JSON.stringify(partner));
+        throw new Error('Missing user ID for conversation creation');
+      }
+
+      let conversationId = partner.conversationId;
+
+      if (!conversationId) {
+        const participants = [currentId, partnerId];
+        const res = await chatService.createConversation(participants);
+        conversationId = res?._id || res?.id || res?.data?._id || res?.data?.id;
+      }
+      
+      emit('love-request:accepted', { 
+        toUserId: partnerId,
+        partnerName: currentUser?.profile?.name || currentUser?.name,
+        conversationId: conversationId
+      });
+
+      setActiveTab('matched');
+      navigation.navigate('Chat', {
+        targetUser: {
+          id: partnerId,
+          name: partner.name || partner.username || 'Partner',
+          avatarUrl: partner.avatarUrl || partner.profile?.avatarUrl,
+        },
+        conversationId: conversationId,
+        isFirstFriendshipMessage: true,
+      });
+    } catch (error) {
+      console.error('[HomeScreen] Create conversation error:', error);
+      const partnerId = partner?._id || partner?.id || partner?.userId;
+      
+      setActiveTab('matched');
+      navigation.navigate('Chat', {
+        targetUser: {
+          id: partnerId,
+          name: partner.name || partner.username || 'Partner',
+          avatarUrl: partner.avatarUrl || partner.profile?.avatarUrl,
+        },
+        conversationId: 'fallback',
+        isFirstFriendshipMessage: true,
+      });
+    }
+  };
 
   useEffect(() => {
     if (isScanning) {
@@ -163,6 +321,10 @@ const HomeScreen = (props: HomeScreenProps) => {
       }).start();
 
       const type = () => {
+        if (loveRequests.length > 0) {
+          setDisplayedText(`Có ${loveRequests.length} người đang để ý bạn...`);
+          return;
+        }
         if (charIndexRef.current <= TYPEWRITER_TEXT.length) {
           setDisplayedText(TYPEWRITER_TEXT.slice(0, charIndexRef.current));
           charIndexRef.current += 1;
@@ -192,7 +354,7 @@ const HomeScreen = (props: HomeScreenProps) => {
         typewriterRef.current = null;
       }
     };
-  }, [isScanning, bannerOpacity]);
+  }, [isScanning, bannerOpacity, loveRequests.length]);
 
   useEffect(() => {
     if (!isScanning) {
@@ -201,26 +363,10 @@ const HomeScreen = (props: HomeScreenProps) => {
     }
     const beat = Animated.loop(
       Animated.sequence([
-        Animated.timing(heartScale, {
-          toValue: 1.1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(heartScale, {
-          toValue: 1.0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(heartScale, {
-          toValue: 1.05,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(heartScale, {
-          toValue: 1.0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
+        Animated.timing(heartScale, { toValue: 1.1, duration: 200, useNativeDriver: true }),
+        Animated.timing(heartScale, { toValue: 1.0, duration: 200, useNativeDriver: true }),
+        Animated.timing(heartScale, { toValue: 1.05, duration: 150, useNativeDriver: true }),
+        Animated.timing(heartScale, { toValue: 1.0, duration: 300, useNativeDriver: true }),
         Animated.delay(600),
       ]),
     );
@@ -228,9 +374,7 @@ const HomeScreen = (props: HomeScreenProps) => {
     return () => beat.stop();
   }, [isScanning, heartScale]);
 
-  const userPositionsRef = useRef<
-    Record<string, { angle: number; ring: number }>
-  >({});
+  const userPositionsRef = useRef<Record<string, { angle: number; ring: number }>>({});
   const userOpacitiesRef = useRef<Record<string, Animated.Value>>({});
 
   useEffect(() => {
@@ -246,16 +390,12 @@ const HomeScreen = (props: HomeScreenProps) => {
     (nearbyUsers || []).forEach((user, index) => {
       if (!userPositionsRef.current[user.userId]) {
         const ring = index % 3;
-        const existing = Object.values(userPositionsRef.current).map(
-          p => p.angle,
-        );
+        const existing = Object.values(userPositionsRef.current).map(p => p.angle);
         let angle = 0;
         let best = -1;
         for (let attempt = 0; attempt < 30; attempt++) {
           const candidate = Math.random() * 2 * Math.PI;
-          const minDist = existing.length
-            ? Math.min(...existing.map(a => Math.abs(a - candidate)))
-            : Infinity;
+          const minDist = existing.length ? Math.min(...existing.map(a => Math.abs(a - candidate))) : Infinity;
           if (minDist > best) {
             best = minDist;
             angle = candidate;
@@ -265,11 +405,7 @@ const HomeScreen = (props: HomeScreenProps) => {
 
         const opacity = new Animated.Value(0);
         userOpacitiesRef.current[user.userId] = opacity;
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }).start();
+        Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }).start();
       }
     });
   }, [nearbyUsers]);
@@ -283,111 +419,94 @@ const HomeScreen = (props: HomeScreenProps) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {showBanner ? (
           <Animated.View style={[styles.header, { opacity: bannerOpacity }]}>
-            <View style={styles.welcomeTextContainer}>
-              <Icon name="radio-outline" size={24} color={COLOR_PALETTE.pink} />
+            <TouchableOpacity 
+              disabled={loveRequests.length === 0}
+              onPress={() => setReceivedModalVisible(true)}
+              style={styles.welcomeTextContainer}
+            >
+              <Icon 
+                name={loveRequests.length > 0 ? "heart-circle" : "radio-outline"} 
+                size={24} 
+                color={COLOR_PALETTE.pink} 
+              />
               <Text style={styles.welcomeText}>{displayedText}</Text>
-            </View>
+            </TouchableOpacity>
           </Animated.View>
         ) : (
           <View style={styles.bluetoothContainer}>
             <Icon name="bluetooth" size={24} color={COLOR_PALETTE.pink} />
-            <Text style={styles.welcomeText}>Bluetooth is {isBluetoothOn ? "active": "offline"}</Text>
+            <Text style={styles.welcomeText}>Bluetooth is {isBluetoothOn ? "active" : "offline"}</Text>
           </View>
         )}
 
         <View style={styles.radarContainer}>
           <View style={styles.radarInner}>
-            <PulseRing
-              delay={1600}
-              isActive={isScanning}
-              size={160}
-              staticOpacity={0.65}
-            />
-            <PulseRing
-              delay={800}
-              isActive={isScanning}
-              size={220}
-              staticOpacity={0.45}
-            />
-            <PulseRing
-              delay={0}
-              isActive={isScanning}
-              size={280}
-              staticOpacity={0.2}
-            />
+            <PulseRing delay={1600} isActive={isScanning} size={160} staticOpacity={0.65} />
+            <PulseRing delay={800} isActive={isScanning} size={220} staticOpacity={0.45} />
+            <PulseRing delay={0} isActive={isScanning} size={280} staticOpacity={0.2} />
 
-            <View
-              style={[
-                styles.centerCircle,
-                isScanning && styles.centerCircleActive,
-              ]}
-            >
-              <Animated.View
-                style={[
-                  { transform: [{ scale: heartScale }] },
-                  styles.heartGlow,
-                ]}
-              >
-                <Icon
-                  style={styles.heartIcon}
-                  name="heart"
-                  size={80}
-                  color={COLOR_PALETTE.cherryBlossomPink}
-                />
+            <View style={[styles.centerCircle, isScanning && styles.centerCircleActive]}>
+              <Animated.View style={[{ transform: [{ scale: heartScale }] }, styles.heartGlow]}>
+                <Icon style={styles.heartIcon} name="heart" size={80} color={COLOR_PALETTE.cherryBlossomPink} />
               </Animated.View>
             </View>
 
-            {isScanning &&
-              (nearbyUsers || []).map(user => {
-                const pos = userPositionsRef.current[user.userId];
-                const opacityAnim = userOpacitiesRef.current[user.userId];
-                if (!pos || !opacityAnim) return null;
+            {isScanning && (nearbyUsers || []).map(user => {
+              const pos = userPositionsRef.current[user.userId];
+              const opacityAnim = userOpacitiesRef.current[user.userId];
+              if (!pos || !opacityAnim) return null;
 
-                const radius = RING_RADII[pos.ring];
-                const cx =
-                  RADAR_CENTER + radius * Math.cos(pos.angle) - BUBBLE_SIZE / 2;
-                const cy =
-                  RADAR_CENTER + radius * Math.sin(pos.angle) - BUBBLE_SIZE / 2;
+              const radius = RING_RADII[pos.ring];
+              const cx = RADAR_CENTER + radius * Math.cos(pos.angle) - BUBBLE_SIZE / 2;
+              const cy = RADAR_CENTER + radius * Math.sin(pos.angle) - BUBBLE_SIZE / 2;
 
-                return (
-                  <Animated.View
-                    key={user.userId}
-                    style={[
-                      styles.userBubbleWrapper,
-                      { left: cx, top: cy, opacity: opacityAnim },
-                    ]}
-                  >
-                    <LinearGradient
-                      colors={['#FFF6E4', '#FFECC9', '#F6889A']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.userBubbleGradient}
-                    >
+              return (
+                <Animated.View key={user.userId} style={[styles.userBubbleWrapper, { left: cx, top: cy, opacity: opacityAnim }]}>
+                  <TouchableOpacity onPress={() => handleUserPress(user)}>
+                    <LinearGradient colors={['#FFF6E4', '#FFECC9', '#F6889A']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.userBubbleGradient}>
                       {user.avatarUrl ? (
-                        <Image
-                          source={{ uri: user.avatarUrl }}
-                          style={styles.userBubbleImage}
-                        />
+                        <Image source={{ uri: user.avatarUrl }} style={styles.userBubbleImage} />
                       ) : (
                         <View style={styles.userBubbleFallback}>
-                          <Text style={styles.userBubbleInitial}>
-                            {user.name?.[0]?.toUpperCase() ?? '?'}
-                          </Text>
+                          <Text style={styles.userBubbleInitial}>{user.name?.[0]?.toUpperCase() ?? '?'}</Text>
                         </View>
                       )}
                     </LinearGradient>
-                  </Animated.View>
-                );
-              })}
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            })}
           </View>
         </View>
       </ScrollView>
+
+      {currentUser && console.log('[HomeScreen] Passing current user to modal:', JSON.stringify(currentUser))}
+      {selectedUser && currentUser && (currentUser._id || currentUser.userId) && (
+        <LoveRequestModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          onSend={handleSendLoveRequest}
+          currentUser={{
+            id: currentUser._id || currentUser.userId,
+            name: currentUser.profile?.name || currentUser.name || 'Me',
+            avatarUrl: currentUser.profile?.avatarUrl || currentUser.avatarUrl,
+          }}
+          targetUser={{
+            id: selectedUser.userId,
+            name: selectedUser.name,
+            avatarUrl: selectedUser.avatarUrl,
+          }}
+        />
+      )}
+
+      <ReceivedRequestsModal
+        visible={receivedModalVisible}
+        onClose={() => setReceivedModalVisible(false)}
+        onRequestAccepted={handleRequestAccepted}
+      />
     </View>
   );
 };
@@ -409,14 +528,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     alignItems: 'center',
   },
-  brandText: {
-    color: COLORS.primaryLight,
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 4,
-    marginBottom: 16,
-  },
-   welcomeTextContainer: {
+  welcomeTextContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -450,11 +562,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 10,
   },
-  cursor: {
-    color: COLOR_PALETTE.pink,
-    fontWeight: '300',
-    opacity: 1,
-  },
   radarContainer: {
     position: 'absolute',
     top: 0,
@@ -474,7 +581,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderWidth: 4,
     borderColor: COLOR_PALETTE.cherryBlossomPink,
-    elevation: 8,
   },
   centerCircle: {
     width: 200,
@@ -500,186 +606,6 @@ const styles = StyleSheet.create({
     textShadowColor: COLOR_PALETTE.cherryBlossomPink,
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 20,
-  },
-  statusCard: {
-    marginHorizontal: 24,
-    backgroundColor: COLORS.surface,
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#3D0E1E',
-    shadowColor: COLORS.primaryDark,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  statusRow2: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  statusLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  countText: {
-    color: COLORS.primaryLight,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 12,
-  },
-  statusLabel: {
-    color: COLORS.textSecondary,
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  statusValue: {
-    color: COLORS.textPrimary,
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  scanningText: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontWeight: '600',
-    fontStyle: 'italic',
-  },
-  devicesContainer: {
-    marginHorizontal: 24,
-    marginBottom: 24,
-  },
-  devicesTitle: {
-    color: COLORS.textPrimary,
-    fontWeight: '800',
-    fontSize: 18,
-    marginBottom: 16,
-  },
-  deviceRow: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  deviceIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 77, 109, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  deviceIconText: {
-    fontSize: 20,
-  },
-  deviceInfo: {
-    flex: 1,
-  },
-  deviceName: {
-    color: COLOR_PALETTE.amaranthPink,
-    fontWeight: '700',
-    fontSize: 15,
-    marginBottom: 4,
-  },
-  deviceRssi: {
-    color: COLORS.textMuted,
-    fontSize: 13,
-  },
-  signalBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    borderWidth: 1,
-    backgroundColor: 'transparent',
-  },
-  signalBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-  },
-  scanButtonContainer: {
-    marginHorizontal: 24,
-    marginBottom: 48,
-  },
-  scanButton: {
-    borderRadius: 30,
-    paddingVertical: 18,
-    alignItems: 'center',
-    elevation: 8,
-  },
-  scanButtonStart: {
-    backgroundColor: COLORS.primary,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.8,
-    shadowRadius: 15,
-  },
-  scanButtonStop: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    shadowOpacity: 0,
-  },
-  scanButtonText: {
-    color: COLORS.textPrimary,
-    fontWeight: '900',
-    fontSize: 16,
-    letterSpacing: 1.5,
-  },
-  tokenContainer: {
-    flexDirection: 'row',
-    marginHorizontal: 24,
-    marginTop: 64,
-    marginBottom: -16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  tokenInput: {
-    flex: 1,
-    height: 48,
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.border,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    color: COLORS.textPrimary,
-    marginRight: 12,
-  },
-  saveButton: {
-    backgroundColor: COLORS.primary,
-    height: 48,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    borderRadius: 12,
-  },
-  saveButtonText: {
-    color: COLORS.textPrimary,
-    fontWeight: '700',
-    fontSize: 15,
   },
   userBubbleWrapper: {
     position: 'absolute',
