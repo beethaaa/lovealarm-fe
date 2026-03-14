@@ -17,10 +17,7 @@ export const userService = {
   updateProfile: async (formData: FormData) => {
     const headers = await getAuthHeader();
     const response = await axios.put(`${SERVER_URL}/api/users/`, formData, {
-      headers: {
-          ...headers,
-          'Content-Type': 'multipart/form-data',
-      },
+      headers,
     });
     return response.data;
   },

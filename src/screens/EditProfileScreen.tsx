@@ -224,16 +224,15 @@ const EditProfileScreen = () => {
         initialUser?.profile?.personalityTags || [],
     );
     const [open, setOpen] = useState(false);
-    
-    const [avatarUri, setAvatarUri] = useState<string | null>(initialUser?.avatarUrl || null);
-    const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
+
+    const [avatarUri, setAvatarUri] = useState<string | null>(initialUser?.avatarUrl || initialUser?.avatar || null);
+    const [avatarFile, setAvatarFile] = useState<any>(null);
 
     const handleSelectAvatar = async () => {
         try {
             const result = await launchImageLibrary({
                 mediaType: 'photo',
                 quality: 0.8,
-                includeBase64: true,
             });
 
             if (result.didCancel) return;
@@ -245,9 +244,11 @@ const EditProfileScreen = () => {
             const asset = result.assets?.[0];
             if (asset) {
                 setAvatarUri(asset.uri || null);
-                if (asset.base64) {
-                    setAvatarBase64(`data:${asset.type || 'image/jpeg'};base64,${asset.base64}`);
-                }
+                setAvatarFile({
+                    uri: Platform.OS === 'ios' && asset.uri ? asset.uri.replace('file://', '') : asset.uri,
+                    type: asset.type || 'image/jpeg',
+                    name: asset.fileName || 'avatar.jpg',
+                });
             }
         } catch (error) {
             console.error('ImagePicker Error:', error);
@@ -311,7 +312,7 @@ const EditProfileScreen = () => {
             setLoading(true);
 
             const formData = new FormData();
-            
+
             // Build the profile object
             const updatedProfile = {
                 ...initialUser?.profile,
@@ -327,10 +328,13 @@ const EditProfileScreen = () => {
             if (initialUser?.address) {
                 formData.append('address', JSON.stringify(initialUser.address));
             }
-            
-            // Include base64 avatar if changed
-            if (avatarBase64) {
-                formData.append('avatarUrl', avatarBase64);
+            if (initialUser?.email) {
+                formData.append('email', initialUser.email);
+            }
+
+            // Include avatar file if changed
+            if (avatarFile) {
+                formData.append('avatar', avatarFile as any);
             }
 
             console.log('Sending Update Profile FormData:', formData);
