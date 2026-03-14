@@ -22,6 +22,9 @@ import { useAppStore } from '@/store/appStore';
 import { RootStackParamList } from '@/types/index';
 import COLOR_PALETTE from '@/styles/colorPalette';
 import { State } from 'react-native-ble-plx';
+import ProfileScreen from '@/screens/ProfileSreen';
+import EditProfileScreen from '@/screens/EditProfileScreen';
+import ChangePasswordScreen from '@/screens/ChangePasswordScreen';
 
 type TabKey = NonNullable<GNBProps['activeTab']>;
 
@@ -66,7 +69,7 @@ const MainTabsWithGNB = () => {
       case 'matched':
         return <ChatListScreen />;
       case 'profile':
-        return <ChatListScreen />;
+        return <ProfileScreen />;
       case 'settings':
         return <SettingsScreen />;
       case 'home':
@@ -100,7 +103,8 @@ const MainTabsWithGNB = () => {
 };
 
 const AppNavigator = () => {
-  const { isLoggedIn, isOnboarded, isInitialized, checkLoginStatus, user } = useAppStore();
+  const { isLoggedIn, isOnboarded, isInitialized, checkLoginStatus, user } =
+    useAppStore();
 
   useEffect(() => {
     checkLoginStatus();
@@ -114,7 +118,12 @@ const AppNavigator = () => {
     );
   }
 
-  console.log('[AppNavigator] Rendering Main Wrapper. isLoggedIn:', isLoggedIn, 'User:', JSON.stringify(user));
+  console.log(
+    '[AppNavigator] Rendering Main Wrapper. isLoggedIn:',
+    isLoggedIn,
+    'User:',
+    JSON.stringify(user),
+  );
   return (
     <SocketProvider>
       <NotificationBanner />
@@ -135,6 +144,19 @@ const AppNavigator = () => {
                 <>
                   <Stack.Screen name="Main" component={MainTabsWithGNB} />
                   <Stack.Screen name="Chat" component={ChatScreen} />
+                  <Stack.Screen
+                    name="EditProfile"
+                    component={EditProfileScreen}
+                    options={{
+                      headerShown: false,
+                      animation: 'slide_from_bottom',
+                    }}
+                  />
+                  <Stack.Screen
+                    name="ChangePassword"
+                    component={ChangePasswordScreen}
+                    options={{ headerShown: false }}
+                  />
                 </>
               )}
             </Stack.Group>

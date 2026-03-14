@@ -12,9 +12,10 @@ interface AppState {
   isInitialized: boolean;
   setIsInitialized: (value: boolean) => void;
   isLoggedIn: boolean;
+  setIsLoggedIn: (value: boolean) => void;  
   isOnboarded: boolean;
   hasSeenTutorial: boolean;
-  userToken: string | null;
+  token: string | null;
   user: any | null;
   setUser: (user: any) => Promise<void>;
   loveRequests: any[];
@@ -44,9 +45,10 @@ export const useAppStore = create<AppState>(set => ({
   isInitialized: false,
   setIsInitialized: (value: boolean) => set({ isInitialized: value }),
   isLoggedIn: false,
+  setIsLoggedIn: (value: boolean) => set({ isLoggedIn: value }),
   isOnboarded: false,
   hasSeenTutorial: false,
-  userToken: null,
+  token: null,
   user: null,
   setUser: async (user: any) => {
     console.log('[appStore] Updating User State to:', JSON.stringify(user));
@@ -59,9 +61,10 @@ export const useAppStore = create<AppState>(set => ({
   },
   loveRequests: [],
   setLoveRequests: (requests: any[]) => set({ loveRequests: requests }),
-  addLoveRequest: (request: any) => set(state => ({ 
-    loveRequests: [request, ...state.loveRequests] 
-  })),
+  addLoveRequest: (request: any) =>
+    set(state => ({
+      loveRequests: [request, ...state.loveRequests],
+    })),
   notification: null,
   setNotification: (msg: string | null) => set({ notification: msg }),
 
@@ -75,46 +78,64 @@ export const useAppStore = create<AppState>(set => ({
     set({ hasSeenTutorial: value });
   },
 
-  setLogin: async (token: string, isNewUser: boolean = false, user: any = null) => {
-    await AsyncStorage.setItem('userToken', token);
+  setLogin: async (
+    token: string,
+    isNewUser: boolean = false,
+    user: any = null,
+  ) => {
+    await AsyncStorage.setItem('token', token);
     if (user) {
       await AsyncStorage.setItem('user', JSON.stringify(user));
     }
     const onboardValue = (!isNewUser).toString();
     await AsyncStorage.setItem('isOnboarded', onboardValue);
-    
+
     if (isNewUser) {
       await AsyncStorage.setItem('hasSeenTutorial', 'false');
-      set({ isLoggedIn: true, userToken: token, user, isOnboarded: false, hasSeenTutorial: false });
+      set({
+        isLoggedIn: true,
+        token: token,
+        user,
+        isOnboarded: false,
+        hasSeenTutorial: false,
+      });
     } else {
       await AsyncStorage.setItem('hasSeenTutorial', 'true');
-      set({ isLoggedIn: true, userToken: token, user, isOnboarded: true, hasSeenTutorial: true });
+      set({
+        isLoggedIn: true,
+        token: token,
+        user,
+        isOnboarded: true,
+        hasSeenTutorial: true,
+      });
     }
   },
 
   setLogout: async () => {
-    await AsyncStorage.removeItem('userToken');
+    await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('isOnboarded');
     await AsyncStorage.removeItem('user');
-    set({ isLoggedIn: false, userToken: null, user: null, isOnboarded: false });
+    set({ isLoggedIn: false, token: null, user: null, isOnboarded: false });
   },
 
   checkLoginStatus: async () => {
     try {
-      const token = await AsyncStorage.getItem('userToken') || await AsyncStorage.getItem('token');
+      const token =
+        (await AsyncStorage.getItem('token')) ||
+        (await AsyncStorage.getItem('token'));
       const isOnboardedStr = await AsyncStorage.getItem('isOnboarded');
       const hasSeenTutorialStr = await AsyncStorage.getItem('hasSeenTutorial');
       const userStr = await AsyncStorage.getItem('user');
       const storedUser = userStr ? JSON.parse(userStr) : null;
       console.log('[appStore] checkLoginStatus - stored user:', storedUser);
       if (token) {
-        set({ 
-          isLoggedIn: true, 
-          userToken: token,
+        set({
+          isLoggedIn: true,
+          token: token,
           user: storedUser,
           isOnboarded: isOnboardedStr === 'true',
-          hasSeenTutorial: hasSeenTutorialStr === 'true'
+          hasSeenTutorial: hasSeenTutorialStr === 'true',
         });
       }
     } catch (error) {
