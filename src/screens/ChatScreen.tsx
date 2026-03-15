@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -18,6 +19,7 @@ import { useSocket } from '@/context/SocketContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAppStore } from '@/store/appStore';
 import { chatService } from '@/services/chatService';
+import { userService } from '@/services/userService';
 
 interface Message {
   id: string;
@@ -33,17 +35,65 @@ const ChatScreen = () => {
   const route = useRoute<any>();
   const { targetUser } = route.params;
   const { socket, emit } = useSocket();
-  const { user: currentUser, conversationId, setConversationId } = useAppStore();
+  const {
+    user: currentUser,
+    conversationId,
+    setConversationId,
+  } = useAppStore();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const flatListRef = useRef<FlatList>(null);
-  
+
   useEffect(() => {
-    if (route.params?.conversationId && route.params.conversationId !== conversationId) {
+    if (
+      route.params?.conversationId &&
+      route.params.conversationId !== conversationId
+    ) {
       setConversationId(route.params.conversationId);
     }
-  }, [route.params?.conversationId, conversationId, setConversationId]);
+  }, [
+    route.params?.conversationId,
+    conversationId,
+    setConversationId,
+    currentUser,
+    targetUser,
+  ]);
+
+  const [fullTargetUser, setFullTargetUser] = useState(targetUser);
+
+  useEffect(() => {
+    const fetchTargetProfile = async () => {
+      console.log('targetUser', targetUser);
+      const targetId = targetUser._id;
+      if (targetId) {
+        try {
+          console.log(
+            '[ChatScreen] Fetching full target profile for ID:',
+            targetId,
+          );
+          const res = await userService.getUserById(targetId);
+          const userData = res.data;
+          if (userData) {
+            console.log(
+              '[ChatScreen] Fetched Target Profile:',
+              JSON.stringify(userData),
+            );
+            setFullTargetUser({
+              ...targetUser,
+              name: userData.profile?.name,
+              avatarUrl: userData.avatarUrl,
+              profile: userData.profile,
+            });
+          }
+        } catch (error) {
+          console.error('[ChatScreen] Failed to fetch target profile:', error);
+        }
+      }
+    };
+    fetchTargetProfile();
+  }, [targetUser]);
 
   useEffect(() => {
     if (route.params.isFirstFriendshipMessage) {
@@ -64,17 +114,40 @@ const ChatScreen = () => {
       if (conversationId) {
         try {
           const res = await chatService.getMessages(conversationId);
-          const history = Array.isArray(res) ? res : 
-                          (res.data && Array.isArray(res.data) ? res.data : 
-                          (res.data?.messages && Array.isArray(res.data.messages) ? res.data.messages :
-                          (res.messages || [])));
-          
+          const history = Array.isArray(res)
+            ? res
+            : res.data && Array.isArray(res.data)
+            ? res.data
+            : res.data?.messages && Array.isArray(res.data.messages)
+            ? res.data.messages
+            : res.messages || [];
+
+          if (history.length === 0) {
+            console.log(
+              '[ChatScreen] First conversation detected, starting AI...',
+            );
+            const targetId = targetUser._id;
+            let interests = ['any'];
+            try {
+              const profileRes = await userService.getUserById(targetId);
+              interests = profileRes.data?.profile?.interest || ['any'];
+            } catch (err) {
+              console.warn(
+                '[ChatScreen] Failed to fetch interests for AI:',
+                err,
+              );
+            }
+            const aiRes = await chatService.startAIConversation(interests);
+            setAiSuggestions(aiRes);
+          }
           setMessages(prev => {
-            const existingIds = new Set(prev.map(m => (m.id || (m as any)._id)));
-            const newHistory = history.map((m: any) => ({
-              ...m,
-              id: m._id,
-            })).filter((m: any) => !existingIds.has(m.id));
+            const existingIds = new Set(prev.map(m => m.id || (m as any)._id));
+            const newHistory = history
+              .map((m: any) => ({
+                ...m,
+                id: m._id,
+              }))
+              .filter((m: any) => !existingIds.has(m.id));
             return [...newHistory.reverse(), ...prev];
           });
         } catch (error) {
@@ -98,13 +171,17 @@ const ChatScreen = () => {
         if (prev.find(m => (m.id || (m as any)._id) === msgId)) return prev;
         return [...prev, { ...newMsg, id: msgId }];
       });
-      console.log("conversationIdddddddđ", conversationId)
-      emit('message:seen', {
-        messageId: newMsg.id || newMsg._id,
-        conversationId: conversationId,
-      }, (callback: any) => {
-        console.log('[ChatScreen] message:seen callback:', callback);
-      });
+      console.log('conversationIdddddddđ', conversationId);
+      emit(
+        'message:seen',
+        {
+          messageId: newMsg.id || newMsg._id,
+          conversationId: conversationId,
+        },
+        (callback: any) => {
+          console.log('[ChatScreen] message:seen callback:', callback);
+        },
+      );
     };
 
     socket.on('message:new', handleNewMessage);
@@ -117,7 +194,7 @@ const ChatScreen = () => {
 
   const handleSend = () => {
     if (!inputText.trim()) return;
-    console.log("currentUserrrrrrrrrrrrr", conversationId)
+    console.log('currentUserrrrrrrrrrrrr', conversationId);
 
     const currentId = currentUser._id;
     const messageData = {
@@ -141,11 +218,33 @@ const ChatScreen = () => {
     emit('message:send', messageData, (callback: any) => {
       console.log('[ChatScreen] message:send callback:', callback);
       if (callback && (callback.id || callback._id)) {
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: callback.id || callback._id } : m));
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === tempId ? { ...m, id: callback.id || callback._id } : m,
+          ),
+        );
       }
     });
 
     setInputText('');
+  };
+
+  const formatMessageTime = (item: any) => {
+    const rawDate =
+      item.createdAt || item.created_at || item.timestamp || item.date;
+    const dateObj = rawDate ? new Date(rawDate) : new Date();
+
+    if (isNaN(dateObj.getTime())) {
+      return new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+
+    return dateObj.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const renderItem = ({ item }: { item: Message }) => {
@@ -156,35 +255,45 @@ const ChatScreen = () => {
         </View>
       );
     }
-    const senderId = item.senderId || (item as any).fromUserId || (item as any).userId;
-    const isMe = senderId === (currentUser.id || currentUser._id || currentUser.userId);
+    const senderId =
+      item.senderId || (item as any).fromUserId || (item as any).userId;
+    const isMe = senderId === currentUser._id;
     return (
-      <View style={[styles.messageWrapper, isMe ? styles.myMessageWrapper : styles.theirMessageWrapper]}>
+      <View
+        style={[
+          styles.messageWrapper,
+          isMe ? styles.myMessageWrapper : styles.theirMessageWrapper,
+        ]}
+      >
         {!isMe && (
           <View style={styles.avatarContainer}>
             <Image
-              source={{ uri: targetUser.avatarUrl }}
+              source={{ uri: fullTargetUser.avatarUrl }}
               style={styles.messageAvatar}
             />
           </View>
         )}
-        <View style={isMe ? styles.myMessageContainer : styles.theirMessageContainer}>
+        <View
+          style={
+            isMe ? styles.myMessageContainer : styles.theirMessageContainer
+          }
+        >
           {isMe ? (
-            <LinearGradient
-              colors={[COLOR_PALETTE.pink, '#FF4D6D']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.bubble, styles.myBubble]}
-            >
-              <Text style={styles.messageText}>{item.content}</Text>
-            </LinearGradient>
+            <View style={[styles.bubble, styles.myBubble]}>
+              <Text style={styles.myMessageText}>{item.content}</Text>
+            </View>
           ) : (
             <View style={[styles.bubble, styles.theirBubble]}>
-              <Text style={styles.messageText}>{item.content}</Text>
+              <Text style={styles.theirMessageText}>{item.content}</Text>
             </View>
           )}
-          <Text style={[styles.timestamp, isMe ? styles.myTimestamp : styles.theirTimestamp]}>
-            {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          <Text
+            style={[
+              styles.timestamp,
+              isMe ? styles.myTimestamp : styles.theirTimestamp,
+            ]}
+          >
+            {formatMessageTime(item)}
           </Text>
         </View>
       </View>
@@ -194,15 +303,18 @@ const ChatScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
-      
+
       <LinearGradient
         colors={['rgba(13, 13, 13, 0.95)', 'rgba(13, 13, 13, 0.8)']}
         style={styles.header}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+        >
           <Icon name="chevron-back" size={28} color="#FFF" />
         </TouchableOpacity>
-        
+
         <View style={styles.headerInfo}>
           <View style={styles.headerAvatarWrapper}>
             <LinearGradient
@@ -210,11 +322,16 @@ const ChatScreen = () => {
               style={styles.headerAvatarGlow}
             >
               <View style={styles.headerAvatarContainer}>
-                {targetUser.avatarUrl ? (
-                  <Image source={{ uri: targetUser.avatarUrl }} style={styles.headerAvatar} />
+                {fullTargetUser.avatarUrl ? (
+                  <Image
+                    source={{ uri: fullTargetUser.avatarUrl }}
+                    style={styles.headerAvatar}
+                  />
                 ) : (
                   <View style={styles.headerAvatarPlaceholder}>
-                    <Text style={styles.headerInitials}>{targetUser.name?.[0]}</Text>
+                    <Text style={styles.headerInitials}>
+                      {fullTargetUser.name?.[0]}
+                    </Text>
                   </View>
                 )}
               </View>
@@ -222,7 +339,7 @@ const ChatScreen = () => {
             <View style={styles.onlineIndicator} />
           </View>
           <View>
-            <Text style={styles.headerName}>{targetUser.name}</Text>
+            <Text style={styles.headerName}>{fullTargetUser.name}</Text>
             <View style={styles.statusRow}>
               <View style={styles.statusDot} />
               <Text style={styles.headerStatus}>Active Now</Text>
@@ -230,38 +347,70 @@ const ChatScreen = () => {
           </View>
         </View>
 
-        <TouchableOpacity 
-          style={styles.radarBtn} 
+        <TouchableOpacity
+          style={styles.radarBtn}
           onPress={() => navigation.navigate('Main')}
         >
-           <Icon name="heart" size={20} color={COLOR_PALETTE.pink} />
+          <Icon name="heart" size={20} color={COLOR_PALETTE.pink} />
         </TouchableOpacity>
       </LinearGradient>
 
-      {/* Message List */}
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={item => item.id || (item as any)._id || Math.random().toString()}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyAvatarContainer}>
-              <Image source={{ uri: targetUser.avatarUrl }} style={styles.emptyAvatar} />
-            </View>
-            <Text style={styles.emptyText}>{targetUser.name}</Text>
-            <Text style={styles.emptySubtext}>Say something to start the conversation.</Text>
-          </View>
-        }
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-      />
-
-      {/* Input */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={item =>
+            item.id || (item as any)._id || Math.random().toString()
+          }
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyAvatarContainer}>
+                <Image
+                  source={{ uri: fullTargetUser.avatarUrl }}
+                  style={styles.emptyAvatar}
+                />
+              </View>
+              <Text style={styles.emptyText}>{fullTargetUser.name}</Text>
+              <Text style={styles.emptySubtext}>
+                Say something to start the conversation.
+              </Text>
+            </View>
+          }
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+        />
+
+        {aiSuggestions.length > 0 && (
+          <View style={styles.suggestionsContainer}>
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              data={aiSuggestions}
+              keyExtractor={(item, index) => 'suggest_' + index}
+              contentContainerStyle={styles.suggestionsList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.suggestionBubble}
+                  onPress={() => {
+                    setInputText(item);
+                    setAiSuggestions(prev => prev.filter(s => s !== item));
+                  }}
+                >
+                  <View style={styles.botIconWrapper}>
+                    <Icon name="sparkles" size={12} color="#FFF" />
+                  </View>
+                  <Text style={styles.suggestionText}>{item}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
+
         <View style={styles.inputContainer}>
           <View style={styles.inputWrapper}>
             <TextInput
@@ -286,6 +435,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#050505',
+  },
+  keyboardView: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -396,7 +548,7 @@ const styles = StyleSheet.create({
   },
   messageWrapper: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 12,
     maxWidth: '85%',
   },
   myMessageWrapper: {
@@ -408,12 +560,12 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     alignSelf: 'flex-end',
-    marginRight: 10,
+    marginRight: 8,
   },
   messageAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
@@ -424,27 +576,45 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   bubble: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingVertical: 12,
-    borderRadius: 22,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 24,
   },
   myBubble: {
+    backgroundColor: '#0D0D0D',
+    borderWidth: 1,
     borderBottomRightRadius: 4,
+    borderColor: 'rgba(255, 194, 209, 0.4)',
+    boxShadow: 'inset 0px 1px 3px 0px #FFB2C5',
+    shadowColor: COLOR_PALETTE.pink,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 5,
   },
   theirBubble: {
-    backgroundColor: '#1A1A1A',
-    borderBottomLeftRadius: 4,
+    backgroundColor: COLOR_PALETTE.pink,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderBottomLeftRadius: 4,
+    boxShadow: 'inset 0px 1px 3px 0px #000',
+    shadowColor: COLOR_PALETTE.pink,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  messageText: {
+  myMessageText: {
     color: '#FFF',
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '500',
+    textShadowColor: 'rgba(255, 194, 209, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  theirMessageText: {
+    color: '#1A1A1A',
+    fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
   },
@@ -506,20 +676,65 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.05)',
   },
+  suggestionsContainer: {
+    paddingVertical: 12,
+    backgroundColor: '#050505',
+  },
+  suggestionsList: {
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  suggestionBubble: {
+    width: 270,
+    backgroundColor: '#0D0D0D',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 105, 180, 0.4)',
+    boxShadow: 'inset 0px 1px 3px 0px #FFB2C5',
+    shadowColor: '#FF69B4',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  botIconWrapper: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLOR_PALETTE.pink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    shadowColor: COLOR_PALETTE.pink,
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+  },
+  suggestionText: {
+    flex: 1,
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
   inputWrapper: {
     flex: 1,
-    backgroundColor: '#111',
     borderRadius: 24,
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     marginRight: 12,
+    backgroundColor: '#0D0D0D',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    boxShadow: 'inset 0px 1px 3px 0px #fff',
+    elevation: 5,
   },
   input: {
     color: '#FFF',
-    fontSize: 15,
-    maxHeight: 120,
+    fontSize: 14,
+    maxHeight: 100,
     paddingTop: Platform.OS === 'ios' ? 0 : 4,
   },
   sendBtn: {
@@ -529,11 +744,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLOR_PALETTE.pink,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    boxShadow: 'inset 0px 1px 2px 0px #000',
     shadowColor: COLOR_PALETTE.pink,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 5,
   },
   systemMessageWrapper: {
     alignSelf: 'center',
