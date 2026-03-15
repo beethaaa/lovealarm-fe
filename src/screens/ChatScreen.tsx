@@ -23,7 +23,8 @@ interface Message {
   id: string;
   senderId: string;
   content: string;
-  timestamp: string;
+  createdAt: Date;
+  updatedAt: Date;
   type: number;
 }
 
@@ -44,15 +45,14 @@ const ChatScreen = () => {
     }
   }, [route.params?.conversationId, conversationId, setConversationId]);
 
-
-
   useEffect(() => {
     if (route.params.isFirstFriendshipMessage) {
       const systemMsg: Message = {
         id: 'system_1',
         senderId: 'system',
         content: 'You and ' + targetUser.name + ' have become friends',
-        timestamp: new Date().toISOString(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
         type: 0,
       };
       setMessages([systemMsg]);
@@ -75,7 +75,7 @@ const ChatScreen = () => {
               ...m,
               id: m._id,
             })).filter((m: any) => !existingIds.has(m.id));
-            return [...newHistory, ...prev];
+            return [...newHistory.reverse(), ...prev];
           });
         } catch (error) {
           console.error('Failed to fetch messages:', error);
@@ -131,7 +131,8 @@ const ChatScreen = () => {
       id: tempId,
       senderId: currentId,
       content: inputText.trim(),
-      timestamp: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
       type: 1,
     };
 
@@ -183,7 +184,7 @@ const ChatScreen = () => {
             </View>
           )}
           <Text style={[styles.timestamp, isMe ? styles.myTimestamp : styles.theirTimestamp]}>
-            {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </Text>
         </View>
       </View>

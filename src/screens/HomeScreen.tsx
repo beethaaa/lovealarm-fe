@@ -225,7 +225,8 @@ const HomeScreen = (props: HomeScreenProps) => {
     try {
       // Create conversation via API POST as requested
       const currentId = currentUser._id || currentUser.id || currentUser.userId;
-      const conv = await chatService.createConversation([currentId, selectedUser.userId]);
+      const participants = [currentId, selectedUser.userId].sort();
+      const conv = await chatService.createConversation(participants);
       const conversationId = conv?._id || conv?.id || conv?.conversation?._id || conv?.conversation?.id || conv?.data?._id || conv?.data?.id;
 
       if (!conversationId) {
@@ -270,9 +271,27 @@ const HomeScreen = (props: HomeScreenProps) => {
       let conversationId = partner.conversationId;
 
       if (!conversationId) {
-        const participants = [currentId, partnerId];
-        const res = await chatService.createConversation(participants);
-        conversationId = res?._id || res?.id || res?.data?._id || res?.data?.id;
+        try {
+          const allConvsRes = await loveRequestService.getConversations();
+          const allConvs = Array.isArray(allConvsRes) ? allConvsRes : (allConvsRes?.data || []);
+          const existingConv = allConvs.find((c: any) => {
+            const p = c.partner || c.targetUser || c.toUser || {};
+            const pId = p.id || p._id || p.userId;
+            return pId && pId.toString() === partnerId.toString();
+          });
+
+          if (existingConv) {
+            console.log('[HomeScreen] Found existing conversation with partner:', existingConv.id || existingConv._id);
+            conversationId = existingConv.id || existingConv._id;
+          } else {
+            console.log('[HomeScreen] Creating new conversation array:', [currentId, partnerId].sort());
+            const participants = [currentId, partnerId].sort();
+            const res = await chatService.createConversation(participants);
+            conversationId = res?._id || res?.id || res?.data?._id || res?.data?.id;
+          }
+        } catch (err) {
+          console.error('[HomeScreen] Error finding existing conversation', err);
+        }
       }
       
       emit('love-request:accepted', { 

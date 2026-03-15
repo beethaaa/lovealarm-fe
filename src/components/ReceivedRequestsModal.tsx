@@ -11,6 +11,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import COLOR_PALETTE from '@/styles/colorPalette';
 import { loveRequestService } from '@/services/loveRequestService';
+import { userService } from '@/services/userService';
 import { useAppStore } from '@/store/appStore';
 
 const { width: W, height: H } = Dimensions.get('window');
@@ -46,10 +47,25 @@ const ReceivedRequestsModal: React.FC<ReceivedRequestsModalProps> = ({
       setLoveRequests(newList);
       onClose();
 
+      let senderName = request.fromUser?.name || 'User ' + request.fromUserId.slice(-4);
+      let senderAvatar = request.fromUser?.avatarUrl;
+
+      try {
+        const userInfo = await userService.getUserById(request.fromUserId);
+        const u = userInfo?.data?.user || userInfo?.data || userInfo?.user || userInfo;
+        if (u) {
+          senderName = u.name || u.profile?.name || senderName;
+          senderAvatar = u.avatarUrl || u.profile?.avatarUrl || senderAvatar;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch user info', err);
+      }
+
       const senderObj = {
         _id: request.fromUserId,
         id: request.fromUserId,
-        name: request.fromUser?.name || 'User ' + request.fromUserId.slice(-4),
+        name: senderName,
+        avatarUrl: senderAvatar,
         conversationId: res.conversation?._id,
       };
 

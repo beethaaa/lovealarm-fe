@@ -74,6 +74,25 @@ export const userService = {
     );
     return response.data;
   },
+  getUserById: async (userId: string) => {
+    try {
+      let token = await AsyncStorage.getItem('token');
+      const response = await axios.get(`${SERVER_URL}/api/users/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        'Lỗi Axios Get User by id:',
+        error.response?.data || error.message,
+      );
+      throw new Error(
+        error.response?.data?.message || 'Không thể lấy thông tin người dùng',
+      );
+    }
+  },
   getAllInterests: async () => {
     const headers = await getAuthHeader();
     const response = await axios.get(`${SERVER_URL}/api/interests/`, {
