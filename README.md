@@ -148,7 +148,12 @@ taskkill /PID 11580 (PID) /F
 
 npx react-native start --reset-cache
 npx react-native run-android  // run in new terminal
-npx react-native log-android  // check log
+npx react-native log-android  // check log (emulator or only 1 physical device)
+
+npx react-native run-android --deviceId <device_id>  // run on specific device
+adb -s <device_id> logcat *:S ReactNativeJS:V  // check log (multiple physical devices)
+
+
 ```
 
 ---
