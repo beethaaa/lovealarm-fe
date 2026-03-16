@@ -14,13 +14,17 @@ export const userService = {
       if (!token) {
         token = await AsyncStorage.getItem('token');
       }
-      const response = await axios.put(`${SERVER_URL}/api/users`, data, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const response = await axios.put(
+        `${SERVER_URL}/api/users/first-time`,
+        data,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: 30000,
         },
-        timeout: 30000,
-      });
+      );
       return response.data;
     } catch (error: any) {
       console.error(
@@ -54,7 +58,10 @@ export const userService = {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log('[userService] getProfile RAW response:', JSON.stringify(response.data));
+      console.log(
+        '[userService] getProfile RAW response:',
+        JSON.stringify(response.data),
+      );
       return response.data;
     } catch (error: any) {
       console.error(
@@ -78,12 +85,18 @@ export const userService = {
   getUserById: async (userId: string) => {
     try {
       let token = await AsyncStorage.getItem('token');
-      const response = await axios.get(`${SERVER_URL}/api/users/profile/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await axios.get(
+        `${SERVER_URL}/api/users/profile/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
-      console.log(`[userService] getUserById(${userId}) RAW response:`, JSON.stringify(response.data));
+      );
+      console.log(
+        `[userService] getUserById(${userId}) RAW response:`,
+        JSON.stringify(response.data),
+      );
       return response.data;
     } catch (error: any) {
       console.error(
