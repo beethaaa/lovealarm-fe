@@ -32,6 +32,8 @@ interface AppState {
   setActiveTab: (tab: any) => void;
   conversationId: string | null;
   setConversationId: (id: string | null) => void;
+  heartTrigger: number;
+  triggerHeart: () => void;
 }
 
 export const useAppStore = create<AppState>(set => ({
@@ -148,4 +150,6 @@ export const useAppStore = create<AppState>(set => ({
   setActiveTab: (tab: string) => set({ activeTab: tab }),
   conversationId: null,
   setConversationId: (id: string | null) => set({ conversationId: id }),
+  heartTrigger: 0,
+  triggerHeart: () => set(state => ({ heartTrigger: state.heartTrigger + 1 })),
 }));

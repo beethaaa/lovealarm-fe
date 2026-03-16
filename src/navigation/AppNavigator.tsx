@@ -16,7 +16,7 @@ import { SocketProvider } from '../context/SocketContext';
 import NotificationBanner from '@/components/NotificationBanner';
 
 import GNB, { GNBProps } from '@/components/GNB';
-import TutorialOverlay from '@/components/TutorialOverlay';
+// import TutorialOverlay from '@/components/TutorialOverlay';
 import { useLoveAlarm } from '@/hooks/useLoveAlarm';
 import { useAppStore } from '@/store/appStore';
 import { RootStackParamList } from '@/types/index';
@@ -31,7 +31,7 @@ type TabKey = NonNullable<GNBProps['activeTab']>;
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const MainTabsWithGNB = () => {
-  const { activeTab, setActiveTab } = useAppStore();
+  const { activeTab, setActiveTab, user, triggerHeart } = useAppStore();
   const {
     isScanning,
     startLoveAlarm,
@@ -43,6 +43,12 @@ const MainTabsWithGNB = () => {
   const isBluetoothOn = bluetoothState === State.PoweredOn;
 
   const handleScan = () => {
+    if (user?.mode === 2) {
+      triggerHeart();
+      setActiveTab('home');
+      return;
+    }
+
     if (!isBluetoothOn) {
       Alert.alert(
         'Oops bluetooth is off!',
@@ -97,7 +103,7 @@ const MainTabsWithGNB = () => {
         onProfile={() => handleTabPress('profile')}
         onSettings={() => handleTabPress('settings')}
       />
-      <TutorialOverlay />
+      {/* <TutorialOverlay /> */}
     </View>
   );
 };

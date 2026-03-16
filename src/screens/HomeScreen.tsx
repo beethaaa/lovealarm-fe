@@ -23,6 +23,7 @@ import { chatService } from '@/services/chatService';
 import { userService } from '@/services/userService';
 import { useAppStore } from '@/store/appStore';
 import { useNavigation } from '@react-navigation/native';
+import CoupleScreen from './CoupleScreen';
 
 const TYPEWRITER_TEXT = 'Are you crushing on anyone...';
 
@@ -507,6 +508,10 @@ const HomeScreen = (props: HomeScreenProps) => {
   const RING_RADII = [80, 110, 140];
 
   const isBluetoothOn = bluetoothState === State.PoweredOn;
+
+  if (currentUser?.mode === 2) {
+    return <CoupleScreen />;
+  }
 
   return (
     <View style={styles.container}>

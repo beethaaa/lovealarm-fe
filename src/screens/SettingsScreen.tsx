@@ -17,6 +17,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppStore } from '../store/appStore';
 import { authApi } from '../services/authService';
+import { coupleService } from '../services/coupleService';
+import { userService } from '../services/userService';
 import { LANGUAGES, changeLanguage as i18nChangeLanguage } from '../i18n';
 import COLOR_PALETTE from '../styles/colorPalette';
 
@@ -168,7 +170,7 @@ const SettingRow = ({
 
 const SettingsScreen = () => {
   const { t } = useTranslation();
-  const { language, setLanguage, theme, setTheme, setLogout } = useAppStore();
+  const { language, setLanguage, theme, setTheme, setLogout, user, setUser } = useAppStore();
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const isDark = theme === 'dark';
@@ -221,6 +223,32 @@ const SettingsScreen = () => {
               console.error('Logout API error:', error);
             } finally {
               await setLogout();
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleLeaveCouple = () => {
+    Alert.alert(
+      'Leave Couple Mode',
+      'Are you sure you want to leave the couple mode? You will return to normal scanning mode.',
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await coupleService.leaveCoupleMode();
+              // After leaving, we need to refresh the profile to update the mode
+              const profileRes = await userService.getProfile();
+              const userData = profileRes.user || profileRes.data?.user || profileRes;
+              await setUser(userData);
+              Alert.alert('Success', 'You have left the couple mode.');
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to leave couple mode');
             }
           },
         },
@@ -322,6 +350,14 @@ const SettingsScreen = () => {
             onPress={() => {}}
             iconColor={COLOR_PALETTE.lavenderBlush}
           />
+          {user?.mode === 2 && (
+            <SettingRow
+              iconName="heart-dislike-outline"
+              label="Leave Couple Mode"
+              onPress={handleLeaveCouple}
+              iconColor={COLORS.danger}
+            />
+          )}
           <SettingRow
             iconName="logout"
             iconType="MaterialCommunityIcons"
