@@ -292,7 +292,7 @@ const HomeScreen = (props: HomeScreenProps) => {
 
       navigation.navigate('Chat', {
         targetUser: {
-          id: selectedUser.userId,
+          _id: selectedUser.userId,
           name: selectedUser.name,
           avatarUrl: selectedUser.avatarUrl,
         },
@@ -370,7 +370,7 @@ const HomeScreen = (props: HomeScreenProps) => {
       setActiveTab('matched');
       navigation.navigate('Chat', {
         targetUser: {
-          id: partnerId,
+          _id: partnerId,
           name: partner.name || partner.username || 'Partner',
           avatarUrl: partner.avatarUrl || partner.profile?.avatarUrl,
         },
@@ -384,7 +384,7 @@ const HomeScreen = (props: HomeScreenProps) => {
       setActiveTab('matched');
       navigation.navigate('Chat', {
         targetUser: {
-          id: partnerId,
+          _id: partnerId,
           name: partner.name || partner.username || 'Partner',
           avatarUrl: partner.avatarUrl || partner.profile?.avatarUrl,
         },
@@ -664,13 +664,13 @@ const HomeScreen = (props: HomeScreenProps) => {
             onClose={() => setModalVisible(false)}
             onSend={handleSendLoveRequest}
             currentUser={{
-              id: currentUser._id || currentUser.userId,
+              _id: currentUser._id || currentUser.userId,
               name: currentUser.profile?.name || currentUser.name || 'Me',
               avatarUrl:
                 currentUser.profile?.avatarUrl || currentUser.avatarUrl,
             }}
             targetUser={{
-              id: selectedUser.userId,
+              _id: selectedUser.userId,
               name: selectedUser.name,
               avatarUrl: selectedUser.avatarUrl,
             }}

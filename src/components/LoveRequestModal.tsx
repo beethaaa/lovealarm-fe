@@ -15,7 +15,7 @@ import LinearGradient from 'react-native-linear-gradient';
 const { width: SW } = Dimensions.get('window');
 
 interface UserInfo {
-  id: string;
+  _id: string;
   name: string;
   avatarUrl?: string;
 }

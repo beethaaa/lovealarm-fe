@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
+  Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
@@ -21,6 +22,7 @@ import { useAppStore } from '@/store/appStore';
 import { chatService } from '@/services/chatService';
 import { userService } from '@/services/userService';
 import { coupleService } from '@/services/coupleService';
+import { Alert } from 'react-native';
 
 interface Message {
   id: string;
@@ -45,14 +47,21 @@ const ChatScreen = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [showCoupleModal, setShowCoupleModal] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  const handleAcceptCoupleMode = async () => {
+  const handleAcceptCoupleMode = () => {
+    setShowCoupleModal(true);
+  };
+
+  const confirmAcceptCoupleMode = async () => {
     try {
       await coupleService.acceptCouple(targetUser._id);
-      // console.log(res);
-    } catch (error) {
-      console.error(error);
+      setShowCoupleModal(false);
+      // You might want to show a success message or update UI here
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+      setShowCoupleModal(false);
     }
   };
 
@@ -439,6 +448,57 @@ const ChatScreen = () => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={showCoupleModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCoupleModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <LinearGradient
+            colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']}
+            style={styles.modalBackdrop}
+          >
+            <View style={styles.modalContent}>
+              <LinearGradient
+                colors={[COLOR_PALETTE.pink, COLOR_PALETTE.amaranthPink]}
+                style={styles.modalIconContainer}
+              >
+                <Icon name="heart" size={40} color="#FFF" />
+              </LinearGradient>
+
+              <Text style={styles.modalTitle}>Enter Couple Mode?</Text>
+              <Text style={styles.modalDescription}>
+                By entering Couple Mode with {fullTargetUser.name}, you'll
+                unlock exclusive features and a dedicated space for just the two
+                of you.
+              </Text>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => setShowCoupleModal(false)}
+                >
+                  <Text style={styles.cancelBtnText}>Maybe Later</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.confirmModalBtn}
+                  onPress={confirmAcceptCoupleMode}
+                >
+                  <LinearGradient
+                    colors={[COLOR_PALETTE.pink, COLOR_PALETTE.amaranthPink]}
+                    style={styles.confirmGradient}
+                  >
+                    <Text style={styles.confirmBtnText}>Confirm</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -779,6 +839,94 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBackdrop: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: '#121212',
+    borderRadius: 30,
+    padding: 30,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 194, 209, 0.2)',
+    boxShadow: '0px 10px 30px rgba(0,0,0,0.5)',
+    elevation: 10,
+  },
+  modalIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: COLOR_PALETTE.pink,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 8,
+  },
+  modalTitle: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: '900',
+    marginBottom: 15,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  modalDescription: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 30,
+    paddingHorizontal: 10,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 15,
+    width: '100%',
+  },
+  cancelBtn: {
+    flex: 1,
+    height: 55,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  cancelBtnText: {
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  confirmModalBtn: {
+    flex: 1,
+    height: 55,
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  confirmGradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmBtnText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800',
   },
 });
 
