@@ -193,6 +193,7 @@ const ChatScreen = () => {
       setMessages(prev => {
         const msgId = newMsg.id || newMsg._id;
         if (prev.find(m => (m.id || (m as any)._id) === msgId)) return prev;
+        if (newMsg.senderId !== targetUser._id) return prev;
         return [...prev, { ...newMsg, id: msgId }];
       });
       console.log('conversationIdddddddđ', conversationId);
