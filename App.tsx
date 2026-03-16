@@ -8,20 +8,30 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { useAppStore } from './src/store/appStore';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getFcmToken, requestUserPermission } from '@/services/notifService';
 
 axios.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  response => response,
+  async error => {
     if (error.response && error.response.status === 401) {
-      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem('token');
       await useAppStore.getState().setLogout();
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 const App = () => {
   const { setIsInitialized } = useAppStore();
+
+  useEffect(() => {
+    const init = async () => {
+      await requestUserPermission();
+      await getFcmToken();
+    };
+
+    init();
+  }, []);
 
   useEffect(() => {
     const init = async () => {
