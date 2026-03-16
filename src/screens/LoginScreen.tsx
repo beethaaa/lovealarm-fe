@@ -20,6 +20,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import COLOR_PALETTE from '../styles/colorPalette';
 import { authApi } from '../services/authService';
 import { useAppStore } from '../store/appStore';
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -238,6 +239,7 @@ const LoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [secureText, setSecureText] = useState(true);
   const setLogin = useAppStore(state => state.setLogin);
+  const setActiveTab = useAppStore(state => state.setActiveTab);
 
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideUp = useRef(new Animated.Value(32)).current;
@@ -283,6 +285,7 @@ const LoginScreen = ({ navigation }: any) => {
 
       if (token) {
         await setLogin(token, isNewUser, user);
+        setActiveTab('home');
       } else {
         Alert.alert('Lỗi dữ liệu', 'Đăng nhập OK nhưng không tìm thấy token.');
       }
@@ -392,6 +395,7 @@ const LoginScreen = ({ navigation }: any) => {
           </View>
         </Animated.View>
       </ScrollView>
+      <LoadingOverlay visible={loading} message="Heartbeat Syncing..." />
     </KeyboardAvoidingView>
   );
 };

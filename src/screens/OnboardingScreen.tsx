@@ -37,13 +37,25 @@ const GENDERS = [
 ];
 
 const PREDEFINED_INTERESTS = [
-  'Music', 'Travel', 'Food', 'Sports',
-  'Art', 'Reading', 'Gaming', 'Photography',
+  'Music',
+  'Travel',
+  'Food',
+  'Sports',
+  'Art',
+  'Reading',
+  'Gaming',
+  'Photography',
 ];
 
 const PREDEFINED_PERSONALITIES = [
-  'Outgoing', 'Creative', 'Introvert', 'Energetic',
-  'Romantic', 'Chill', 'Ambitious', 'Funny',
+  'Outgoing',
+  'Creative',
+  'Introvert',
+  'Energetic',
+  'Romantic',
+  'Chill',
+  'Ambitious',
+  'Funny',
 ];
 
 const PinkInput = ({
@@ -84,7 +96,10 @@ const PinkInput = ({
         style={[
           styles.fieldInputRow,
           { borderColor },
-          focused && ({ boxShadow: 'inset 0px -1px 8px 0px rgba(255,194,209,0.08)' } as ViewStyle)
+          focused &&
+            ({
+              boxShadow: 'inset 0px -1px 8px 0px rgba(255,194,209,0.08)',
+            } as ViewStyle),
         ]}
       >
         <TextInput
@@ -116,7 +131,7 @@ const ProgressBar = ({ step, total }: { step: number; total: number }) => {
   }, [step]);
   const width = progress.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0%', '100%']
+    outputRange: ['0%', '100%'],
   });
   return (
     <View style={styles.progressTrack}>
@@ -126,7 +141,7 @@ const ProgressBar = ({ step, total }: { step: number; total: number }) => {
 };
 
 const OnboardingScreen = () => {
-  const { setIsOnboarded } = useAppStore();
+  const { setIsOnboarded, setActiveTab } = useAppStore();
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -163,9 +178,12 @@ const OnboardingScreen = () => {
   };
 
   const handleNext = () => {
-    if (step === 0 && !name.trim()) return Alert.alert('Thông báo', 'Vui lòng cho biết tên của bạn!');
-    if (step === 1 && (!birthday.trim() || gender === null)) return Alert.alert('Thông báo', 'Vui lòng điền ngày sinh và giới tính!');
-    if (step === 2 && !location.trim()) return Alert.alert('Thông báo', 'Vui lòng cho biết bạn đến từ đâu!');
+    if (step === 0 && !name.trim())
+      return Alert.alert('Thông báo', 'Vui lòng cho biết tên của bạn!');
+    if (step === 1 && (!birthday.trim() || gender === null))
+      return Alert.alert('Thông báo', 'Vui lòng điền ngày sinh và giới tính!');
+    if (step === 2 && !location.trim())
+      return Alert.alert('Thông báo', 'Vui lòng cho biết bạn đến từ đâu!');
 
     if (step < 3) {
       setStep(step + 1);
@@ -187,10 +205,10 @@ const OnboardingScreen = () => {
     try {
       const parts = birthday.split('/');
       let isoDate = '2000-01-01T00:00:00Z';
-      if (parts.length === 3) isoDate = `${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`;
+      if (parts.length === 3)
+        isoDate = `${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`;
 
       const payload = {
-        avatarUrl: 'https://example.com/avatar.jpg',
         profile: {
           name,
           gender: gender || 1,
@@ -202,6 +220,7 @@ const OnboardingScreen = () => {
       };
 
       await userService.updateUser(payload);
+      setActiveTab('home');
       setIsOnboarded(true);
     } catch (error: any) {
       Alert.alert('Lỗi', error.message || 'Không thể cập nhật hồ sơ.');
@@ -218,7 +237,10 @@ const OnboardingScreen = () => {
   );
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.root}
+    >
       <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
 
       <View style={styles.headerRow}>
@@ -226,7 +248,9 @@ const OnboardingScreen = () => {
           <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
             <Icon name="arrow-back" size={20} color={COLOR_PALETTE.pink} />
           </TouchableOpacity>
-        ) : <View style={styles.backBtnPlaceholder} />}
+        ) : (
+          <View style={styles.backBtnPlaceholder} />
+        )}
         <Text style={styles.brandTitle}>LOVE ALARM</Text>
         <View style={styles.backBtnPlaceholder} />
       </View>
@@ -243,18 +267,40 @@ const OnboardingScreen = () => {
         style={{ flex: 1 }}
       >
         <View style={styles.slide}>
-          {renderHeader('Bạn tên là gì?', 'Tên này sẽ hiển thị trên hồ sơ của bạn và gợi ý cho mọi người.')}
-          <PinkInput label="TÊN HIỂN THỊ" placeholder="Nhập tên của bạn" value={name} onChangeText={setName} />
+          {renderHeader(
+            'Bạn tên là gì?',
+            'Tên này sẽ hiển thị trên hồ sơ của bạn và gợi ý cho mọi người.',
+          )}
+          <PinkInput
+            label="TÊN HIỂN THỊ"
+            placeholder="Nhập tên của bạn"
+            value={name}
+            onChangeText={setName}
+          />
         </View>
 
         <View style={styles.slide}>
-          {renderHeader('Thông tin cơ bản', 'Chọn ngày sinh và giới tính để nhận được những gợi ý chuẩn xác nhất.')}
-          <TouchableOpacity activeOpacity={0.8} onPress={() => {
-            Keyboard.dismiss();
-            setShowDatePicker(true);
-          }}>
+          {renderHeader(
+            'Thông tin cơ bản',
+            'Chọn ngày sinh và giới tính để nhận được những gợi ý chuẩn xác nhất.',
+          )}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => {
+              Keyboard.dismiss();
+              setShowDatePicker(true);
+            }}
+          >
             <View pointerEvents="none">
-              <PinkInput label="NGÀY SINH" placeholder="DD/MM/YYYY" value={birthday} onChangeText={() => { }} keyboardType="numeric" maxLength={10} editable={false} />
+              <PinkInput
+                label="NGÀY SINH"
+                placeholder="DD/MM/YYYY"
+                value={birthday}
+                onChangeText={() => {}}
+                keyboardType="numeric"
+                maxLength={10}
+                editable={false}
+              />
             </View>
           </TouchableOpacity>
           {Platform.OS === 'ios' && showDatePicker && (
@@ -267,15 +313,53 @@ const OnboardingScreen = () => {
             />
           )}
 
-          <Text style={[styles.fieldLabel, { color: 'rgba(255,194,209,0.4)', marginTop: 24, marginBottom: 12 }]}>GIỚI TÍNH CỦA BẠN</Text>
+          <Text
+            style={[
+              styles.fieldLabel,
+              {
+                color: 'rgba(255,194,209,0.4)',
+                marginTop: 24,
+                marginBottom: 12,
+              },
+            ]}
+          >
+            GIỚI TÍNH CỦA BẠN
+          </Text>
           <View style={styles.genderContainer}>
             {GENDERS.map(g => {
               const isActive = gender === g.value;
               return (
-                <TouchableOpacity key={g.value} style={[styles.genderBox, isActive && styles.genderBoxActive]} onPress={() => setGender(g.value)} activeOpacity={0.8}>
-                  {isActive && <LinearGradient colors={['rgba(255,194,209,0.15)', 'rgba(255,194,209,0.02)']} style={[StyleSheet.absoluteFill, { borderRadius: 16 }]} />}
-                  <Icon name={g.icon} size={28} color={isActive ? COLOR_PALETTE.pink : 'rgba(255,194,209,0.3)'} style={{ marginBottom: 8 }} />
-                  <Text style={[styles.genderText, isActive && styles.genderTextActive]}>{g.label}</Text>
+                <TouchableOpacity
+                  key={g.value}
+                  style={[styles.genderBox, isActive && styles.genderBoxActive]}
+                  onPress={() => setGender(g.value)}
+                  activeOpacity={0.8}
+                >
+                  {isActive && (
+                    <LinearGradient
+                      colors={[
+                        'rgba(255,194,209,0.15)',
+                        'rgba(255,194,209,0.02)',
+                      ]}
+                      style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
+                    />
+                  )}
+                  <Icon
+                    name={g.icon}
+                    size={28}
+                    color={
+                      isActive ? COLOR_PALETTE.pink : 'rgba(255,194,209,0.3)'
+                    }
+                    style={{ marginBottom: 8 }}
+                  />
+                  <Text
+                    style={[
+                      styles.genderText,
+                      isActive && styles.genderTextActive,
+                    ]}
+                  >
+                    {g.label}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
@@ -283,26 +367,66 @@ const OnboardingScreen = () => {
         </View>
 
         <View style={styles.slide}>
-          {renderHeader('Bạn đến từ đâu?', 'Chia sẻ khu vực để bắt sóng với những người xung quanh bạn dễ dàng hơn.')}
-          <PinkInput label="VỊ TRÍ / ĐỊA ĐIỂM" placeholder="VD: Hà Nội, Việt Nam" value={location} onChangeText={setLocation} />
+          {renderHeader(
+            'Bạn đến từ đâu?',
+            'Chia sẻ khu vực để bắt sóng với những người xung quanh bạn dễ dàng hơn.',
+          )}
+          <PinkInput
+            label="VỊ TRÍ / ĐỊA ĐIỂM"
+            placeholder="VD: Hà Nội, Việt Nam"
+            value={location}
+            onChangeText={setLocation}
+          />
         </View>
 
         <View style={styles.slide}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
-            {renderHeader('Sở thích & Tính cách', 'Hãy để mọi người hiểu thêm về con người thật của bạn.')}
-            <Text style={[styles.fieldLabel, { color: 'rgba(255,194,209,0.4)', marginBottom: 16 }]}>SỞ THÍCH</Text>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 60 }}
+          >
+            {renderHeader(
+              'Sở thích & Tính cách',
+              'Hãy để mọi người hiểu thêm về con người thật của bạn.',
+            )}
+            <Text
+              style={[
+                styles.fieldLabel,
+                { color: 'rgba(255,194,209,0.4)', marginBottom: 16 },
+              ]}
+            >
+              SỞ THÍCH
+            </Text>
             <View style={styles.chipContainer}>
               {[...PREDEFINED_INTERESTS, ...customInterests].map(item => {
                 const isActive = interests.includes(item);
                 return (
-                  <TouchableOpacity key={item} style={[styles.chip, isActive && styles.chipActive]}
-                    onPress={() => setInterests(isActive ? interests.filter(i => i !== item) : [...interests, item])}>
-                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{item}</Text>
+                  <TouchableOpacity
+                    key={item}
+                    style={[styles.chip, isActive && styles.chipActive]}
+                    onPress={() =>
+                      setInterests(
+                        isActive
+                          ? interests.filter(i => i !== item)
+                          : [...interests, item],
+                      )
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        isActive && styles.chipTextActive,
+                      ]}
+                    >
+                      {item}
+                    </Text>
                   </TouchableOpacity>
                 );
               })}
 
-              <TouchableOpacity style={styles.chipAdd} onPress={() => setShowInterestInput(true)}>
+              <TouchableOpacity
+                style={styles.chipAdd}
+                onPress={() => setShowInterestInput(true)}
+              >
                 <Icon name="add" size={16} color="rgba(255,194,209,0.5)" />
                 <Text style={styles.chipAddText}>Khác</Text>
               </TouchableOpacity>
@@ -322,7 +446,11 @@ const OnboardingScreen = () => {
                   style={styles.customAddBtn}
                   onPress={() => {
                     const val = newInterest.trim();
-                    if (val && !PREDEFINED_INTERESTS.includes(val) && !customInterests.includes(val)) {
+                    if (
+                      val &&
+                      !PREDEFINED_INTERESTS.includes(val) &&
+                      !customInterests.includes(val)
+                    ) {
                       setCustomInterests([...customInterests, val]);
                       setInterests([...interests, val]);
                     }
@@ -335,19 +463,51 @@ const OnboardingScreen = () => {
               </View>
             )}
 
-            <Text style={[styles.fieldLabel, { color: 'rgba(255,194,209,0.4)', marginTop: 32, marginBottom: 16 }]}>TÍNH CÁCH</Text>
+            <Text
+              style={[
+                styles.fieldLabel,
+                {
+                  color: 'rgba(255,194,209,0.4)',
+                  marginTop: 32,
+                  marginBottom: 16,
+                },
+              ]}
+            >
+              TÍNH CÁCH
+            </Text>
             <View style={styles.chipContainer}>
-              {[...PREDEFINED_PERSONALITIES, ...customPersonalities].map(item => {
-                const isActive = personalities.includes(item);
-                return (
-                  <TouchableOpacity key={item} style={[styles.chip, isActive && styles.chipActive]}
-                    onPress={() => setPersonalities(isActive ? personalities.filter(p => p !== item) : [...personalities, item])}>
-                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{item}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+              {[...PREDEFINED_PERSONALITIES, ...customPersonalities].map(
+                item => {
+                  const isActive = personalities.includes(item);
+                  return (
+                    <TouchableOpacity
+                      key={item}
+                      style={[styles.chip, isActive && styles.chipActive]}
+                      onPress={() =>
+                        setPersonalities(
+                          isActive
+                            ? personalities.filter(p => p !== item)
+                            : [...personalities, item],
+                        )
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.chipText,
+                          isActive && styles.chipTextActive,
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                },
+              )}
 
-              <TouchableOpacity style={styles.chipAdd} onPress={() => setShowPersonalityInput(true)}>
+              <TouchableOpacity
+                style={styles.chipAdd}
+                onPress={() => setShowPersonalityInput(true)}
+              >
                 <Icon name="add" size={16} color="rgba(255,194,209,0.5)" />
                 <Text style={styles.chipAddText}>Khác</Text>
               </TouchableOpacity>
@@ -367,7 +527,11 @@ const OnboardingScreen = () => {
                   style={styles.customAddBtn}
                   onPress={() => {
                     const val = newPersonality.trim();
-                    if (val && !PREDEFINED_PERSONALITIES.includes(val) && !customPersonalities.includes(val)) {
+                    if (
+                      val &&
+                      !PREDEFINED_PERSONALITIES.includes(val) &&
+                      !customPersonalities.includes(val)
+                    ) {
                       setCustomPersonalities([...customPersonalities, val]);
                       setPersonalities([...personalities, val]);
                     }
@@ -394,11 +558,27 @@ const OnboardingScreen = () => {
       )}
 
       <View style={styles.footer}>
-        <TouchableOpacity style={[styles.mainBtn, loading && { opacity: 0.6 }]} onPress={handleNext} disabled={loading} activeOpacity={0.85}>
-          {loading ? <ActivityIndicator color={COLOR_PALETTE.pink} /> : (
+        <TouchableOpacity
+          style={[styles.mainBtn, loading && { opacity: 0.6 }]}
+          onPress={handleNext}
+          disabled={loading}
+          activeOpacity={0.85}
+        >
+          {loading ? (
+            <ActivityIndicator color={COLOR_PALETTE.pink} />
+          ) : (
             <>
-              <Text style={styles.mainBtnText}>{step === 3 ? 'Bắt đầu ngay' : 'Tiếp theo'}</Text>
-              {step < 3 && <Icon name="arrow-forward" size={18} color={COLOR_PALETTE.pink} style={{ marginLeft: 8 }} />}
+              <Text style={styles.mainBtnText}>
+                {step === 3 ? 'Bắt đầu ngay' : 'Tiếp theo'}
+              </Text>
+              {step < 3 && (
+                <Icon
+                  name="arrow-forward"
+                  size={18}
+                  color={COLOR_PALETTE.pink}
+                  style={{ marginLeft: 8 }}
+                />
+              )}
             </>
           )}
         </TouchableOpacity>
@@ -501,7 +681,9 @@ const styles = StyleSheet.create({
   },
   genderBoxActive: {
     borderColor: COLOR_PALETTE.pink,
-    ...({ boxShadow: 'inset 0px 0px 12px 0px rgba(255,194,209,0.2)' } as ViewStyle),
+    ...({
+      boxShadow: 'inset 0px 0px 12px 0px rgba(255,194,209,0.2)',
+    } as ViewStyle),
   },
   genderText: {
     fontSize: 14,

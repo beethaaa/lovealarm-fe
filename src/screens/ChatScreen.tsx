@@ -21,6 +21,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAppStore } from '@/store/appStore';
 import { chatService } from '@/services/chatService';
 import { userService } from '@/services/userService';
+import LoadingOverlay from '@/components/LoadingOverlay';
 import { coupleService } from '@/services/coupleService';
 import { Alert } from 'react-native';
 
@@ -40,13 +41,15 @@ const ChatScreen = () => {
   const { socket, emit } = useSocket();
   const {
     user: currentUser,
-    conversationId,
+    conversationId: globalConvId,
     setConversationId,
   } = useAppStore();
+  const conversationId = route.params?.conversationId;
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showCoupleModal, setShowCoupleModal] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -58,7 +61,6 @@ const ChatScreen = () => {
     try {
       await coupleService.acceptCouple(targetUser._id);
       setShowCoupleModal(false);
-      // You might want to show a success message or update UI here
     } catch (error: any) {
       Alert.alert('Error', error.message);
       setShowCoupleModal(false);
@@ -66,15 +68,12 @@ const ChatScreen = () => {
   };
 
   useEffect(() => {
-    if (
-      route.params?.conversationId &&
-      route.params.conversationId !== conversationId
-    ) {
-      setConversationId(route.params.conversationId);
+    if (conversationId && conversationId !== globalConvId) {
+      setConversationId(conversationId);
     }
   }, [
-    route.params?.conversationId,
     conversationId,
+    globalConvId,
     setConversationId,
     currentUser,
     targetUser,
@@ -84,8 +83,7 @@ const ChatScreen = () => {
 
   useEffect(() => {
     const fetchTargetProfile = async () => {
-      console.log('targetUser', targetUser);
-      const targetId = targetUser._id;
+      const targetId = targetUser._id || targetUser.id;
       if (targetId) {
         try {
           console.log(
@@ -134,6 +132,7 @@ const ChatScreen = () => {
         console.log('conversation: ', conversationId);
 
         try {
+          if (messages.length === 0) setLoading(true);
           const res = await chatService.getMessages(conversationId);
           const history = Array.isArray(res)
             ? res
@@ -173,7 +172,11 @@ const ChatScreen = () => {
           });
         } catch (error) {
           console.error('Failed to fetch messages:', error);
+        } finally {
+          setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
     };
     fetchMessages();
@@ -190,6 +193,7 @@ const ChatScreen = () => {
       setMessages(prev => {
         const msgId = newMsg.id || newMsg._id;
         if (prev.find(m => (m.id || (m as any)._id) === msgId)) return prev;
+        if (newMsg.senderId !== targetUser._id) return prev;
         return [...prev, { ...newMsg, id: msgId }];
       });
       console.log('conversationIdddddddđ', conversationId);
@@ -448,6 +452,7 @@ const ChatScreen = () => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+      <LoadingOverlay visible={loading} message="Loading Signal..." />
 
       <Modal
         visible={showCoupleModal}

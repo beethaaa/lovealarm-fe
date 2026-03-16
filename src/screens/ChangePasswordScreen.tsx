@@ -20,6 +20,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import COLOR_PALETTE from '../styles/colorPalette';
 import { userService } from '../services/userService';
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 const PinkInput = ({
     icon,
@@ -273,6 +274,7 @@ const ChangePasswordScreen = () => {
                     </TouchableOpacity>
                 </Animated.View>
             </ScrollView>
+            <LoadingOverlay visible={loading} message="Securing Account..." />
         </KeyboardAvoidingView>
     );
 };

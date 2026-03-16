@@ -230,7 +230,7 @@ const HomeScreen = (props: HomeScreenProps) => {
         } catch (error) {
           console.error('[HomeScreen] Failed to fetch profile:', error);
         }
-      }
+      } 
     };
     fetchProfile();
   }, [currentUser, setCurrentUser]);
@@ -264,8 +264,9 @@ const HomeScreen = (props: HomeScreenProps) => {
     try {
       // Create conversation via API POST as requested
       const currentId = currentUser._id || currentUser.id || currentUser.userId;
-      const participants = [currentId, selectedUser.userId].sort();
-      const conv = await chatService.createConversation(participants);
+      const partnerId = selectedUser.userId;
+
+      const conv = await chatService.getOrCreateConversation(currentId, partnerId);
       const conversationId =
         conv?._id ||
         conv?.id ||
@@ -275,11 +276,7 @@ const HomeScreen = (props: HomeScreenProps) => {
         conv?.data?.id;
 
       if (!conversationId) {
-        console.warn(
-          '[HomeScreen] Failed to extract conversationId from:',
-          JSON.stringify(conv),
-        );
-        throw new Error('Failed to create conversation session');
+        throw new Error('Failed to identify conversation session');
       }
 
       await loveRequestService.sendLoveRequest(selectedUser.userId);
@@ -328,35 +325,12 @@ const HomeScreen = (props: HomeScreenProps) => {
 
       if (!conversationId) {
         try {
-          const allConvsRes = await loveRequestService.getConversations();
-          const allConvs = Array.isArray(allConvsRes)
-            ? allConvsRes
-            : allConvsRes?.data || [];
-          const existingConv = allConvs.find((c: any) => {
-            const p = c.partner || c.targetUser || c.toUser || {};
-            const pId = p.id || p._id || p.userId;
-            return pId && pId.toString() === partnerId.toString();
-          });
-
-          if (existingConv) {
-            console.log(
-              '[HomeScreen] Found existing conversation with partner:',
-              existingConv.id || existingConv._id,
-            );
-            conversationId = existingConv.id || existingConv._id;
-          } else {
-            console.log(
-              '[HomeScreen] Creating new conversation array:',
-              [currentId, partnerId].sort(),
-            );
-            const participants = [currentId, partnerId].sort();
-            const res = await chatService.createConversation(participants);
-            conversationId =
-              res?._id || res?.id || res?.data?._id || res?.data?.id;
-          }
+          const res = await chatService.getOrCreateConversation(currentId, partnerId);
+          conversationId =
+            res?._id || res?.id || res?.data?._id || res?.data?.id;
         } catch (err) {
           console.error(
-            '[HomeScreen] Error finding existing conversation',
+            '[HomeScreen] Error ensuring conversation exists',
             err,
           );
         }
