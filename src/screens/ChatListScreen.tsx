@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Image,
   StatusBar,
-  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import COLOR_PALETTE from '@/styles/colorPalette';
@@ -16,6 +15,7 @@ import { useAppStore } from '@/store/appStore';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { userService } from '@/services/userService';
 import LinearGradient from 'react-native-linear-gradient';
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 const ConversationRow = ({
   item,
@@ -27,11 +27,13 @@ const ConversationRow = ({
   navigation: any;
 }) => {
   const [partnerInfo, setPartnerInfo] = useState<any>(null);
-  console.log('item', item);
 
-  const myId = currentUser?._id;
+  const myId = currentUser?._id || currentUser?.id;
   const partnerId = Array.isArray(item.participants)
-    ? item.participants.find((p: string) => p !== myId)
+    ? item.participants.find((p: any) => {
+        const pid = (typeof p === 'object' ? (p._id || p.id) : p)?.toString();
+        return pid !== myId;
+      })
     : null;
 
   useEffect(() => {
@@ -56,7 +58,7 @@ const ConversationRow = ({
   const displayPartner = partnerInfo
     ? {
         ...partnerInfo,
-        name: partnerInfo.profile?.name,
+        name: partnerInfo.profile?.name || partnerInfo.name,
         avatarUrl: partnerInfo.avatarUrl,
       }
     : {};
@@ -67,7 +69,7 @@ const ConversationRow = ({
       onPress={() =>
         navigation.navigate('Chat', {
           targetUser: displayPartner,
-          conversationId: item._id,
+          conversationId: item._id || item.id,
         })
       }
     >
@@ -117,8 +119,30 @@ const ChatListScreen = () => {
   useEffect(() => {
     const fetchConversations = async () => {
       try {
+        setLoading(true);
         const res = await loveRequestService.getConversations();
-        setConversations(res.data || []);
+        const raw = res.data || [];
+        
+        const filtered: any[] = [];
+        const seenPairs = new Set<string>();
+        
+        raw.forEach((c: any) => {
+          const participants = (c.participants || []).map((p: any) => 
+            (typeof p === 'object' ? (p._id || p.id) : p)?.toString()
+          ).filter(Boolean).sort();
+          
+          if (participants.length === 2) {
+            const pairKey = participants.join(',');
+            if (!seenPairs.has(pairKey)) {
+              seenPairs.add(pairKey);
+              filtered.push(c);
+            }
+          } else {
+            filtered.push(c);
+          }
+        });
+
+        setConversations(filtered);
       } catch (error) {
         console.error('Failed to fetch conversations:', error);
       } finally {
@@ -154,25 +178,19 @@ const ChatListScreen = () => {
           </View>
         </View>
         
-        {/* Search Placeholder / Decorative bar */}
         <View style={styles.searchBar}>
           <Icon name="search" size={18} color="rgba(255,255,255,0.3)" />
           <Text style={styles.searchPlaceholder}>Search friends...</Text>
         </View>
       </LinearGradient>
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={COLOR_PALETTE.pink} />
-          <Text style={styles.loadingText}>Syncing hearts...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={conversations}
-          keyExtractor={item => item.id || item._id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={
+      <FlatList
+        data={conversations}
+        keyExtractor={item => item.id || item._id}
+        renderItem={renderItem}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          !loading ? (
             <View style={styles.empty}>
               <LinearGradient
                 colors={['rgba(255, 194, 209, 0.1)', 'transparent']}
@@ -184,9 +202,7 @@ const ChatListScreen = () => {
                   color="rgba(255, 194, 209, 0.3)"
                 />
               </LinearGradient>
-              <Text style={styles.emptyText}>
-                The radar is quiet...
-              </Text>
+              <Text style={styles.emptyText}>The radar is quiet...</Text>
               <Text style={styles.emptySubtext}>
                 Turn on your Love Alarm radar to find someone special nearby!
               </Text>
@@ -197,9 +213,10 @@ const ChatListScreen = () => {
                 <Text style={styles.findBtnText}>Open Radar</Text>
               </TouchableOpacity>
             </View>
-          }
-        />
-      )}
+          ) : null
+        }
+      />
+      <LoadingOverlay visible={loading} message="Syncing hearts..." />
     </View>
   );
 };
@@ -358,18 +375,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 194, 209, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 1,
   },
   empty: {
     marginTop: 60,

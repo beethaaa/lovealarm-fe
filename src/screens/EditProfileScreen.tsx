@@ -20,6 +20,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import DatePicker from 'react-native-date-picker';
 import COLOR_PALETTE from '../styles/colorPalette';
 import { userService } from '../services/userService';
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 const GENDER_OPTIONS = [
     { label: 'Male', val: 0 },
@@ -513,6 +514,7 @@ const EditProfileScreen = () => {
 
                     <View style={{ height: 60 }} />
                 </ScrollView>
+                <LoadingOverlay visible={loading} message="Updating Profile..." />
             </View>
         </TouchableWithoutFeedback>
     );

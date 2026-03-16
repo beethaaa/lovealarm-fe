@@ -17,6 +17,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import COLOR_PALETTE from '../styles/colorPalette';
 import { userService } from '../services/userService';
 import { useAppStore } from '../store/appStore';
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 const formatDate = (raw: string | undefined): string => {
     if (!raw) return '---';
@@ -86,14 +87,7 @@ const ProfileScreen = () => {
     );
 
 
-    if (loading && !user) {
-        return (
-            <View style={styles.loadingCenter}>
-                {/* Loader could go here if imported, but we removed ActivityIndicator */}
-                <Text style={{color: COLOR_PALETTE.pink}}>Loading...</Text>
-            </View>
-        );
-    }
+    if (!user && !loading) return null;
 
     const profile = user?.profile || {};
     const displayName = profile.name || user?.name || 'User';
@@ -214,6 +208,7 @@ const ProfileScreen = () => {
 
                 <View style={{ height: 200 }} />
             </ScrollView>
+            <LoadingOverlay visible={loading} message="Fetching Profile..." />
         </View>
     );
 };
