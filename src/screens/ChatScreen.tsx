@@ -20,6 +20,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAppStore } from '@/store/appStore';
 import { chatService } from '@/services/chatService';
 import { userService } from '@/services/userService';
+import { coupleService } from '@/services/coupleService';
 
 interface Message {
   id: string;
@@ -45,6 +46,15 @@ const ChatScreen = () => {
   const [inputText, setInputText] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const flatListRef = useRef<FlatList>(null);
+
+  const handleAcceptCoupleMode = async () => {
+    try {
+      await coupleService.acceptCouple(targetUser._id);
+      // console.log(res);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
     if (
@@ -112,6 +122,8 @@ const ChatScreen = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       if (conversationId) {
+        console.log('conversation: ', conversationId);
+
         try {
           const res = await chatService.getMessages(conversationId);
           const history = Array.isArray(res)
@@ -349,7 +361,7 @@ const ChatScreen = () => {
 
         <TouchableOpacity
           style={styles.radarBtn}
-          onPress={() => navigation.navigate('Main')}
+          onPress={handleAcceptCoupleMode}
         >
           <Icon name="heart" size={20} color={COLOR_PALETTE.pink} />
         </TouchableOpacity>
