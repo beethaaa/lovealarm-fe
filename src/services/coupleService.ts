@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { SERVER_URL } from '../constants/service';
+import { SERVER_URL } from '@/constants/service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const coupleService = {
@@ -19,6 +19,31 @@ export const coupleService = {
       );
       throw new Error(
         error.response?.data?.message || 'Failed to get couple info',
+      );
+    }
+  },
+
+  acceptCouple: async (toUserId: string) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await axios.post(
+        `${SERVER_URL}/api/couples/accept`,
+        { toUserId },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        'Error accepting couple request:',
+        error.response?.data || error.message,
+      );
+      throw new Error(
+        error.response?.data?.message || 'Failed to accept couple request',
       );
     }
   },
