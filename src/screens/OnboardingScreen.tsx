@@ -24,6 +24,9 @@ import { userService } from '../services/userService';
 import { useAppStore } from '../store/appStore';
 import LinearGradient from 'react-native-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+AsyncStorage.clear();
 
 const { width: SW } = Dimensions.get('window');
 
@@ -124,7 +127,7 @@ const ProgressBar = ({ step, total }: { step: number; total: number }) => {
 
 const OnboardingScreen = () => {
   const { setIsOnboarded } = useAppStore();
-  
+
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -135,7 +138,7 @@ const OnboardingScreen = () => {
   const [location, setLocation] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
   const [personalities, setPersonalities] = useState<string[]>([]);
-  
+
   const [customInterests, setCustomInterests] = useState<string[]>([]);
   const [customPersonalities, setCustomPersonalities] = useState<string[]>([]);
   const [showInterestInput, setShowInterestInput] = useState(false);
@@ -236,7 +239,7 @@ const OnboardingScreen = () => {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         scrollEnabled={false}
-        keyboardShouldPersistTaps="handled" 
+        keyboardShouldPersistTaps="handled"
         style={{ flex: 1 }}
       >
         <View style={styles.slide}>
@@ -251,7 +254,7 @@ const OnboardingScreen = () => {
             setShowDatePicker(true);
           }}>
             <View pointerEvents="none">
-              <PinkInput label="NGÀY SINH" placeholder="DD/MM/YYYY" value={birthday} onChangeText={() => {}} keyboardType="numeric" maxLength={10} editable={false} />
+              <PinkInput label="NGÀY SINH" placeholder="DD/MM/YYYY" value={birthday} onChangeText={() => { }} keyboardType="numeric" maxLength={10} editable={false} />
             </View>
           </TouchableOpacity>
           {Platform.OS === 'ios' && showDatePicker && (
@@ -270,9 +273,9 @@ const OnboardingScreen = () => {
               const isActive = gender === g.value;
               return (
                 <TouchableOpacity key={g.value} style={[styles.genderBox, isActive && styles.genderBoxActive]} onPress={() => setGender(g.value)} activeOpacity={0.8}>
-                   {isActive && <LinearGradient colors={['rgba(255,194,209,0.15)', 'rgba(255,194,209,0.02)']} style={[StyleSheet.absoluteFill, { borderRadius: 16 }]} />}
-                   <Icon name={g.icon} size={28} color={isActive ? COLOR_PALETTE.pink : 'rgba(255,194,209,0.3)'} style={{ marginBottom: 8 }} />
-                   <Text style={[styles.genderText, isActive && styles.genderTextActive]}>{g.label}</Text>
+                  {isActive && <LinearGradient colors={['rgba(255,194,209,0.15)', 'rgba(255,194,209,0.02)']} style={[StyleSheet.absoluteFill, { borderRadius: 16 }]} />}
+                  <Icon name={g.icon} size={28} color={isActive ? COLOR_PALETTE.pink : 'rgba(255,194,209,0.3)'} style={{ marginBottom: 8 }} />
+                  <Text style={[styles.genderText, isActive && styles.genderTextActive]}>{g.label}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -298,7 +301,7 @@ const OnboardingScreen = () => {
                   </TouchableOpacity>
                 );
               })}
-              
+
               <TouchableOpacity style={styles.chipAdd} onPress={() => setShowInterestInput(true)}>
                 <Icon name="add" size={16} color="rgba(255,194,209,0.5)" />
                 <Text style={styles.chipAddText}>Khác</Text>
@@ -343,7 +346,7 @@ const OnboardingScreen = () => {
                   </TouchableOpacity>
                 );
               })}
-              
+
               <TouchableOpacity style={styles.chipAdd} onPress={() => setShowPersonalityInput(true)}>
                 <Icon name="add" size={16} color="rgba(255,194,209,0.5)" />
                 <Text style={styles.chipAddText}>Khác</Text>

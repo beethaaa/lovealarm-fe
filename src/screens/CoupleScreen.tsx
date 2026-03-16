@@ -7,6 +7,8 @@ import {
   Image,
   Dimensions,
   StatusBar,
+  Modal,
+  TouchableOpacity,
 } from 'react-native';
 import COLOR_PALETTE from '../styles/colorPalette';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -145,6 +147,7 @@ const CoupleScreen = () => {
   const [randomWish, setRandomWish] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [hearts, setHearts] = useState<{ id: number }[]>([]);
+  const [showPartnerProfile, setShowPartnerProfile] = useState(false);
   const beat = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -263,7 +266,11 @@ const CoupleScreen = () => {
         </View>
 
         {/* Partner */}
-        <View style={[styles.avatarWrapper, styles.userB]}>
+        <TouchableOpacity 
+          activeOpacity={0.9}
+          onPress={() => setShowPartnerProfile(true)}
+          style={[styles.avatarWrapper, styles.userB]}
+        >
           <Text style={styles.userName}>{partnerName}</Text>
           <View style={styles.avatarBorder}>
             <Image
@@ -271,7 +278,7 @@ const CoupleScreen = () => {
               style={styles.avatar}
             />
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
 
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -281,6 +288,73 @@ const CoupleScreen = () => {
           ))}
         </View>
       </View>
+
+      {/* Partner Profile Modal */}
+      <Modal
+        visible={showPartnerProfile}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPartnerProfile(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity 
+            style={StyleSheet.absoluteFill} 
+            activeOpacity={1} 
+            onPress={() => setShowPartnerProfile(false)} 
+          />
+          <View style={styles.modalContainer}>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setShowPartnerProfile(false)}
+            >
+              <Icon name="close" size={24} color="#FFF" />
+            </TouchableOpacity>
+
+            <View style={styles.modalHeader}>
+              <View style={styles.modalAvatarBorder}>
+                <Image
+                  source={{ uri: partnerAvatar || defaultAvatar }}
+                  style={styles.modalAvatar}
+                />
+              </View>
+              <Text style={styles.modalName}>{partnerName}</Text>
+              <View style={styles.genderBadge}>
+                <Icon 
+                  name={partner?.profile?.gender === 1 ? "female" : "male"} 
+                  size={14} 
+                  color={COLOR_PALETTE.pink} 
+                />
+                <Text style={styles.genderText}>
+                  {partner?.profile?.gender === 1 ? "Female" : "Male"}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.modalBody}>
+              <View style={styles.infoRow}>
+                <Icon name="calendar-outline" size={18} color="rgba(255,255,255,0.5)" />
+                <Text style={styles.infoText}>
+                  {partner?.profile?.birthday || '---'}
+                </Text>
+              </View>
+
+              <View style={styles.tagSection}>
+                <Text style={styles.sectionLabel}>Sở thích & Tính cách</Text>
+                <View style={styles.tagWrapper}>
+                  {[...(partner?.profile?.interest || []), ...(partner?.profile?.personalityTags || [])].map((tag: string, idx: number) => (
+                    <View key={idx} style={styles.tagItem}>
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </View>
+                  ))}
+                  {(!partner?.profile?.interest?.length && !partner?.profile?.personalityTags?.length) && (
+                    <Text style={styles.emptyText}>Chưa có thông tin</Text>
+                  )}
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -398,5 +472,122 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 36,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: SW * 0.85,
+    backgroundColor: '#161616',
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255,194,209,0.2)',
+    padding: 24,
+    alignItems: 'center',
+    boxShadow: '0px 0px 30px rgba(255, 136, 170, 0.15)',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  modalAvatarBorder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: COLOR_PALETTE.pink,
+    padding: 4,
+    marginBottom: 16,
+  },
+  modalAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 56,
+  },
+  modalName: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#FFF',
+    letterSpacing: 0.5,
+  },
+  genderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,194,209,0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+    gap: 6,
+  },
+  genderText: {
+    color: COLOR_PALETTE.pink,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  modalBody: {
+    width: '100%',
+    gap: 20,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  infoText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  tagSection: {
+    width: '100%',
+  },
+  sectionLabel: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 12,
+    opacity: 0.9,
+    textAlign: 'center',
+  },
+  tagWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  tagItem: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  tagText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  emptyText: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 12,
+    fontStyle: 'italic',
   },
 });

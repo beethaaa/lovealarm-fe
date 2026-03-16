@@ -20,6 +20,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import DatePicker from 'react-native-date-picker';
 import COLOR_PALETTE from '../styles/colorPalette';
 import { userService } from '../services/userService';
+import { useAppStore } from '../store/appStore';
 
 const GENDER_OPTIONS = [
     { label: 'Male', val: 0 },
@@ -201,6 +202,7 @@ const EditProfileScreen = () => {
     const route = useRoute<any>();
 
     const initialUser = route.params?.user;
+    const { setUser } = useAppStore();
 
     const [loading, setLoading] = useState(false);
     const [allInterests, setAllInterests] = useState<string[]>([]);
@@ -357,6 +359,31 @@ const EditProfileScreen = () => {
             console.log('Sending Update Profile FormData:', formData);
 
             await userService.updateProfile(formData);
+
+            // Fetch latest profile and update appStore
+            try {
+                const res = await userService.getProfile();
+                const latestUser =
+                    res.data?.user && typeof res.data.user === 'object'
+                        ? res.data.user
+                        : res.data?.data?.user && typeof res.data.data.user === 'object'
+                            ? res.data.data.user
+                            : res.user && typeof res.user === 'object'
+                                ? res.user
+                                : res.data &&
+                                    typeof res.data === 'object' &&
+                                    (res.data._id || res.data.id)
+                                    ? res.data
+                                    : res && typeof res === 'object' && (res._id || res.id)
+                                        ? res
+                                        : null;
+
+                if (latestUser) {
+                    await setUser(latestUser);
+                }
+            } catch (err) {
+                console.error('[EditProfileScreen] Failed to refresh profile after update:', err);
+            }
 
             navigation.goBack();
         } catch (error: any) {
