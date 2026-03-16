@@ -25,6 +25,7 @@ import { State } from 'react-native-ble-plx';
 import ProfileScreen from '@/screens/ProfileSreen';
 import EditProfileScreen from '@/screens/EditProfileScreen';
 import ChangePasswordScreen from '@/screens/ChangePasswordScreen';
+import { navigationRef } from './NavigationService';
 
 type TabKey = NonNullable<GNBProps['activeTab']>;
 
@@ -127,7 +128,7 @@ const AppNavigator = () => {
   return (
     <SocketProvider>
       <NotificationBanner />
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <Stack.Navigator
           screenOptions={{
             headerStyle: { backgroundColor: '#0A0A0A' },

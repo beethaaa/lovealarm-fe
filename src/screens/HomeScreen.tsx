@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { useLoveAlarm, ScanResult } from '@hooks/useLoveAlarm';
+import messaging from '@react-native-firebase/messaging';
 import COLOR_PALETTE from '@/styles/colorPalette';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
@@ -23,6 +24,7 @@ import { chatService } from '@/services/chatService';
 import { userService } from '@/services/userService';
 import { useAppStore } from '@/store/appStore';
 import { useNavigation } from '@react-navigation/native';
+import { getFcmToken, requestUserPermission } from '@/services/notifService';
 
 const TYPEWRITER_TEXT = 'Are you crushing on anyone...';
 
@@ -176,6 +178,24 @@ const HomeScreen = (props: HomeScreenProps) => {
   const [selectedUser, setSelectedUser] = useState<ScanResult | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [_isSending, setIsSending] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      console.log('Foreground message:', remoteMessage);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    // init for fcm notification
+    const init = async () => {
+      await requestUserPermission();
+      await getFcmToken();
+    };
+
+    init();
+  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
