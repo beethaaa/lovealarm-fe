@@ -110,6 +110,75 @@ const ConversationRow = ({
   );
 };
 
+const ActiveFriendBubble = ({ item, currentUser, navigation }: any) => {
+  const [partnerInfo, setPartnerInfo] = useState<any>(null);
+
+  const myId = currentUser?._id || currentUser?.id;
+  const partnerId = Array.isArray(item.participants)
+    ? item.participants.find((p: any) => {
+        const pid = (typeof p === 'object' ? (p._id || p.id) : p)?.toString();
+        return pid !== myId;
+      })
+    : null;
+
+  useEffect(() => {
+    const fetchPartner = async () => {
+      if (!partnerId) return;
+      try {
+        const res = await userService.getUserById(partnerId);
+        const u = res.data;
+        if (u) {
+          setPartnerInfo(u);
+        }
+      } catch {}
+    };
+    fetchPartner();
+  }, [partnerId]);
+
+  if (!partnerInfo) return null;
+
+  const displayPartner = {
+    ...partnerInfo,
+    name: partnerInfo.profile?.name || partnerInfo.name,
+    avatarUrl: partnerInfo.avatarUrl,
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.activeFriendBubble}
+      onPress={() =>
+        navigation.navigate('Chat', {
+          targetUser: displayPartner,
+          conversationId: item._id || item.id,
+        })
+      }
+    >
+      <View style={styles.activeAvatarWrapper}>
+        <LinearGradient
+          colors={[COLOR_PALETTE.pink, COLOR_PALETTE.roseRed]}
+          style={styles.activeAvatarGlow}
+        >
+          <View style={styles.activeAvatarContainer}>
+            {displayPartner.avatarUrl ? (
+              <Image source={{ uri: displayPartner.avatarUrl }} style={styles.activeAvatar} />
+            ) : (
+              <View style={styles.activeAvatarPlaceholder}>
+                <Text style={styles.activeInitials}>
+                  {displayPartner.name?.[0] || '?'}
+                </Text>
+              </View>
+            )}
+          </View>
+        </LinearGradient>
+        <View style={styles.activeStatusDot} />
+      </View>
+      <Text style={styles.activeFriendName} numberOfLines={1}>
+        {displayPartner.name?.split(' ')[0] || 'Unknown'}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
 const ChatListScreen = () => {
   const navigation = useNavigation<any>();
   const [conversations, setConversations] = useState<any[]>([]);
@@ -160,6 +229,28 @@ const ChatListScreen = () => {
     />
   );
 
+  const renderActiveFriendsList = () => {
+    if (!conversations || conversations.length === 0) return null;
+    return (
+      <View style={styles.activeFriendsContainer}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={conversations}
+          keyExtractor={item => 'active_' + (item.id || item._id)}
+          renderItem={({ item }) => (
+            <ActiveFriendBubble
+              item={item}
+              currentUser={currentUser}
+              navigation={navigation}
+            />
+          )}
+          contentContainerStyle={styles.activeFriendsList}
+        />
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#050505" />
@@ -189,6 +280,7 @@ const ChatListScreen = () => {
         keyExtractor={item => item.id || item._id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
+        ListHeaderComponent={renderActiveFriendsList}
         ListEmptyComponent={
           !loading ? (
             <View style={styles.empty}>
@@ -206,12 +298,6 @@ const ChatListScreen = () => {
               <Text style={styles.emptySubtext}>
                 Turn on your Love Alarm radar to find someone special nearby!
               </Text>
-              <TouchableOpacity 
-                style={styles.findBtn}
-                onPress={() => navigation.navigate('Main')}
-              >
-                <Text style={styles.findBtnText}>Open Radar</Text>
-              </TouchableOpacity>
             </View>
           ) : null
         }
@@ -288,6 +374,74 @@ const styles = StyleSheet.create({
   list: {
     padding: 20,
     paddingBottom: 100,
+  },
+  activeFriendsContainer: {
+    paddingVertical: 12,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  activeFriendsList: {
+    paddingHorizontal: 0,
+    gap: 16,
+  },
+  activeFriendBubble: {
+    alignItems: 'center',
+    width: 64,
+  },
+  activeAvatarWrapper: {
+    position: 'relative',
+    marginBottom: 6,
+  },
+  activeAvatarGlow: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    padding: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeAvatarContainer: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 28,
+    overflow: 'hidden',
+    backgroundColor: '#1A1A1A',
+    borderWidth: 2,
+    borderColor: '#050505',
+  },
+  activeAvatar: {
+    width: '100%',
+    height: '100%',
+  },
+  activeAvatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#1A1A1A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeInitials: {
+    color: COLOR_PALETTE.pink,
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  activeStatusDot: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#22C55E',
+    borderWidth: 2,
+    borderColor: '#050505',
+  },
+  activeFriendName: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   chatRow: {
     flexDirection: 'row',

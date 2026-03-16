@@ -123,7 +123,7 @@ const ProgressBar = ({ step, total }: { step: number; total: number }) => {
 };
 
 const OnboardingScreen = () => {
-  const { setIsOnboarded } = useAppStore();
+  const { setIsOnboarded, setActiveTab } = useAppStore();
   
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -187,7 +187,6 @@ const OnboardingScreen = () => {
       if (parts.length === 3) isoDate = `${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`;
 
       const payload = {
-        avatarUrl: 'https://example.com/avatar.jpg',
         profile: {
           name,
           gender: gender || 1,
@@ -199,6 +198,7 @@ const OnboardingScreen = () => {
       };
 
       await userService.updateUser(payload);
+      setActiveTab('home');
       setIsOnboarded(true);
     } catch (error: any) {
       Alert.alert('Lỗi', error.message || 'Không thể cập nhật hồ sơ.');

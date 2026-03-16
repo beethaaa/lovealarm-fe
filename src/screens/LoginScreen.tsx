@@ -239,6 +239,7 @@ const LoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [secureText, setSecureText] = useState(true);
   const setLogin = useAppStore(state => state.setLogin);
+  const setActiveTab = useAppStore(state => state.setActiveTab);
 
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideUp = useRef(new Animated.Value(32)).current;
@@ -284,6 +285,7 @@ const LoginScreen = ({ navigation }: any) => {
 
       if (token) {
         await setLogin(token, isNewUser, user);
+        setActiveTab('home');
       } else {
         Alert.alert('Lỗi dữ liệu', 'Đăng nhập OK nhưng không tìm thấy token.');
       }

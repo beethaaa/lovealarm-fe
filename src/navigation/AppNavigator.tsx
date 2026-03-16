@@ -16,7 +16,7 @@ import { SocketProvider } from '../context/SocketContext';
 import NotificationBanner from '@/components/NotificationBanner';
 
 import GNB, { GNBProps } from '@/components/GNB';
-// import TutorialOverlay from '@/components/TutorialOverlay';
+import TutorialOverlay from '@/components/TutorialOverlay';
 import { useLoveAlarm } from '@/hooks/useLoveAlarm';
 import { useAppStore } from '@/store/appStore';
 import { RootStackParamList } from '@/types/index';
@@ -104,7 +104,7 @@ const MainTabsWithGNB = () => {
         onProfile={() => handleTabPress('profile')}
         onSettings={() => handleTabPress('settings')}
       />
-      {/* <TutorialOverlay /> */}
+      <TutorialOverlay />
     </View>
   );
 };

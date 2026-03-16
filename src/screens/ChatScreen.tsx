@@ -41,9 +41,10 @@ const ChatScreen = () => {
   const { socket, emit } = useSocket();
   const {
     user: currentUser,
-    conversationId,
+    conversationId: globalConvId,
     setConversationId,
   } = useAppStore();
+  const conversationId = route.params?.conversationId;
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -60,7 +61,6 @@ const ChatScreen = () => {
     try {
       await coupleService.acceptCouple(targetUser._id);
       setShowCoupleModal(false);
-      // You might want to show a success message or update UI here
     } catch (error: any) {
       Alert.alert('Error', error.message);
       setShowCoupleModal(false);
@@ -68,15 +68,12 @@ const ChatScreen = () => {
   };
 
   useEffect(() => {
-    if (
-      route.params?.conversationId &&
-      route.params.conversationId !== conversationId
-    ) {
-      setConversationId(route.params.conversationId);
+    if (conversationId && conversationId !== globalConvId) {
+      setConversationId(conversationId);
     }
   }, [
-    route.params?.conversationId,
     conversationId,
+    globalConvId,
     setConversationId,
     currentUser,
     targetUser,
