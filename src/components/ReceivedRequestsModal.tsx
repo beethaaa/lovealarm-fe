@@ -12,6 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import COLOR_PALETTE from '@/styles/colorPalette';
 import { loveRequestService } from '@/services/loveRequestService';
+import { chatService } from '@/services/chatService';
 import { userService } from '@/services/userService';
 import { useAppStore } from '@/store/appStore';
 
@@ -114,11 +115,28 @@ const ReceivedRequestsModal: React.FC<ReceivedRequestsModalProps> = ({
 
     setLoadingId(loveRequestId);
     try {
+      // Check if conversation already exists before accepting
+      const currentId = useAppStore.getState().user?._id || useAppStore.getState().user?.id;
+      const partnerId = request.fromUserId;
+      
+      let existingConversationId = null;
+      if (currentId && partnerId) {
+        try {
+          const conv = await chatService.getOrCreateConversation(currentId, partnerId);
+          existingConversationId = conv?._id || conv?.id;
+        } catch (err) {
+          console.warn('Error pre-checking conversation:', err);
+        }
+      }
+
       const res = await loveRequestService.responseLoveRequest(
         loveRequestId,
         true,
       );
-      setConversationId(res.conversation?._id);
+      
+      // Use existing one if found, otherwise use what server returned
+      const finalConversationId = existingConversationId || res.conversation?._id;
+      setConversationId(finalConversationId);
 
       const newList = loveRequests.filter(
         r => r.loveRequestId !== loveRequestId,
@@ -147,7 +165,7 @@ const ReceivedRequestsModal: React.FC<ReceivedRequestsModalProps> = ({
         id: request.fromUserId,
         name: senderName,
         avatarUrl: senderAvatar,
-        conversationId: res.conversation?._id,
+        conversationId: finalConversationId,
       };
 
       onRequestAccepted(senderObj);

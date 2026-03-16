@@ -20,6 +20,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import COLOR_PALETTE from '../styles/colorPalette';
 import { authApi } from '../services/authService';
 import { useAppStore } from '../store/appStore';
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -392,6 +393,7 @@ const LoginScreen = ({ navigation }: any) => {
           </View>
         </Animated.View>
       </ScrollView>
+      <LoadingOverlay visible={loading} message="Heartbeat Syncing..." />
     </KeyboardAvoidingView>
   );
 };

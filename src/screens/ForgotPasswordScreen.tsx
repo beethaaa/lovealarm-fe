@@ -19,6 +19,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import COLOR_PALETTE from '../styles/colorPalette';
 import { authApi } from '../services/authService';
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -521,6 +522,7 @@ const ForgotPasswordScreen = ({ navigation }: any) => {
           </View>
         </Animated.View>
       </ScrollView>
+      <LoadingOverlay visible={loading} message="Processing Request..." />
     </KeyboardAvoidingView>
   );
 };

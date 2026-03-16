@@ -21,6 +21,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAppStore } from '@/store/appStore';
 import { chatService } from '@/services/chatService';
 import { userService } from '@/services/userService';
+import LoadingOverlay from '@/components/LoadingOverlay';
 import { coupleService } from '@/services/coupleService';
 import { Alert } from 'react-native';
 
@@ -47,6 +48,7 @@ const ChatScreen = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showCoupleModal, setShowCoupleModal] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -84,8 +86,7 @@ const ChatScreen = () => {
 
   useEffect(() => {
     const fetchTargetProfile = async () => {
-      console.log('targetUser', targetUser);
-      const targetId = targetUser._id;
+      const targetId = targetUser._id || targetUser.id;
       if (targetId) {
         try {
           console.log(
@@ -134,6 +135,7 @@ const ChatScreen = () => {
         console.log('conversation: ', conversationId);
 
         try {
+          if (messages.length === 0) setLoading(true);
           const res = await chatService.getMessages(conversationId);
           const history = Array.isArray(res)
             ? res
@@ -173,7 +175,11 @@ const ChatScreen = () => {
           });
         } catch (error) {
           console.error('Failed to fetch messages:', error);
+        } finally {
+          setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
     };
     fetchMessages();
@@ -448,6 +454,7 @@ const ChatScreen = () => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+      <LoadingOverlay visible={loading} message="Loading Signal..." />
 
       <Modal
         visible={showCoupleModal}
