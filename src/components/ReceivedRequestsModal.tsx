@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   FlatList,
   Dimensions,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import COLOR_PALETTE from '@/styles/colorPalette';
@@ -22,6 +23,76 @@ interface ReceivedRequestsModalProps {
   onRequestAccepted: (partner: any) => void;
 }
 
+const RequestItem = ({
+  item,
+  onAccept,
+  loadingId,
+}: {
+  item: any;
+  onAccept: (item: any) => void;
+  loadingId: string | null;
+}) => {
+  const [userInfo, setUserInfo] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchInfo = async () => {
+      try {
+        const res = await userService.getUserById(item.fromUserId);
+        const u = res.data;
+        if (u) {
+          setUserInfo(u);
+        }
+      } catch (err) {
+        console.warn(
+          'Failed to fetch user info for request item:',
+          item.fromUserId,
+          err,
+        );
+      }
+    };
+    fetchInfo();
+  }, [item.fromUserId]);
+
+  const id = item.loveRequestId;
+  const isAccepting = loadingId === id;
+  const displayName =
+    userInfo?.profile?.name || 'User ' + item.fromUserId.slice(-4);
+  const avatarUrl = userInfo?.avatarUrl;
+
+  return (
+    <View style={styles.requestItem}>
+      <View style={styles.avatarContainer}>
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.initials}>
+              {displayName?.[0]?.toUpperCase() || '?'}
+            </Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.info}>
+        <Text style={styles.name}>{displayName}</Text>
+        <TouchableOpacity
+          style={styles.acceptBtn}
+          onPress={() => onAccept(item)}
+          disabled={isAccepting}
+        >
+          <Icon
+            name={isAccepting ? 'refresh-outline' : 'checkmark-circle-outline'}
+            size={18}
+            color={COLOR_PALETTE.pink}
+          />
+          <Text style={styles.acceptText}>
+            {isAccepting ? 'Accepting...' : 'Accept'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
 const ReceivedRequestsModal: React.FC<ReceivedRequestsModalProps> = ({
   visible,
   onClose,
@@ -34,25 +105,35 @@ const ReceivedRequestsModal: React.FC<ReceivedRequestsModalProps> = ({
     const loveRequestId = request.loveRequestId;
 
     if (!loveRequestId) {
-      console.error('No loveRequestId found in signal object:', JSON.stringify(request));
+      console.error(
+        'No loveRequestId found in signal object:',
+        JSON.stringify(request),
+      );
       return;
     }
 
     setLoadingId(loveRequestId);
     try {
-      const res = await loveRequestService.responseLoveRequest(loveRequestId, true);
+      const res = await loveRequestService.responseLoveRequest(
+        loveRequestId,
+        true,
+      );
       setConversationId(res.conversation?._id);
 
-      const newList = loveRequests.filter(r => r.loveRequestId !== loveRequestId);
+      const newList = loveRequests.filter(
+        r => r.loveRequestId !== loveRequestId,
+      );
       setLoveRequests(newList);
       onClose();
 
-      let senderName = request.fromUser?.name || 'User ' + request.fromUserId.slice(-4);
+      let senderName =
+        request.fromUser?.name || 'User ' + request.fromUserId.slice(-4);
       let senderAvatar = request.fromUser?.avatarUrl;
 
       try {
         const userInfo = await userService.getUserById(request.fromUserId);
-        const u = userInfo?.data?.user || userInfo?.data || userInfo?.user || userInfo;
+        const u =
+          userInfo?.data?.user || userInfo?.data || userInfo?.user || userInfo;
         if (u) {
           senderName = u.name || u.profile?.name || senderName;
           senderAvatar = u.avatarUrl || u.profile?.avatarUrl || senderAvatar;
@@ -77,44 +158,9 @@ const ReceivedRequestsModal: React.FC<ReceivedRequestsModalProps> = ({
     }
   };
 
-  const renderItem = ({ item }: { item: any }) => {
-
-    const id = item.loveRequestId;
-    const isAccepting = loadingId === id;
-
-    return (
-      <View style={styles.requestItem}>
-        {/* <View style={styles.avatarContainer}>
-          {senderAvatar ? (
-            <Image source={{ uri: senderAvatar }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.initials}>{senderName?.[0]?.toUpperCase() || '?'}</Text>
-            </View>
-          )}
-        </View> */}
-        <View style={styles.info}>
-          <Text style={styles.name}>{item.fromUserId}</Text>
-          <TouchableOpacity
-            style={styles.acceptBtn}
-            onPress={() => handleAccept(item)}
-            disabled={isAccepting}
-          >
-            <Icon
-              name={
-                isAccepting ? 'refresh-outline' : 'checkmark-circle-outline'
-              }
-              size={18}
-              color={COLOR_PALETTE.pink}
-            />
-            <Text style={styles.acceptText}>
-              {isAccepting ? 'Accepting...' : 'Accept'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
+  const renderItem = ({ item }: { item: any }) => (
+    <RequestItem item={item} onAccept={handleAccept} loadingId={loadingId} />
+  );
 
   return (
     <Modal

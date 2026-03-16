@@ -54,6 +54,7 @@ export const userService = {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log('[userService] getProfile RAW response:', JSON.stringify(response.data));
       return response.data;
     } catch (error: any) {
       console.error(
@@ -77,11 +78,12 @@ export const userService = {
   getUserById: async (userId: string) => {
     try {
       let token = await AsyncStorage.getItem('token');
-      const response = await axios.get(`${SERVER_URL}/api/users/${userId}`, {
+      const response = await axios.get(`${SERVER_URL}/api/users/profile/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log(`[userService] getUserById(${userId}) RAW response:`, JSON.stringify(response.data));
       return response.data;
     } catch (error: any) {
       console.error(

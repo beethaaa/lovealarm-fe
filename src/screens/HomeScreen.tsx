@@ -146,8 +146,11 @@ interface HomeScreenProps {
 }
 
 const HomeScreen = (props: HomeScreenProps) => {
-  const { isScanning: isScanningHook, nearbyUsers: nearbyUsersHook, bluetoothState } =
-    useLoveAlarm();
+  const {
+    isScanning: isScanningHook,
+    nearbyUsers: nearbyUsersHook,
+    bluetoothState,
+  } = useLoveAlarm();
 
   const isScanning = props.isScanning ?? isScanningHook;
   const nearbyUsers = props.nearbyUsers ?? nearbyUsersHook;
@@ -163,12 +166,12 @@ const HomeScreen = (props: HomeScreenProps) => {
   const charIndexRef = useRef(0);
   const navigation = useNavigation<any>();
 
-  const { 
-    user: currentUser, 
+  const {
+    user: currentUser,
     setUser: setCurrentUser,
     loveRequests,
     setLoveRequests,
-    setActiveTab
+    setActiveTab,
   } = useAppStore();
   const [selectedUser, setSelectedUser] = useState<ScanResult | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -180,16 +183,28 @@ const HomeScreen = (props: HomeScreenProps) => {
       if (!currentUser || !hasId) {
         try {
           const res = await userService.getProfile();
-          const userData = (res.data?.user && typeof res.data.user === 'object') ? res.data.user :
-                           (res.data?.data?.user && typeof res.data.data.user === 'object') ? res.data.data.user :
-                           (res.user && typeof res.user === 'object') ? res.user :
-                           (res.data && typeof res.data === 'object' && (res.data._id || res.data.id)) ? res.data :
-                           (res && typeof res === 'object' && (res._id || res.id)) ? res : null;
-          
+          const userData =
+            res.data?.user && typeof res.data.user === 'object'
+              ? res.data.user
+              : res.data?.data?.user && typeof res.data.data.user === 'object'
+              ? res.data.data.user
+              : res.user && typeof res.user === 'object'
+              ? res.user
+              : res.data &&
+                typeof res.data === 'object' &&
+                (res.data._id || res.data.id)
+              ? res.data
+              : res && typeof res === 'object' && (res._id || res.id)
+              ? res
+              : null;
+
           if (userData && (userData._id || userData.id || userData.userId)) {
             await setCurrentUser(userData);
           } else {
-            console.error('[HomeScreen] Could not find user object in profile response:', JSON.stringify(res));
+            console.error(
+              '[HomeScreen] Could not find user object in profile response:',
+              JSON.stringify(res),
+            );
           }
         } catch (error) {
           console.error('[HomeScreen] Failed to fetch profile:', error);
@@ -214,7 +229,10 @@ const HomeScreen = (props: HomeScreenProps) => {
   }, [currentUser, setLoveRequests]);
 
   const handleUserPress = (user: ScanResult) => {
-    console.log('[HomeScreen] User Bubble Pressed. Current User State:', JSON.stringify(currentUser));
+    console.log(
+      '[HomeScreen] User Bubble Pressed. Current User State:',
+      JSON.stringify(currentUser),
+    );
     setSelectedUser(user);
     setModalVisible(true);
   };
@@ -227,20 +245,29 @@ const HomeScreen = (props: HomeScreenProps) => {
       const currentId = currentUser._id || currentUser.id || currentUser.userId;
       const participants = [currentId, selectedUser.userId].sort();
       const conv = await chatService.createConversation(participants);
-      const conversationId = conv?._id || conv?.id || conv?.conversation?._id || conv?.conversation?.id || conv?.data?._id || conv?.data?.id;
+      const conversationId =
+        conv?._id ||
+        conv?.id ||
+        conv?.conversation?._id ||
+        conv?.conversation?.id ||
+        conv?.data?._id ||
+        conv?.data?.id;
 
       if (!conversationId) {
-        console.warn('[HomeScreen] Failed to extract conversationId from:', JSON.stringify(conv));
+        console.warn(
+          '[HomeScreen] Failed to extract conversationId from:',
+          JSON.stringify(conv),
+        );
         throw new Error('Failed to create conversation session');
       }
 
       await loveRequestService.sendLoveRequest(selectedUser.userId);
       setModalVisible(false);
-      
+
       // Emit socket event for real-time notification
-      emit('love-request:send', { 
+      emit('love-request:send', {
         toUserId: selectedUser.userId,
-        conversationId: conversationId
+        conversationId: conversationId,
       });
 
       navigation.navigate('Chat', {
@@ -260,11 +287,19 @@ const HomeScreen = (props: HomeScreenProps) => {
 
   const handleRequestAccepted = async (partner: any) => {
     try {
-      const currentId = currentUser?._id || currentUser?.id || currentUser?.userId;
+      const currentId =
+        currentUser?._id || currentUser?.id || currentUser?.userId;
       const partnerId = partner?._id || partner?.id || partner?.userId;
 
       if (!currentId || !partnerId) {
-        console.warn('[HomeScreen] Missing user ID. Current:', currentId, 'Partner:', partnerId, 'Partner Object:', JSON.stringify(partner));
+        console.warn(
+          '[HomeScreen] Missing user ID. Current:',
+          currentId,
+          'Partner:',
+          partnerId,
+          'Partner Object:',
+          JSON.stringify(partner),
+        );
         throw new Error('Missing user ID for conversation creation');
       }
 
@@ -273,7 +308,9 @@ const HomeScreen = (props: HomeScreenProps) => {
       if (!conversationId) {
         try {
           const allConvsRes = await loveRequestService.getConversations();
-          const allConvs = Array.isArray(allConvsRes) ? allConvsRes : (allConvsRes?.data || []);
+          const allConvs = Array.isArray(allConvsRes)
+            ? allConvsRes
+            : allConvsRes?.data || [];
           const existingConv = allConvs.find((c: any) => {
             const p = c.partner || c.targetUser || c.toUser || {};
             const pId = p.id || p._id || p.userId;
@@ -281,23 +318,33 @@ const HomeScreen = (props: HomeScreenProps) => {
           });
 
           if (existingConv) {
-            console.log('[HomeScreen] Found existing conversation with partner:', existingConv.id || existingConv._id);
+            console.log(
+              '[HomeScreen] Found existing conversation with partner:',
+              existingConv.id || existingConv._id,
+            );
             conversationId = existingConv.id || existingConv._id;
           } else {
-            console.log('[HomeScreen] Creating new conversation array:', [currentId, partnerId].sort());
+            console.log(
+              '[HomeScreen] Creating new conversation array:',
+              [currentId, partnerId].sort(),
+            );
             const participants = [currentId, partnerId].sort();
             const res = await chatService.createConversation(participants);
-            conversationId = res?._id || res?.id || res?.data?._id || res?.data?.id;
+            conversationId =
+              res?._id || res?.id || res?.data?._id || res?.data?.id;
           }
         } catch (err) {
-          console.error('[HomeScreen] Error finding existing conversation', err);
+          console.error(
+            '[HomeScreen] Error finding existing conversation',
+            err,
+          );
         }
       }
-      
-      emit('love-request:accepted', { 
+
+      emit('love-request:accepted', {
         toUserId: partnerId,
         partnerName: currentUser?.profile?.name || currentUser?.name,
-        conversationId: conversationId
+        conversationId: conversationId,
       });
 
       setActiveTab('matched');
@@ -313,7 +360,7 @@ const HomeScreen = (props: HomeScreenProps) => {
     } catch (error) {
       console.error('[HomeScreen] Create conversation error:', error);
       const partnerId = partner?._id || partner?.id || partner?.userId;
-      
+
       setActiveTab('matched');
       navigation.navigate('Chat', {
         targetUser: {
@@ -382,10 +429,26 @@ const HomeScreen = (props: HomeScreenProps) => {
     }
     const beat = Animated.loop(
       Animated.sequence([
-        Animated.timing(heartScale, { toValue: 1.1, duration: 200, useNativeDriver: true }),
-        Animated.timing(heartScale, { toValue: 1.0, duration: 200, useNativeDriver: true }),
-        Animated.timing(heartScale, { toValue: 1.05, duration: 150, useNativeDriver: true }),
-        Animated.timing(heartScale, { toValue: 1.0, duration: 300, useNativeDriver: true }),
+        Animated.timing(heartScale, {
+          toValue: 1.1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heartScale, {
+          toValue: 1.0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heartScale, {
+          toValue: 1.05,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heartScale, {
+          toValue: 1.0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
         Animated.delay(600),
       ]),
     );
@@ -393,7 +456,9 @@ const HomeScreen = (props: HomeScreenProps) => {
     return () => beat.stop();
   }, [isScanning, heartScale]);
 
-  const userPositionsRef = useRef<Record<string, { angle: number; ring: number }>>({});
+  const userPositionsRef = useRef<
+    Record<string, { angle: number; ring: number }>
+  >({});
   const userOpacitiesRef = useRef<Record<string, Animated.Value>>({});
 
   useEffect(() => {
@@ -409,12 +474,16 @@ const HomeScreen = (props: HomeScreenProps) => {
     (nearbyUsers || []).forEach((user, index) => {
       if (!userPositionsRef.current[user.userId]) {
         const ring = index % 3;
-        const existing = Object.values(userPositionsRef.current).map(p => p.angle);
+        const existing = Object.values(userPositionsRef.current).map(
+          p => p.angle,
+        );
         let angle = 0;
         let best = -1;
         for (let attempt = 0; attempt < 30; attempt++) {
           const candidate = Math.random() * 2 * Math.PI;
-          const minDist = existing.length ? Math.min(...existing.map(a => Math.abs(a - candidate))) : Infinity;
+          const minDist = existing.length
+            ? Math.min(...existing.map(a => Math.abs(a - candidate)))
+            : Infinity;
           if (minDist > best) {
             best = minDist;
             angle = candidate;
@@ -424,7 +493,11 @@ const HomeScreen = (props: HomeScreenProps) => {
 
         const opacity = new Animated.Value(0);
         userOpacitiesRef.current[user.userId] = opacity;
-        Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }).start();
       }
     });
   }, [nearbyUsers]);
@@ -438,18 +511,23 @@ const HomeScreen = (props: HomeScreenProps) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {showBanner ? (
           <Animated.View style={[styles.header, { opacity: bannerOpacity }]}>
-            <TouchableOpacity 
+            <TouchableOpacity
               disabled={loveRequests.length === 0}
               onPress={() => setReceivedModalVisible(true)}
               style={styles.welcomeTextContainer}
             >
-              <Icon 
-                name={loveRequests.length > 0 ? "heart-circle" : "radio-outline"} 
-                size={24} 
-                color={COLOR_PALETTE.pink} 
+              <Icon
+                name={
+                  loveRequests.length > 0 ? 'heart-circle' : 'radio-outline'
+                }
+                size={24}
+                color={COLOR_PALETTE.pink}
               />
               <Text style={styles.welcomeText}>{displayedText}</Text>
             </TouchableOpacity>
@@ -457,69 +535,127 @@ const HomeScreen = (props: HomeScreenProps) => {
         ) : (
           <View style={styles.bluetoothContainer}>
             <Icon name="bluetooth" size={24} color={COLOR_PALETTE.pink} />
-            <Text style={styles.welcomeText}>Bluetooth is {isBluetoothOn ? "active" : "offline"}</Text>
+            <Text style={styles.welcomeText}>
+              Bluetooth is {isBluetoothOn ? 'active' : 'offline'}
+            </Text>
           </View>
         )}
 
         <View style={styles.radarContainer}>
           <View style={styles.radarInner}>
-            <PulseRing delay={1600} isActive={isScanning} size={160} staticOpacity={0.65} />
-            <PulseRing delay={800} isActive={isScanning} size={220} staticOpacity={0.45} />
-            <PulseRing delay={0} isActive={isScanning} size={280} staticOpacity={0.2} />
+            <PulseRing
+              delay={1600}
+              isActive={isScanning}
+              size={160}
+              staticOpacity={0.65}
+            />
+            <PulseRing
+              delay={800}
+              isActive={isScanning}
+              size={220}
+              staticOpacity={0.45}
+            />
+            <PulseRing
+              delay={0}
+              isActive={isScanning}
+              size={280}
+              staticOpacity={0.2}
+            />
 
-            <View style={[styles.centerCircle, isScanning && styles.centerCircleActive]}>
-              <Animated.View style={[{ transform: [{ scale: heartScale }] }, styles.heartGlow]}>
-                <Icon style={styles.heartIcon} name="heart" size={80} color={COLOR_PALETTE.cherryBlossomPink} />
+            <View
+              style={[
+                styles.centerCircle,
+                isScanning && styles.centerCircleActive,
+              ]}
+            >
+              <Animated.View
+                style={[
+                  { transform: [{ scale: heartScale }] },
+                  styles.heartGlow,
+                ]}
+              >
+                <Icon
+                  style={styles.heartIcon}
+                  name="heart"
+                  size={80}
+                  color={COLOR_PALETTE.cherryBlossomPink}
+                />
               </Animated.View>
             </View>
 
-            {isScanning && (nearbyUsers || []).map(user => {
-              const pos = userPositionsRef.current[user.userId];
-              const opacityAnim = userOpacitiesRef.current[user.userId];
-              if (!pos || !opacityAnim) return null;
+            {isScanning &&
+              (nearbyUsers || []).map(user => {
+                const pos = userPositionsRef.current[user.userId];
+                const opacityAnim = userOpacitiesRef.current[user.userId];
+                if (!pos || !opacityAnim) return null;
 
-              const radius = RING_RADII[pos.ring];
-              const cx = RADAR_CENTER + radius * Math.cos(pos.angle) - BUBBLE_SIZE / 2;
-              const cy = RADAR_CENTER + radius * Math.sin(pos.angle) - BUBBLE_SIZE / 2;
+                const radius = RING_RADII[pos.ring];
+                const cx =
+                  RADAR_CENTER + radius * Math.cos(pos.angle) - BUBBLE_SIZE / 2;
+                const cy =
+                  RADAR_CENTER + radius * Math.sin(pos.angle) - BUBBLE_SIZE / 2;
 
-              return (
-                <Animated.View key={user.userId} style={[styles.userBubbleWrapper, { left: cx, top: cy, opacity: opacityAnim }]}>
-                  <TouchableOpacity onPress={() => handleUserPress(user)}>
-                    <LinearGradient colors={['#FFF6E4', '#FFECC9', '#F6889A']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.userBubbleGradient}>
-                      {user.avatarUrl ? (
-                        <Image source={{ uri: user.avatarUrl }} style={styles.userBubbleImage} />
-                      ) : (
-                        <View style={styles.userBubbleFallback}>
-                          <Text style={styles.userBubbleInitial}>{user.name?.[0]?.toUpperCase() ?? '?'}</Text>
-                        </View>
-                      )}
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </Animated.View>
-              );
-            })}
+                return (
+                  <Animated.View
+                    key={user.userId}
+                    style={[
+                      styles.userBubbleWrapper,
+                      { left: cx, top: cy, opacity: opacityAnim },
+                    ]}
+                  >
+                    <TouchableOpacity onPress={() => handleUserPress(user)}>
+                      <LinearGradient
+                        colors={['#FFF6E4', '#FFECC9', '#F6889A']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.userBubbleGradient}
+                      >
+                        {user.avatarUrl ? (
+                          <Image
+                            source={{ uri: user.avatarUrl }}
+                            style={styles.userBubbleImage}
+                          />
+                        ) : (
+                          <View style={styles.userBubbleFallback}>
+                            <Text style={styles.userBubbleInitial}>
+                              {user.name?.[0]?.toUpperCase() ?? '?'}
+                            </Text>
+                          </View>
+                        )}
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              })}
           </View>
         </View>
       </ScrollView>
 
-      {currentUser && console.log('[HomeScreen] Passing current user to modal:', JSON.stringify(currentUser))}
-      {selectedUser && currentUser && (currentUser._id || currentUser.userId) && (
-        <LoveRequestModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          onSend={handleSendLoveRequest}
-          currentUser={{
-            id: currentUser._id || currentUser.userId,
-            name: currentUser.profile?.name || currentUser.name || 'Me',
-            avatarUrl: currentUser.profile?.avatarUrl || currentUser.avatarUrl,
-          }}
-          targetUser={{
-            id: selectedUser.userId,
-            name: selectedUser.name,
-            avatarUrl: selectedUser.avatarUrl,
-          }}
-        />
-      )}
+      {currentUser &&
+        console.log(
+          '[HomeScreen] Passing current user to modal:',
+          JSON.stringify(currentUser),
+        )}
+      {selectedUser &&
+        currentUser &&
+        (currentUser._id || currentUser.userId) && (
+          <LoveRequestModal
+            visible={modalVisible}
+            onClose={() => setModalVisible(false)}
+            onSend={handleSendLoveRequest}
+            currentUser={{
+              id: currentUser._id || currentUser.userId,
+              name: currentUser.profile?.name || currentUser.name || 'Me',
+              avatarUrl:
+                currentUser.profile?.avatarUrl || currentUser.avatarUrl,
+            }}
+            targetUser={{
+              id: selectedUser.userId,
+              name: selectedUser.name,
+              avatarUrl: selectedUser.avatarUrl,
+            }}
+          />
+        )}
 
       <ReceivedRequestsModal
         visible={receivedModalVisible}

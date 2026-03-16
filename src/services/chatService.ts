@@ -40,4 +40,24 @@ export const chatService = {
       throw new Error(error.response?.data?.message || 'Failed to get messages');
     }
   },
+
+  startAIConversation: async (interests: string[] = ['any']) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await axios.post(
+        `${SERVER_URL}/api/ai/conversation-start`,
+        { interests },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Error starting AI conversation:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to start AI conversation');
+    }
+  },
 };
