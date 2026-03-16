@@ -8,7 +8,6 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { useAppStore } from './src/store/appStore';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getFcmToken, requestUserPermission } from '@/services/notifService';
 
 axios.interceptors.response.use(
   response => response,
@@ -23,15 +22,6 @@ axios.interceptors.response.use(
 
 const App = () => {
   const { setIsInitialized } = useAppStore();
-
-  useEffect(() => {
-    const init = async () => {
-      await requestUserPermission();
-      await getFcmToken();
-    };
-
-    init();
-  }, []);
 
   useEffect(() => {
     const init = async () => {
