@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -185,41 +185,46 @@ const ChatListScreen = () => {
   const [loading, setLoading] = useState(true);
   const { user: currentUser } = useAppStore();
 
-  useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        setLoading(true);
-        const res = await loveRequestService.getConversations();
-        const raw = res.data || [];
+  const fetchConversations = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await loveRequestService.getConversations();
+      const raw = res.data || [];
+      
+      const filtered: any[] = [];
+      const seenPairs = new Set<string>();
+      
+      raw.forEach((c: any) => {
+        const participants = (c.participants || []).map((p: any) => 
+          (typeof p === 'object' ? (p._id || p.id) : p)?.toString()
+        ).filter(Boolean).sort();
         
-        const filtered: any[] = [];
-        const seenPairs = new Set<string>();
-        
-        raw.forEach((c: any) => {
-          const participants = (c.participants || []).map((p: any) => 
-            (typeof p === 'object' ? (p._id || p.id) : p)?.toString()
-          ).filter(Boolean).sort();
-          
-          if (participants.length === 2) {
-            const pairKey = participants.join(',');
-            if (!seenPairs.has(pairKey)) {
-              seenPairs.add(pairKey);
-              filtered.push(c);
-            }
-          } else {
+        if (participants.length === 2) {
+          const pairKey = participants.join(',');
+          if (!seenPairs.has(pairKey)) {
+            seenPairs.add(pairKey);
             filtered.push(c);
           }
-        });
+        } else {
+          filtered.push(c);
+        }
+      });
 
-        setConversations(filtered);
-      } catch (error) {
-        console.error('Failed to fetch conversations:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchConversations();
+      setConversations(filtered);
+    } catch (error) {
+      console.error('Failed to fetch conversations:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchConversations();
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchConversations();
+    });
+    return unsubscribe;
+  }, [fetchConversations, navigation]);
 
   const renderItem = ({ item }: { item: any }) => (
     <ConversationRow
@@ -452,7 +457,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 194, 209, 0.15)',
-    boxShadow: 'inset 0px 1px 4px 0px rgba(255, 255, 255, 0.05)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

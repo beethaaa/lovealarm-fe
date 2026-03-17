@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -126,61 +126,63 @@ const ChatScreen = () => {
     }
   }, [route.params.isFirstFriendshipMessage, targetUser.name]);
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      if (conversationId) {
-        console.log('conversation: ', conversationId);
+  const fetchMessages = useCallback(async () => {
+    if (conversationId) {
+      console.log('conversation: ', conversationId);
 
-        try {
-          if (messages.length === 0) setLoading(true);
-          const res = await chatService.getMessages(conversationId);
-          const history = Array.isArray(res)
-            ? res
-            : res.data && Array.isArray(res.data)
-            ? res.data
-            : res.data?.messages && Array.isArray(res.data.messages)
-            ? res.data.messages
-            : res.messages || [];
+      try {
+        if (messages.length === 0) setLoading(true);
+        const res = await chatService.getMessages(conversationId);
+        const history = Array.isArray(res)
+          ? res
+          : res.data && Array.isArray(res.data)
+          ? res.data
+          : res.data?.messages && Array.isArray(res.data.messages)
+          ? res.data.messages
+          : res.messages || [];
 
-          if (history.length === 0) {
-            console.log(
-              '[ChatScreen] First conversation detected, starting AI...',
+        if (history.length === 0) {
+          console.log(
+            '[ChatScreen] First conversation detected, starting AI...',
+          );
+          const targetId = targetUser._id;
+          let interests = ['any'];
+          try {
+            const profileRes = await userService.getUserById(targetId);
+            interests = profileRes.data?.profile?.interest || ['any'];
+          } catch (err) {
+            console.warn(
+              '[ChatScreen] Failed to fetch interests for AI:',
+              err,
             );
-            const targetId = targetUser._id;
-            let interests = ['any'];
-            try {
-              const profileRes = await userService.getUserById(targetId);
-              interests = profileRes.data?.profile?.interest || ['any'];
-            } catch (err) {
-              console.warn(
-                '[ChatScreen] Failed to fetch interests for AI:',
-                err,
-              );
-            }
-            const aiRes = await chatService.startAIConversation(interests);
-            setAiSuggestions(aiRes);
           }
-          setMessages(prev => {
-            const existingIds = new Set(prev.map(m => m.id || (m as any)._id));
-            const newHistory = history
-              .map((m: any) => ({
-                ...m,
-                id: m._id,
-              }))
-              .filter((m: any) => !existingIds.has(m.id));
-            return [...newHistory.reverse(), ...prev];
-          });
-        } catch (error) {
-          console.error('Failed to fetch messages:', error);
-        } finally {
-          setLoading(false);
+          const aiRes = await chatService.startAIConversation(interests);
+          setAiSuggestions(aiRes);
         }
-      } else {
+        
+        const historyMessages = history.map((m: any) => ({
+          ...m,
+          id: m._id,
+        })).reverse();
+
+        setMessages(historyMessages);
+      } catch (error) {
+        console.error('Failed to fetch messages:', error);
+      } finally {
         setLoading(false);
       }
-    };
+    } else {
+      setLoading(false);
+    }
+  }, [conversationId, targetUser._id]);
+
+  useEffect(() => {
     fetchMessages();
-  }, [conversationId]);
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchMessages();
+    });
+    return unsubscribe;
+  }, [fetchMessages, navigation]);
 
   useEffect(() => {
     if (!socket || !conversationId) return;
@@ -662,7 +664,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderBottomRightRadius: 4,
     borderColor: 'rgba(255, 194, 209, 0.4)',
-    boxShadow: 'inset 0px 1px 3px 0px #FFB2C5',
     shadowColor: COLOR_PALETTE.pink,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
@@ -673,12 +674,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLOR_PALETTE.pink,
     borderWidth: 1,
     borderBottomLeftRadius: 4,
-    boxShadow: 'inset 0px 1px 3px 0px #000',
+    elevation: 2,
     shadowColor: COLOR_PALETTE.pink,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 10,
-    elevation: 2,
   },
   myMessageText: {
     color: '#FFF',
@@ -771,7 +771,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 105, 180, 0.4)',
-    boxShadow: 'inset 0px 1px 3px 0px #FFB2C5',
     shadowColor: '#FF69B4',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
