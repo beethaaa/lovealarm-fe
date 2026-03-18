@@ -8,20 +8,35 @@ interface LoadingOverlayProps {
 }
 
 const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ visible, message = 'Loading...' }) => {
+  const [shouldRender, setShouldRender] = React.useState(visible);
   const opacity = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(opacity, {
-      toValue: visible ? 1 : 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
+    if (visible) {
+      setShouldRender(true);
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        setShouldRender(false);
+      });
+    }
   }, [visible, opacity]);
 
-  if (!visible && (opacity as any)._value === 0) return null;
+  if (!shouldRender) return null;
 
   return (
-    <Animated.View style={[styles.container, { opacity }]}>
+    <Animated.View 
+      style={[styles.container, { opacity }]}
+      pointerEvents={visible ? 'auto' : 'none'}
+    >
       <View style={styles.loaderWrapper}>
         <ActivityIndicator size="large" color={COLOR_PALETTE.pink} />
         <Text style={styles.text}>{message}</Text>
