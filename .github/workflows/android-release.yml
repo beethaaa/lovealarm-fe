@@ -58,6 +58,10 @@ jobs:
         run: |
           ./gradlew clean assembleRelease --stacktrace
 
+   - name: Build APK and AAB
+        working-directory: android
+        run: ./gradlew assembleRelease bundleRelease --stacktrace
+
       - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,36 +74,44 @@ jobs:
           git tag -f "$TAG" "${{ github.sha }}"
           git push -f origin "$TAG"
 
+          APK_PATH=$(ls android/app/build/outputs/apk/release/*.apk | head -n 1)
+          AAB_PATH=$(ls android/app/build/outputs/bundle/release/*.aab | head -n 1)
+
+          cp "$APK_PATH" lovealarm-android-latest.apk
+          cp "$AAB_PATH" lovealarm-android-latest.aab
+
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" \
               --title "Latest Build" \
               --notes "Automatic release from commit ${{ github.sha }}" \
               --latest
 
+            gh release delete-asset "$TAG" "lovealarm-android-latest.apk" -y || true
+            gh release delete-asset "$TAG" "lovealarm-android-latest.aab" -y || true
+
             gh release upload "$TAG" \
-              android/app/build/outputs/apk/release/*.apk \
-              # android/app/build/outputs/bundle/release/*.aab \
-              --clobber
+              lovealarm-android-latest.apk \
+              lovealarm-android-latest.aab
           else
             gh release create "$TAG" \
-              android/app/build/outputs/apk/release/*.apk \
-              # android/app/build/outputs/bundle/release/*.aab \
+              lovealarm-android-latest.apk \
+              lovealarm-android-latest.aab \
               --target "${{ github.sha }}" \
               --title "Latest Build" \
               --notes "Automatic release from commit ${{ github.sha }}" \
               --latest
           fi
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v7
-        with:
-          name: lovealarm-android-apk-${{ github.run_number }}
-          path: android/app/build/outputs/apk/release/*.apk
-          if-no-files-found: error
+      # - name: Upload APK
+      #   uses: actions/upload-artifact@v7
+      #   with:
+      #     name: lovealarm-android-apk-${{ github.run_number }}
+      #     path: android/app/build/outputs/apk/release/*.apk
+      #     if-no-files-found: error
 
-      - name: Upload AAB
-        uses: actions/upload-artifact@v7
-        with:
-          name: lovealarm-android-aab-${{ github.run_number }}
-          path: android/app/build/outputs/bundle/release/*.aab
-          if-no-files-found: error
+      # - name: Upload AAB
+      #   uses: actions/upload-artifact@v7
+      #   with:
+      #     name: lovealarm-android-aab-${{ github.run_number }}
+      #     path: android/app/build/outputs/bundle/release/*.aab
+      #     if-no-files-found: error
