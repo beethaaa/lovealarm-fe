@@ -29,8 +29,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Nodejs
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22.11.0
@@ -47,26 +49,24 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: decode Android keystore
+      - name: Decode Android keystore
         run: |
           printf "%s" "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+
       - name: Make Gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build APK
+      - name: Build APK and AAB
         working-directory: android
-        run: |
-          ./gradlew clean assembleRelease --stacktrace
-
-   - name: Build APK and AAB
-        working-directory: android
-        run: ./gradlew assembleRelease bundleRelease --stacktrace
+        run: ./gradlew clean assembleRelease bundleRelease --stacktrace
 
       - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="latest-android"
+          TITLE="Latest Android Build"
+          NOTES="Automatic release from commit ${{ github.sha }}"
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -74,31 +74,31 @@ jobs:
           git tag -f "$TAG" "${{ github.sha }}"
           git push -f origin "$TAG"
 
-          APK_PATH=$(ls android/app/build/outputs/apk/release/*.apk | head -n 1)
-          AAB_PATH=$(ls android/app/build/outputs/bundle/release/*.aab | head -n 1)
+          APK_FILES=(android/app/build/outputs/apk/release/*.apk)
+          AAB_FILES=(android/app/build/outputs/bundle/release/*.aab)
+          APK_PATH="${APK_FILES[0]}"
+          AAB_PATH="${AAB_FILES[0]}"
 
           cp "$APK_PATH" lovealarm-android-latest.apk
           cp "$AAB_PATH" lovealarm-android-latest.aab
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" \
-              --title "Latest Build" \
-              --notes "Automatic release from commit ${{ github.sha }}" \
+              --title "$TITLE" \
+              --notes "$NOTES" \
               --latest
-
-            gh release delete-asset "$TAG" "lovealarm-android-latest.apk" -y || true
-            gh release delete-asset "$TAG" "lovealarm-android-latest.aab" -y || true
 
             gh release upload "$TAG" \
               lovealarm-android-latest.apk \
-              lovealarm-android-latest.aab
+              lovealarm-android-latest.aab \
+              --clobber
           else
             gh release create "$TAG" \
               lovealarm-android-latest.apk \
               lovealarm-android-latest.aab \
               --target "${{ github.sha }}" \
-              --title "Latest Build" \
-              --notes "Automatic release from commit ${{ github.sha }}" \
+              --title "$TITLE" \
+              --notes "$NOTES" \
               --latest
           fi
 
