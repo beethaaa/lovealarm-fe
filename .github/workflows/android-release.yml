@@ -53,10 +53,10 @@ jobs:
       - name: Make Gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build APK and AAB
+      - name: Build APK
         working-directory: android
         run: |
-          ./gradlew clean assembleRelease bundleRelease --stacktrace
+          ./gradlew clean assembleRelease --stacktrace
 
       - name: Create or update GitHub Release
         env:
