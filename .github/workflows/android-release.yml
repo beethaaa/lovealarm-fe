@@ -78,12 +78,12 @@ jobs:
 
             gh release upload "$TAG" \
               android/app/build/outputs/apk/release/*.apk \
-              android/app/build/outputs/bundle/release/*.aab \
+              # android/app/build/outputs/bundle/release/*.aab \
               --clobber
           else
             gh release create "$TAG" \
               android/app/build/outputs/apk/release/*.apk \
-              android/app/build/outputs/bundle/release/*.aab \
+              # android/app/build/outputs/bundle/release/*.aab \
               --target "${{ github.sha }}" \
               --title "Latest Build" \
               --notes "Automatic release from commit ${{ github.sha }}" \
