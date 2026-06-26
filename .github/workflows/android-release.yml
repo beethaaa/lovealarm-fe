@@ -79,8 +79,8 @@ jobs:
           APK_PATH="${APK_FILES[0]}"
           AAB_PATH="${AAB_FILES[0]}"
 
-          cp "$APK_PATH" lovealarm-android-latest.apk
-          cp "$AAB_PATH" lovealarm-android-latest.aab
+          cp "$APK_PATH" dearu-android-latest.apk
+          cp "$AAB_PATH" dearu-android-latest.aab
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" \
@@ -89,13 +89,13 @@ jobs:
               --latest
 
             gh release upload "$TAG" \
-              lovealarm-android-latest.apk \
-              lovealarm-android-latest.aab \
+              dearu-android-latest.apk \
+              dearu-android-latest.aab \
               --clobber
           else
             gh release create "$TAG" \
-              lovealarm-android-latest.apk \
-              lovealarm-android-latest.aab \
+              dearu-android-latest.apk \
+              dearu-android-latest.aab \
               --target "${{ github.sha }}" \
               --title "$TITLE" \
               --notes "$NOTES" \
@@ -105,13 +105,13 @@ jobs:
       # - name: Upload APK
       #   uses: actions/upload-artifact@v7
       #   with:
-      #     name: lovealarm-android-apk-${{ github.run_number }}
+      #     name: dearu-android-apk-${{ github.run_number }}
       #     path: android/app/build/outputs/apk/release/*.apk
       #     if-no-files-found: error
 
       # - name: Upload AAB
       #   uses: actions/upload-artifact@v7
       #   with:
-      #     name: lovealarm-android-aab-${{ github.run_number }}
+      #     name: dearu-android-aab-${{ github.run_number }}
       #     path: android/app/build/outputs/bundle/release/*.aab
       #     if-no-files-found: error
