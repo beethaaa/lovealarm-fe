@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:428767164533:android:3ee261c5bc53735d68203c",
+        "android_client_info": {
+          "package_name": "com.dearu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwmjrZwga-tISJVimZ5kN_iW-2ajk2jIo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:428767164533:android:bf4ff5f0748a7bbb68203c",
         "android_client_info": {
           "package_name": "com.lovealarm"
