@@ -60,7 +60,19 @@ jobs:
         working-directory: android
         run: ./gradlew clean assembleRelease bundleRelease --stacktrace
 
-      - name: Create or update GitHub Release
+      - name: Delete old GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="latest-android"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release delete "$TAG" --yes --cleanup-tag
+          else
+            git push origin ":refs/tags/$TAG" || true
+          fi
+
+      - name: Create new GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -82,25 +94,13 @@ jobs:
           cp "$APK_PATH" dearu-android-latest.apk
           cp "$AAB_PATH" dearu-android-latest.aab
 
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" \
-              --title "$TITLE" \
-              --notes "$NOTES" \
-              --latest
-
-            gh release upload "$TAG" \
-              dearu-android-latest.apk \
-              dearu-android-latest.aab \
-              --clobber
-          else
-            gh release create "$TAG" \
-              dearu-android-latest.apk \
-              dearu-android-latest.aab \
-              --target "${{ github.sha }}" \
-              --title "$TITLE" \
-              --notes "$NOTES" \
-              --latest
-          fi
+          gh release create "$TAG" \
+            dearu-android-latest.apk \
+            dearu-android-latest.aab \
+            --target "${{ github.sha }}" \
+            --title "$TITLE" \
+            --notes "$NOTES" \
+            --latest
 
       # - name: Upload APK
       #   uses: actions/upload-artifact@v7

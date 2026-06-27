@@ -319,7 +319,7 @@ const LoginScreen = ({ navigation }: any) => {
           <View style={styles.formHeader}>
             <Text style={styles.formTitle}>Đăng nhập</Text>
             <Text style={styles.formSubtitle}>
-              Chào mừng trở lại với Love Alarm{' '}
+              Chào mừng trở lại với DearU{' '}
             </Text>
           </View>
 

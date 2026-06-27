@@ -25,9 +25,9 @@
     "profile": "个人资料"
   },
   "home": {
-    "title": "Love Alarm",
+    "title": "DearU",
     "subtitle": "发现附近的连接",
-    "welcome": "欢迎使用Love Alarm",
+    "welcome": "欢迎使用DearU",
     "description": "在您的信号范围内寻找人",
     "start_scanning": "开始扫描",
     "stop_scanning": "停止扫描"
@@ -78,7 +78,7 @@
   },
   "permissions": {
     "bluetooth": "蓝牙权限",
-    "bluetooth_desc": "需要检测附近的Love Alarm",
+    "bluetooth_desc": "需要检测附近的DearU用户",
     "location": "位置权限",
     "location_desc": "Android上蓝牙扫描所需",
     "grant": "授予权限",
