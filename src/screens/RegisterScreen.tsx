@@ -146,17 +146,23 @@ const RegisterScreen = ({ navigation }: any) => {
           style={StyleSheet.absoluteFillObject}
         />
 
-        <Image
-          source={assets.cloud}
-          style={styles.cloud}
-          resizeMode="contain"
-        />
-        <Image source={assets.book} style={styles.book} resizeMode="contain" />
-        <Image
-          source={assets.butterfly}
-          style={styles.butterfly}
-          resizeMode="contain"
-        />
+        <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+          <Image
+            source={assets.cloud}
+            style={styles.cloud}
+            resizeMode="contain"
+          />
+          <Image
+            source={assets.book}
+            style={styles.book}
+            resizeMode="contain"
+          />
+          <Image
+            source={assets.butterfly}
+            style={styles.butterfly}
+            resizeMode="contain"
+          />
+        </View>
 
         <Animated.View
           style={[
@@ -357,6 +363,7 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#020001',
+    overflow: 'hidden',
   },
   scroll: {
     minHeight: SCENE_HEIGHT,

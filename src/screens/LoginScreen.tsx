@@ -123,21 +123,23 @@ const LoginScreen = ({ navigation }: any) => {
           style={StyleSheet.absoluteFillObject}
         />
 
-        <Image
-          source={assets.cloud}
-          style={styles.cloud}
-          resizeMode="contain"
-        />
-        <Image
-          source={assets.table}
-          style={styles.table}
-          resizeMode="contain"
-        />
-        <Image
-          source={assets.butterfly}
-          style={styles.butterfly}
-          resizeMode="contain"
-        />
+        <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+          <Image
+            source={assets.cloud}
+            style={styles.cloud}
+            resizeMode="contain"
+          />
+          <Image
+            source={assets.table}
+            style={styles.table}
+            resizeMode="contain"
+          />
+          <Image
+            source={assets.butterfly}
+            style={styles.butterfly}
+            resizeMode="contain"
+          />
+        </View>
 
         <Animated.View
           style={[
@@ -210,19 +212,20 @@ const LoginScreen = ({ navigation }: any) => {
             </View>
           </View>
 
-          <View style={styles.openButtonFrame}>
-            <Image
-              source={assets.openButton}
-              style={styles.openButtonAsset}
-              resizeMode="contain"
-            />
-            <TouchableOpacity
-              style={[styles.openButtonHitbox, loading && styles.disabledButton]}
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.88}
-            />
-          </View>
+          <TouchableOpacity
+            style={[styles.openButtonFrame, loading && styles.disabledButton]}
+            onPress={handleLogin}
+            disabled={loading}
+            activeOpacity={0.88}
+          >
+            <View pointerEvents="none" style={styles.openButtonImageLayer}>
+              <Image
+                source={assets.openButton}
+                style={styles.openButtonAsset}
+                resizeMode="contain"
+              />
+            </View>
+          </TouchableOpacity>
         </Animated.View>
       </ScrollView>
 
@@ -235,6 +238,7 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#020001',
+    overflow: 'hidden',
   },
   scroll: {
     minHeight: SCENE_HEIGHT,
@@ -328,6 +332,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    zIndex: 10,
+    elevation: 10,
   },
   linkText: {
     color: 'rgba(255,221,233,0.66)',
@@ -344,12 +350,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'visible',
   },
-  openButtonHitbox: {
-    position: 'absolute',
-    width: '68%',
-    height: '46%',
-    bottom: 8,
-    borderRadius: 999,
+  openButtonImageLayer: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   disabledButton: {
     opacity: 0.75,

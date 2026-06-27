@@ -9,7 +9,7 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  KeyboardAvoidingView,
+  Image,
   Platform,
   Animated,
   StatusBar,
@@ -28,12 +28,25 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 AsyncStorage.clear();
 
-const { width: SW } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const SW = SCREEN_WIDTH;
+const SCENE_HEIGHT = Math.max(SCREEN_HEIGHT, 820);
+const PANEL_WIDTH = Math.min(SCREEN_WIDTH - 56, 500);
+const PANEL_HEIGHT = Math.min(Math.max(SCENE_HEIGHT * 0.5, 320), 640);
+
+const assets = {
+  title: require('../assets/title.webp'),
+  light: require('../assets/light.webp'),
+  cloud: require('../assets/cloud.webp'),
+  letter: require('../assets/letter.webp'),
+  butterfly: require('../assets/butterfly_light.webp'),
+  openButton: require('../assets/button.webp'),
+};
 
 const GENDERS = [
-  { label: 'Nam', value: 1, icon: 'male-outline' },
-  { label: 'Nữ', value: 2, icon: 'female-outline' },
-  { label: 'Khác', value: 3, icon: 'male-female-outline' },
+  { label: 'Male', value: 1, icon: 'male-outline' },
+  { label: 'Female', value: 2, icon: 'female-outline' },
+  { label: 'Other', value: 3, icon: 'male-female-outline' },
 ];
 
 const PREDEFINED_INTERESTS = [
@@ -141,7 +154,7 @@ const ProgressBar = ({ step, total }: { step: number; total: number }) => {
 };
 
 const OnboardingScreen = () => {
-  const { setIsOnboarded, setActiveTab } = useAppStore();
+  const { setIsOnboarded, setActiveTab, setLogout } = useAppStore();
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -179,11 +192,11 @@ const OnboardingScreen = () => {
 
   const handleNext = () => {
     if (step === 0 && !name.trim())
-      return Alert.alert('Thông báo', 'Vui lòng cho biết tên của bạn!');
+      return Alert.alert('Notice', 'Please enter your name.');
     if (step === 1 && (!birthday.trim() || gender === null))
-      return Alert.alert('Thông báo', 'Vui lòng điền ngày sinh và giới tính!');
+      return Alert.alert('Notice', 'Please select your birthday and gender.');
     if (step === 2 && !location.trim())
-      return Alert.alert('Thông báo', 'Vui lòng cho biết bạn đến từ đâu!');
+      return Alert.alert('Notice', 'Please enter your location.');
 
     if (step < 3) {
       setStep(step + 1);
@@ -198,6 +211,10 @@ const OnboardingScreen = () => {
       setStep(step - 1);
       scrollViewRef.current?.scrollTo({ x: (step - 1) * SW, animated: true });
     }
+  };
+
+  const handleBackToLogin = async () => {
+    await setLogout();
   };
 
   const submitProfile = async () => {
@@ -223,7 +240,7 @@ const OnboardingScreen = () => {
       setActiveTab('home');
       setIsOnboarded(true);
     } catch (error: any) {
-      Alert.alert('Lỗi', error.message || 'Không thể cập nhật hồ sơ.');
+      Alert.alert('Error', error.message || 'Unable to update your profile.');
     } finally {
       setLoading(false);
     }
@@ -237,313 +254,422 @@ const OnboardingScreen = () => {
   );
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.root}
-    >
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
-
-      <View style={styles.headerRow}>
-        {step > 0 ? (
-          <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-            <Icon name="arrow-back" size={20} color={COLOR_PALETTE.pink} />
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.backBtnPlaceholder} />
-        )}
-        <Text style={styles.brandTitle}>LOVE ALARM</Text>
-        <View style={styles.backBtnPlaceholder} />
-      </View>
-
-      <ProgressBar step={step} total={4} />
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor="#020001" />
 
       <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        scrollEnabled={false}
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        style={{ flex: 1 }}
+        scrollEnabled={false}
+        bounces={false}
       >
-        <View style={styles.slide}>
-          {renderHeader(
-            'Bạn tên là gì?',
-            'Tên này sẽ hiển thị trên hồ sơ của bạn và gợi ý cho mọi người.',
-          )}
-          <PinkInput
-            label="TÊN HIỂN THỊ"
-            placeholder="Nhập tên của bạn"
-            value={name}
-            onChangeText={setName}
+        <LinearGradient
+          colors={['#000000', '#030002', '#110511', '#1f071d']}
+          locations={[0, 0.45, 0.78, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
+
+        <Image
+          source={assets.cloud}
+          style={styles.cloud}
+          resizeMode="contain"
+        />
+        <Image
+          source={assets.letter}
+          style={styles.letter}
+          resizeMode="contain"
+        />
+        <Image
+          source={assets.butterfly}
+          style={styles.butterfly}
+          resizeMode="contain"
+        />
+
+        <View style={styles.scene}>
+          <Image
+            source={assets.title}
+            style={styles.logo}
+            resizeMode="contain"
           />
-        </View>
 
-        <View style={styles.slide}>
-          {renderHeader(
-            'Thông tin cơ bản',
-            'Chọn ngày sinh và giới tính để nhận được những gợi ý chuẩn xác nhất.',
-          )}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => {
-              Keyboard.dismiss();
-              setShowDatePicker(true);
-            }}
-          >
-            <View pointerEvents="none">
-              <PinkInput
-                label="NGÀY SINH"
-                placeholder="DD/MM/YYYY"
-                value={birthday}
-                onChangeText={() => {}}
-                keyboardType="numeric"
-                maxLength={10}
-                editable={false}
-              />
-            </View>
-          </TouchableOpacity>
-          {Platform.OS === 'ios' && showDatePicker && (
-            <DateTimePicker
-              value={birthdayDate}
-              mode="date"
-              display="spinner"
-              onChange={handleDateChange}
-              maximumDate={new Date()}
-            />
-          )}
-
-          <Text
-            style={[
-              styles.fieldLabel,
-              {
-                color: 'rgba(255,194,209,0.4)',
-                marginTop: 24,
-                marginBottom: 12,
-              },
-            ]}
-          >
-            GIỚI TÍNH CỦA BẠN
-          </Text>
-          <View style={styles.genderContainer}>
-            {GENDERS.map(g => {
-              const isActive = gender === g.value;
-              return (
-                <TouchableOpacity
-                  key={g.value}
-                  style={[styles.genderBox, isActive && styles.genderBoxActive]}
-                  onPress={() => setGender(g.value)}
-                  activeOpacity={0.8}
-                >
-                  {isActive && (
-                    <LinearGradient
-                      colors={[
-                        'rgba(255,194,209,0.15)',
-                        'rgba(255,194,209,0.02)',
-                      ]}
-                      style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
-                    />
-                  )}
-                  <Icon
-                    name={g.icon}
-                    size={28}
-                    color={
-                      isActive ? COLOR_PALETTE.pink : 'rgba(255,194,209,0.3)'
-                    }
-                    style={{ marginBottom: 8 }}
-                  />
-                  <Text
-                    style={[
-                      styles.genderText,
-                      isActive && styles.genderTextActive,
-                    ]}
-                  >
-                    {g.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={styles.slide}>
-          {renderHeader(
-            'Bạn đến từ đâu?',
-            'Chia sẻ khu vực để bắt sóng với những người xung quanh bạn dễ dàng hơn.',
-          )}
-          <PinkInput
-            label="VỊ TRÍ / ĐỊA ĐIỂM"
-            placeholder="VD: Hà Nội, Việt Nam"
-            value={location}
-            onChangeText={setLocation}
+          <Image
+            source={assets.light}
+            style={styles.lantern}
+            resizeMode="contain"
           />
-        </View>
 
-        <View style={styles.slide}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 60 }}
-          >
-            {renderHeader(
-              'Sở thích & Tính cách',
-              'Hãy để mọi người hiểu thêm về con người thật của bạn.',
-            )}
-            <Text
-              style={[
-                styles.fieldLabel,
-                { color: 'rgba(255,194,209,0.4)', marginBottom: 16 },
-              ]}
-            >
-              SỞ THÍCH
-            </Text>
-            <View style={styles.chipContainer}>
-              {[...PREDEFINED_INTERESTS, ...customInterests].map(item => {
-                const isActive = interests.includes(item);
-                return (
+          <View style={styles.panel}>
+            <View style={styles.panelContent}>
+              <View style={styles.panelHeader}>
+                {step > 0 ? (
                   <TouchableOpacity
-                    key={item}
-                    style={[styles.chip, isActive && styles.chipActive]}
-                    onPress={() =>
-                      setInterests(
-                        isActive
-                          ? interests.filter(i => i !== item)
-                          : [...interests, item],
-                      )
-                    }
+                    style={styles.backBtn}
+                    onPress={handleBack}
+                    activeOpacity={0.75}
                   >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        isActive && styles.chipTextActive,
-                      ]}
-                    >
-                      {item}
-                    </Text>
+                    <Icon
+                      name="arrow-back"
+                      size={22}
+                      color="rgba(255,221,233,0.72)"
+                    />
                   </TouchableOpacity>
-                );
-              })}
+                ) : (
+                  <View style={styles.backBtnPlaceholder} />
+                )}
 
-              <TouchableOpacity
-                style={styles.chipAdd}
-                onPress={() => setShowInterestInput(true)}
-              >
-                <Icon name="add" size={16} color="rgba(255,194,209,0.5)" />
-                <Text style={styles.chipAddText}>Khác</Text>
-              </TouchableOpacity>
-            </View>
+                <View style={styles.panelTitleBlock}>
+                  <Text style={styles.formTitle}>Love Profile</Text>
+                  <Text style={styles.stepText}>Step {step + 1} / 4</Text>
+                </View>
 
-            {showInterestInput && (
-              <View style={styles.customAddRow}>
-                <TextInput
-                  style={styles.customAddInput}
-                  placeholder="Nhập sở thích khác..."
-                  placeholderTextColor="rgba(255,194,209,0.3)"
-                  value={newInterest}
-                  onChangeText={setNewInterest}
-                  autoFocus
-                />
-                <TouchableOpacity
-                  style={styles.customAddBtn}
-                  onPress={() => {
-                    const val = newInterest.trim();
-                    if (
-                      val &&
-                      !PREDEFINED_INTERESTS.includes(val) &&
-                      !customInterests.includes(val)
-                    ) {
-                      setCustomInterests([...customInterests, val]);
-                      setInterests([...interests, val]);
-                    }
-                    setNewInterest('');
-                    setShowInterestInput(false);
-                  }}
-                >
-                  <Text style={styles.customAddBtnText}>Thêm</Text>
-                </TouchableOpacity>
+                <View style={styles.backBtnPlaceholder} />
               </View>
-            )}
 
-            <Text
-              style={[
-                styles.fieldLabel,
-                {
-                  color: 'rgba(255,194,209,0.4)',
-                  marginTop: 32,
-                  marginBottom: 16,
-                },
-              ]}
-            >
-              TÍNH CÁCH
-            </Text>
-            <View style={styles.chipContainer}>
-              {[...PREDEFINED_PERSONALITIES, ...customPersonalities].map(
-                item => {
-                  const isActive = personalities.includes(item);
-                  return (
+              <ProgressBar step={step} total={4} />
+
+              <ScrollView
+                ref={scrollViewRef}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                scrollEnabled={false}
+                keyboardShouldPersistTaps="handled"
+                style={styles.pager}
+              >
+                <View style={styles.slide}>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled
+                    bounces={false}
+                    contentContainerStyle={styles.slideInner}
+                  >
+                    {renderHeader(
+                      'What is your name?',
+                      'This name will appear on your profile.',
+                    )}
+                    <PinkInput
+                      label="DISPLAY NAME"
+                      placeholder="Enter your name"
+                      value={name}
+                      onChangeText={setName}
+                    />
+                  </ScrollView>
+                </View>
+
+                <View style={styles.slide}>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled
+                    bounces={false}
+                    contentContainerStyle={styles.slideInner}
+                  >
+                    {renderHeader(
+                      'Basic Information',
+                      'Choose your birthday and gender.',
+                    )}
                     <TouchableOpacity
-                      key={item}
-                      style={[styles.chip, isActive && styles.chipActive]}
-                      onPress={() =>
-                        setPersonalities(
-                          isActive
-                            ? personalities.filter(p => p !== item)
-                            : [...personalities, item],
-                        )
-                      }
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setShowDatePicker(true);
+                      }}
                     >
-                      <Text
-                        style={[
-                          styles.chipText,
-                          isActive && styles.chipTextActive,
-                        ]}
-                      >
-                        {item}
-                      </Text>
+                      <View pointerEvents="none">
+                        <PinkInput
+                          label="DATE OF BIRTH"
+                          placeholder="DD/MM/YYYY"
+                          value={birthday}
+                          onChangeText={() => {}}
+                          keyboardType="numeric"
+                          maxLength={10}
+                          editable={false}
+                        />
+                      </View>
                     </TouchableOpacity>
-                  );
-                },
-              )}
+
+                    {Platform.OS === 'ios' && showDatePicker && (
+                      <DateTimePicker
+                        value={birthdayDate}
+                        mode="date"
+                        display="spinner"
+                        onChange={handleDateChange}
+                        maximumDate={new Date()}
+                      />
+                    )}
+
+                    <Text style={styles.sectionLabel}>YOUR GENDER</Text>
+                    <View style={styles.genderContainer}>
+                      {GENDERS.map(g => {
+                        const isActive = gender === g.value;
+                        return (
+                          <TouchableOpacity
+                            key={g.value}
+                            style={[
+                              styles.genderBox,
+                              isActive && styles.genderBoxActive,
+                            ]}
+                            onPress={() => setGender(g.value)}
+                            activeOpacity={0.8}
+                          >
+                            {isActive && (
+                              <LinearGradient
+                                colors={[
+                                  'rgba(255,194,209,0.15)',
+                                  'rgba(255,194,209,0.02)',
+                                ]}
+                                style={[
+                                  StyleSheet.absoluteFill,
+                                  { borderRadius: 12 },
+                                ]}
+                              />
+                            )}
+                            <Icon
+                              name={g.icon}
+                              size={25}
+                              color={
+                                isActive
+                                  ? COLOR_PALETTE.pink
+                                  : 'rgba(255,194,209,0.34)'
+                              }
+                              style={{ marginBottom: 6 }}
+                            />
+                            <Text
+                              style={[
+                                styles.genderText,
+                                isActive && styles.genderTextActive,
+                              ]}
+                            >
+                              {g.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </ScrollView>
+                </View>
+
+                <View style={styles.slide}>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled
+                    bounces={false}
+                    contentContainerStyle={styles.slideInner}
+                  >
+                    {renderHeader(
+                      'Where are you from?',
+                      'Share your area to make better matches.',
+                    )}
+                    <PinkInput
+                      label="LOCATION"
+                      placeholder="e.g. Hanoi, Vietnam"
+                      value={location}
+                      onChangeText={setLocation}
+                    />
+                  </ScrollView>
+                </View>
+
+                <View style={styles.slide}>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled
+                    bounces={false}
+                    contentContainerStyle={styles.tagsContent}
+                  >
+                    {renderHeader(
+                      'Interests & Personality',
+                      'Help others understand you better.',
+                    )}
+                    <Text style={styles.tagsLabel}>INTERESTS</Text>
+                    <View style={styles.chipContainer}>
+                      {[...PREDEFINED_INTERESTS, ...customInterests].map(
+                        item => {
+                          const isActive = interests.includes(item);
+                          return (
+                            <TouchableOpacity
+                              key={item}
+                              style={[styles.chip, isActive && styles.chipActive]}
+                              onPress={() =>
+                                setInterests(
+                                  isActive
+                                    ? interests.filter(i => i !== item)
+                                    : [...interests, item],
+                                )
+                              }
+                            >
+                              <Text
+                                style={[
+                                  styles.chipText,
+                                  isActive && styles.chipTextActive,
+                                ]}
+                              >
+                                {item}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        },
+                      )}
+
+                      <TouchableOpacity
+                        style={styles.chipAdd}
+                        onPress={() => setShowInterestInput(true)}
+                      >
+                        <Icon
+                          name="add"
+                          size={16}
+                          color="rgba(255,194,209,0.5)"
+                        />
+                        <Text style={styles.chipAddText}>Other</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {showInterestInput && (
+                      <View style={styles.customAddRow}>
+                        <TextInput
+                          style={styles.customAddInput}
+                          placeholder="Enter another interest..."
+                          placeholderTextColor="rgba(255,194,209,0.3)"
+                          value={newInterest}
+                          onChangeText={setNewInterest}
+                          autoFocus
+                        />
+                        <TouchableOpacity
+                          style={styles.customAddBtn}
+                          onPress={() => {
+                            const val = newInterest.trim();
+                            if (
+                              val &&
+                              !PREDEFINED_INTERESTS.includes(val) &&
+                              !customInterests.includes(val)
+                            ) {
+                              setCustomInterests([...customInterests, val]);
+                              setInterests([...interests, val]);
+                            }
+                            setNewInterest('');
+                            setShowInterestInput(false);
+                          }}
+                        >
+                          <Text style={styles.customAddBtnText}>Add</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    <Text style={[styles.tagsLabel, styles.personalityLabel]}>
+                      PERSONALITY
+                    </Text>
+                    <View style={styles.chipContainer}>
+                      {[...PREDEFINED_PERSONALITIES, ...customPersonalities].map(
+                        item => {
+                          const isActive = personalities.includes(item);
+                          return (
+                            <TouchableOpacity
+                              key={item}
+                              style={[styles.chip, isActive && styles.chipActive]}
+                              onPress={() =>
+                                setPersonalities(
+                                  isActive
+                                    ? personalities.filter(p => p !== item)
+                                    : [...personalities, item],
+                                )
+                              }
+                            >
+                              <Text
+                                style={[
+                                  styles.chipText,
+                                  isActive && styles.chipTextActive,
+                                ]}
+                              >
+                                {item}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        },
+                      )}
+
+                      <TouchableOpacity
+                        style={styles.chipAdd}
+                        onPress={() => setShowPersonalityInput(true)}
+                      >
+                        <Icon
+                          name="add"
+                          size={16}
+                          color="rgba(255,194,209,0.5)"
+                        />
+                        <Text style={styles.chipAddText}>Other</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {showPersonalityInput && (
+                      <View style={styles.customAddRow}>
+                        <TextInput
+                          style={styles.customAddInput}
+                          placeholder="Enter another personality..."
+                          placeholderTextColor="rgba(255,194,209,0.3)"
+                          value={newPersonality}
+                          onChangeText={setNewPersonality}
+                          autoFocus
+                        />
+                        <TouchableOpacity
+                          style={styles.customAddBtn}
+                          onPress={() => {
+                            const val = newPersonality.trim();
+                            if (
+                              val &&
+                              !PREDEFINED_PERSONALITIES.includes(val) &&
+                              !customPersonalities.includes(val)
+                            ) {
+                              setCustomPersonalities([
+                                ...customPersonalities,
+                                val,
+                              ]);
+                              setPersonalities([...personalities, val]);
+                            }
+                            setNewPersonality('');
+                            setShowPersonalityInput(false);
+                          }}
+                        >
+                          <Text style={styles.customAddBtnText}>Add</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </ScrollView>
+                </View>
+              </ScrollView>
 
               <TouchableOpacity
-                style={styles.chipAdd}
-                onPress={() => setShowPersonalityInput(true)}
+                style={[styles.openButtonFrame, loading && styles.disabledButton]}
+                onPress={handleNext}
+                disabled={loading}
+                activeOpacity={0.88}
               >
-                <Icon name="add" size={16} color="rgba(255,194,209,0.5)" />
-                <Text style={styles.chipAddText}>Khác</Text>
+                <View pointerEvents="none" style={styles.openButtonImageLayer}>
+                  <Image
+                    source={assets.openButton}
+                    style={styles.openButtonAsset}
+                    resizeMode="contain"
+                  />
+                </View>
+                {loading ? (
+                  <ActivityIndicator
+                    color="#ffe8f1"
+                    style={styles.openButtonContent}
+                  />
+                ) : (
+                  <Text style={[styles.openButtonText, styles.openButtonContent]}>
+                    Continue
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleBackToLogin}
+                activeOpacity={0.75}
+                style={styles.loginLinkBelow}
+              >
+                <Text style={styles.linkText}>Back to Login</Text>
               </TouchableOpacity>
             </View>
-
-            {showPersonalityInput && (
-              <View style={styles.customAddRow}>
-                <TextInput
-                  style={styles.customAddInput}
-                  placeholder="Nhập tính cách khác..."
-                  placeholderTextColor="rgba(255,194,209,0.3)"
-                  value={newPersonality}
-                  onChangeText={setNewPersonality}
-                  autoFocus
-                />
-                <TouchableOpacity
-                  style={styles.customAddBtn}
-                  onPress={() => {
-                    const val = newPersonality.trim();
-                    if (
-                      val &&
-                      !PREDEFINED_PERSONALITIES.includes(val) &&
-                      !customPersonalities.includes(val)
-                    ) {
-                      setCustomPersonalities([...customPersonalities, val]);
-                      setPersonalities([...personalities, val]);
-                    }
-                    setNewPersonality('');
-                    setShowPersonalityInput(false);
-                  }}
-                >
-                  <Text style={styles.customAddBtnText}>Thêm</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </ScrollView>
+          </View>
         </View>
       </ScrollView>
 
@@ -556,73 +682,110 @@ const OnboardingScreen = () => {
           maximumDate={new Date()}
         />
       )}
-
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.mainBtn, loading && { opacity: 0.6 }]}
-          onPress={handleNext}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          {loading ? (
-            <ActivityIndicator color={COLOR_PALETTE.pink} />
-          ) : (
-            <>
-              <Text style={styles.mainBtnText}>
-                {step === 3 ? 'Bắt đầu ngay' : 'Tiếp theo'}
-              </Text>
-              {step < 3 && (
-                <Icon
-                  name="arrow-forward"
-                  size={18}
-                  color={COLOR_PALETTE.pink}
-                  style={{ marginLeft: 8 }}
-                />
-              )}
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
 export default OnboardingScreen;
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0A0A0A' },
-  headerRow: {
+  root: {
+    flex: 1,
+    backgroundColor: '#020001',
+    overflow: 'hidden',
+  },
+  scroll: {
+    minHeight: SCENE_HEIGHT,
+    overflow: 'hidden',
+  },
+  scene: {
+    minHeight: SCENE_HEIGHT,
+    alignItems: 'center',
+    paddingTop: Math.max(48, SCENE_HEIGHT * 0.06),
+    paddingBottom: 240,
+  },
+  logo: {
+    width: Math.min(SCREEN_WIDTH * 0.58, 330),
+    height: Math.min(SCREEN_WIDTH * 0.4, 145),
+    zIndex: 5,
+    transform: [{ scale: 1.7 }],
+  },
+  lantern: {
+    position: 'absolute',
+    top: Math.max(142, SCENE_HEIGHT * 0.15),
+    right: Math.max(20, SCREEN_WIDTH * 0.12),
+    width: Math.min(SCREEN_WIDTH * 0.2, 118),
+    height: Math.min(SCREEN_WIDTH * 0.32, 178),
+    zIndex: 7,
+    transform: [{ scale: 2 }],
+    filter: 'drop-shadow(0px 0px 20px rgba(255, 155, 215, 1))',
+  },
+  panel: {
+    width: PANEL_WIDTH,
+    height: PANEL_HEIGHT,
+    marginTop: Math.max(22, SCENE_HEIGHT * 0.035),
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,212,228,0.38)',
+    backgroundColor: 'rgba(2,0,2,0.82)',
+    shadowColor: '#f9a2cb',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    elevation: 10,
+    justifyContent: 'center',
+    zIndex: 4,
+  },
+  panelContent: {
+    flex: 1,
+    paddingHorizontal: 28,
+    paddingTop: 36,
+    paddingBottom: 24,
+    justifyContent: 'flex-start',
+  },
+  panelHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'ios' ? 60 : 32,
-    paddingBottom: 24,
+    marginBottom: 12,
+  },
+  panelTitleBlock: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  formTitle: {
+    fontSize: 27,
+    fontFamily: 'serif',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#e8c5ce',
+    textShadowColor: '#c12a7f',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 9,
+  },
+  stepText: {
+    marginTop: 4,
+    color: 'rgba(255,221,233,0.58)',
+    fontSize: 14,
+    fontFamily: 'serif',
+    fontWeight: 'bold',
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,194,209,0.07)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,194,209,0.15)',
+    width: 34,
+    height: 34,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backBtnPlaceholder: { width: 40, height: 40 },
-  brandTitle: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: COLOR_PALETTE.pink,
-    letterSpacing: 4,
+  backBtnPlaceholder: {
+    width: 34,
+    height: 34,
   },
   progressTrack: {
     height: 3,
-    backgroundColor: 'rgba(255,194,209,0.1)',
-    marginHorizontal: 24,
+    backgroundColor: 'rgba(255,194,209,0.14)',
     borderRadius: 1.5,
     overflow: 'hidden',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   progressFill: {
     height: '100%',
@@ -630,54 +793,98 @@ const styles = StyleSheet.create({
     borderRadius: 1.5,
     ...({ boxShadow: '0px 0px 8px 0px #ffc2d1' } as ViewStyle),
   },
-  slide: { width: SW, paddingHorizontal: 24, flex: 1 },
-  stepHeader: { marginBottom: 40, marginTop: 12 },
+  pager: {
+    flex: 1,
+    marginHorizontal: -28,
+    minHeight: 0,
+  },
+  slide: {
+    width: SW,
+    flex: 1,
+  },
+  slideInner: {
+    width: PANEL_WIDTH,
+    paddingHorizontal: 28,
+    paddingTop: 10,
+    paddingBottom: 28,
+  },
+  tagsContent: {
+    width: PANEL_WIDTH,
+    paddingHorizontal: 28,
+    paddingTop: 10,
+    paddingBottom: 28,
+  },
+  stepHeader: {
+    marginBottom: 22,
+  },
   title: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: COLOR_PALETTE.pink,
-    letterSpacing: 0.5,
-    marginBottom: 12,
-    textShadowColor: COLOR_PALETTE.brightPink,
+    fontSize: 23,
+    fontFamily: 'serif',
+    fontWeight: 'bold',
+    color: '#e8c5ce',
+    textAlign: 'center',
+    textShadowColor: '#c12a7f',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 15,
+    textShadowRadius: 9,
   },
   subtitle: {
-    fontSize: 14,
-    color: 'rgba(255,194,209,0.5)',
-    lineHeight: 22,
-    fontWeight: '500',
+    marginTop: 8,
+    fontSize: 13,
+    color: 'rgba(255,221,233,0.52)',
+    lineHeight: 18,
+    fontFamily: 'serif',
+    textAlign: 'center',
   },
-  fieldGroup: { marginBottom: 24 },
+  fieldGroup: {
+    marginBottom: 18,
+  },
   fieldLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 1.5,
-    marginBottom: 10,
+    letterSpacing: 1.1,
+    marginBottom: 8,
+    fontFamily: 'serif',
   },
   fieldInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1.5,
-    paddingBottom: 14,
+    borderBottomWidth: 1,
+    paddingBottom: 10,
   },
   fieldInput: {
     flex: 1,
-    color: COLOR_PALETTE.lavenderBlush,
-    fontSize: 18,
-    fontWeight: '600',
+    color: '#ffe8f1',
+    fontSize: 17,
+    fontWeight: '500',
     padding: 0,
+    fontFamily: 'serif',
+    textShadowColor: 'rgba(255,157,205,0.35)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
-  genderContainer: { flexDirection: 'row', gap: 12 },
+  sectionLabel: {
+    color: 'rgba(255,221,233,0.5)',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    marginTop: 2,
+    marginBottom: 12,
+    fontFamily: 'serif',
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   genderBox: {
     flex: 1,
-    height: 110,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,194,209,0.15)',
+    height: 88,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,213,229,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0A0A0A',
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    overflow: 'hidden',
   },
   genderBoxActive: {
     borderColor: COLOR_PALETTE.pink,
@@ -686,20 +893,36 @@ const styles = StyleSheet.create({
     } as ViewStyle),
   },
   genderText: {
-    fontSize: 14,
-    color: 'rgba(255,194,209,0.4)',
+    fontSize: 13,
+    color: 'rgba(255,221,233,0.46)',
     fontWeight: '700',
+    fontFamily: 'serif',
   },
   genderTextActive: {
     color: COLOR_PALETTE.pink,
   },
-  chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  tagsLabel: {
+    color: 'rgba(255,221,233,0.5)',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    marginBottom: 12,
+    fontFamily: 'serif',
+  },
+  personalityLabel: {
+    marginTop: 24,
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 9,
+  },
   chip: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 24,
+    paddingHorizontal: 15,
+    paddingVertical: 9,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255,194,209,0.15)',
+    borderColor: 'rgba(255,213,229,0.22)',
     backgroundColor: 'rgba(255,194,209,0.03)',
   },
   chipActive: {
@@ -709,19 +932,20 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    color: 'rgba(255,194,209,0.5)',
+    color: 'rgba(255,221,233,0.54)',
     fontWeight: '600',
+    fontFamily: 'serif',
   },
   chipTextActive: {
     color: COLOR_PALETTE.pink,
     fontWeight: '800',
   },
   chipAdd: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,194,209,0.2)',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 18,
+    borderWidth: 1.3,
+    borderColor: 'rgba(255,213,229,0.26)',
     borderStyle: 'dashed',
     flexDirection: 'row',
     alignItems: 'center',
@@ -729,59 +953,121 @@ const styles = StyleSheet.create({
   },
   chipAddText: {
     fontSize: 13,
-    color: 'rgba(255,194,209,0.5)',
+    color: 'rgba(255,221,233,0.54)',
     fontWeight: '600',
+    fontFamily: 'serif',
   },
   customAddRow: {
     flexDirection: 'row',
-    marginTop: 16,
+    marginTop: 14,
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   customAddInput: {
     flex: 1,
-    height: 44,
+    height: 42,
     backgroundColor: 'rgba(255,194,209,0.05)',
     borderWidth: 1,
     borderColor: 'rgba(255,194,209,0.2)',
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    color: COLOR_PALETTE.pink,
+    borderRadius: 21,
+    paddingHorizontal: 14,
+    color: '#ffe8f1',
     fontSize: 14,
+    fontFamily: 'serif',
   },
   customAddBtn: {
-    height: 44,
-    paddingHorizontal: 20,
-    borderRadius: 22,
+    height: 42,
+    paddingHorizontal: 18,
+    borderRadius: 21,
     backgroundColor: COLOR_PALETTE.pink,
     alignItems: 'center',
     justifyContent: 'center',
   },
   customAddBtnText: {
-    color: '#0A0A0A',
+    color: '#17050A',
     fontWeight: '700',
     fontSize: 14,
+    fontFamily: 'serif',
   },
-  footer: {
-    paddingHorizontal: 24,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
-    paddingTop: 16,
-  },
-  mainBtn: {
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#17050A',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,194,209,0.3)',
-    flexDirection: 'row',
+  openButtonFrame: {
+    width: Math.min(SCREEN_WIDTH * 0.58, 342),
+    height: Math.min(SCREEN_WIDTH * 0.16, 96),
+    marginTop: 14,
+    alignSelf: 'center',
+    zIndex: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    ...({ boxShadow: 'inset 0px -2px 16px 0px #ffc2d1' } as ViewStyle),
+    overflow: 'visible',
   },
-  mainBtnText: {
-    color: COLOR_PALETTE.pink,
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+  openButtonImageLayer: {
+    width: '100%',
+    height: '100%',
+    zIndex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  openButtonContent: {
+    position: 'absolute',
+    zIndex: 2,
+  },
+  openButtonText: {
+    color: '#934564',
+    fontSize: 18,
+    fontFamily: 'serif',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    transform: [{ translateY: -10 }],
+  },
+  disabledButton: {
+    opacity: 0.75,
+  },
+  openButtonAsset: {
+    width: '100%',
+    height: '100%',
+    zIndex: 1,
+    transform: [{ scale: 1.5 }, { translateY: -6 }],
+  },
+  loginLinkBelow: {
+    marginTop: 2,
+    zIndex: 10,
+    elevation: 10,
+    minHeight: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  linkText: {
+    color: 'rgba(255,221,233,0.66)',
+    fontSize: 14,
+    fontFamily: 'serif',
+    fontWeight: 'bold',
+  },
+  cloud: {
+    position: 'absolute',
+    left: -10,
+    bottom: -24,
+    width: Math.min(SCREEN_WIDTH * 0.82, 520),
+    height: 220,
+    opacity: 0.4,
+    zIndex: 1,
+    transform: [{ scale: 2.5 }, { rotate: '-10deg' }],
+  },
+  letter: {
+    position: 'absolute',
+    left: 10,
+    bottom: 40,
+    width: Math.min(SCREEN_WIDTH * 0.62, 390),
+    height: Math.min(SCREEN_WIDTH * 0.34, 220),
+    zIndex: 2,
+    transform: [{ scale: 1.8 }],
+  },
+  butterfly: {
+    position: 'absolute',
+    right: Math.max(24, SCREEN_WIDTH * 0.1),
+    bottom: Math.max(158, SCENE_HEIGHT * 0.18),
+    width: Math.min(SCREEN_WIDTH * 0.12, 70),
+    height: Math.min(SCREEN_WIDTH * 0.12, 70),
+    zIndex: 3,
+    transform: [{ scaleX: -1 }],
+    filter: 'drop-shadow(0px 0px 20px rgba(255, 155, 215, 1))',
   },
 });

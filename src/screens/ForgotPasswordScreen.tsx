@@ -400,6 +400,7 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#020001',
+    overflow: 'hidden',
   },
   scroll: {
     minHeight: SCENE_HEIGHT,
