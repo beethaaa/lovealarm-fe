@@ -1,256 +1,36 @@
-/* eslint-disable react/no-unstable-nested-components */
-/* eslint-disable react-native/no-inline-styles */
-import React, { useState, useRef, useEffect } from 'react';
+// @refresh reset
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Animated,
-  StatusBar,
-  ScrollView,
-  Dimensions,
-  ViewStyle,
+  View,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
-import COLOR_PALETTE from '../styles/colorPalette';
-import { authApi } from '../services/authService';
 import LoadingOverlay from '@/components/LoadingOverlay';
+import { authApi } from '../services/authService';
 
-const { width: SW } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const SCENE_HEIGHT = Math.max(SCREEN_HEIGHT, 820);
+const PANEL_WIDTH = Math.min(SCREEN_WIDTH - 56, 500);
 
-const HX = 90;
-const HY = 110;
-const HEART_D = 96;
-const RadarRing = ({ delay, size }: { delay: number; size: number }) => {
-  const scale = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0.8)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.parallel([
-          Animated.timing(scale, {
-            toValue: 1,
-            duration: 2400,
-            useNativeDriver: true,
-          }),
-          Animated.timing(opacity, {
-            toValue: 0,
-            duration: 2400,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.parallel([
-          Animated.timing(scale, {
-            toValue: 0,
-            duration: 0,
-            useNativeDriver: true,
-          }),
-          Animated.timing(opacity, {
-            toValue: 0.8,
-            duration: 0,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [scale, opacity, delay]);
-
-  return (
-    <Animated.View
-      style={{
-        position: 'absolute',
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        borderWidth: 1.5,
-        borderColor: COLOR_PALETTE.cherryBlossomPink,
-        left: HX - size / 2,
-        top: HY - size / 2,
-        opacity,
-        transform: [{ scale }],
-      }}
-    />
-  );
-};
-
-const RadarSection = () => {
-  const beat = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(beat, {
-          toValue: 1.18,
-          duration: 160,
-          useNativeDriver: true,
-        }),
-        Animated.timing(beat, {
-          toValue: 0.95,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(beat, {
-          toValue: 1.08,
-          duration: 120,
-          useNativeDriver: true,
-        }),
-        Animated.timing(beat, {
-          toValue: 1.0,
-          duration: 280,
-          useNativeDriver: true,
-        }),
-        Animated.delay(950),
-      ]),
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [beat]);
-
-  return (
-    <View style={styles.radarSection}>
-      <RadarRing delay={0} size={SW * 0.75} />
-      <RadarRing delay={800} size={SW * 0.75} />
-      <RadarRing delay={1600} size={SW * 0.75} />
-
-      <View
-        style={[
-          styles.heartCircle,
-          {
-            position: 'absolute',
-            left: HX - HEART_D / 2,
-            top: HY - HEART_D / 2,
-          },
-        ]}
-      >
-        <Animated.View style={{ transform: [{ scale: beat }] }}>
-          <Icon
-            name="heart"
-            size={48}
-            color={COLOR_PALETTE.cherryBlossomPink}
-            style={styles.heartGlowIcon}
-          />
-        </Animated.View>
-      </View>
-
-      <View style={styles.brandBlock}>
-        <Text style={styles.brandTitle}>LOVE ALARM</Text>
-        <Text style={styles.brandSub}>Where is your true love?</Text>
-      </View>
-    </View>
-  );
-};
-
-const PinkInput = ({
-  icon,
-  label,
-  placeholder,
-  value,
-  onChangeText,
-  secureTextEntry = false,
-  rightElement,
-}: {
-  icon: string;
-  label: string;
-  placeholder: string;
-  value: string;
-  onChangeText: (t: string) => void;
-  secureTextEntry?: boolean;
-  rightElement?: React.ReactNode;
-}) => {
-  const [focused, setFocused] = useState(false);
-  const anim = useRef(new Animated.Value(0)).current;
-
-  const run = (v: number) =>
-    Animated.timing(anim, {
-      toValue: v,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-
-  const borderColor = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['rgba(255,194,209,0.15)', COLOR_PALETTE.pink],
-  });
-  const labelColor = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['rgba(255,194,209,0.4)', COLOR_PALETTE.pink],
-  });
-
-  return (
-    <View style={styles.fieldGroup}>
-      <Animated.View style={styles.fieldLabelRow}>
-        <Icon
-          name={icon}
-          size={13}
-          color={focused ? COLOR_PALETTE.pink : 'rgba(255,194,209,0.5)'}
-        />
-        <Animated.Text style={[styles.fieldLabel, { color: labelColor }]}>
-          {label}
-        </Animated.Text>
-      </Animated.View>
-
-      <Animated.View
-        style={[
-          styles.fieldInputRow,
-          { borderColor },
-          focused &&
-            ({
-              boxShadow: 'inset 0px -1px 8px 0px rgba(255,194,209,0.08)',
-            } as ViewStyle),
-        ]}
-      >
-        <TextInput
-          placeholder={placeholder}
-          placeholderTextColor="rgba(255,194,209,0.2)"
-          style={styles.fieldInput}
-          value={value}
-          onChangeText={onChangeText}
-          secureTextEntry={secureTextEntry}
-          autoCapitalize="none"
-          onFocus={() => {
-            setFocused(true);
-            run(1);
-          }}
-          onBlur={() => {
-            setFocused(false);
-            run(0);
-          }}
-        />
-        {rightElement}
-      </Animated.View>
-    </View>
-  );
-};
-
-const ProgressBar = ({ step }: { step: number }) => {
-  const progress = useRef(new Animated.Value(0.5)).current;
-  useEffect(() => {
-    Animated.spring(progress, {
-      toValue: step === 0 ? 0.5 : 1,
-      tension: 60,
-      friction: 8,
-      useNativeDriver: false,
-    }).start();
-  }, [step, progress]);
-  const width = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
-  return (
-    <View style={styles.progressTrack}>
-      <Animated.View style={[styles.progressFill, { width }]} />
-    </View>
-  );
+const assets = {
+  title: require('../assets/title.webp'),
+  book: require('../assets/book.webp'),
+  cloud: require('../assets/cloud.webp'),
+  butterfly: require('../assets/butterfly_light.webp'),
+  openButton: require('../assets/button.webp'),
 };
 
 const RegisterScreen = ({ navigation }: any) => {
@@ -289,13 +69,13 @@ const RegisterScreen = ({ navigation }: any) => {
     }
     Animated.sequence([
       Animated.timing(step1Anim, {
-        toValue: -SW,
+        toValue: -SCREEN_WIDTH,
         duration: 220,
         useNativeDriver: true,
       }),
     ]).start(() => {
       setStep(1);
-      step1Anim.setValue(SW);
+      step1Anim.setValue(SCREEN_WIDTH);
       Animated.spring(step1Anim, {
         toValue: 0,
         tension: 60,
@@ -307,12 +87,12 @@ const RegisterScreen = ({ navigation }: any) => {
 
   const goBack = () => {
     Animated.timing(step1Anim, {
-      toValue: SW,
+      toValue: SCREEN_WIDTH,
       duration: 200,
       useNativeDriver: true,
     }).start(() => {
       setStep(0);
-      step1Anim.setValue(-SW);
+      step1Anim.setValue(-SCREEN_WIDTH);
       Animated.spring(step1Anim, {
         toValue: 0,
         tension: 60,
@@ -344,383 +124,482 @@ const RegisterScreen = ({ navigation }: any) => {
     }
   };
 
-  const EyeBtn = ({
-    secure,
-    onPress,
-  }: {
-    secure: boolean;
-    onPress: () => void;
-  }) => (
-    <TouchableOpacity onPress={onPress} style={styles.eyeBtn}>
-      <Icon
-        name={secure ? 'eye-off-outline' : 'eye-outline'}
-        size={19}
-        color="rgba(255,194,209,0.45)"
-      />
-    </TouchableOpacity>
-  );
+  const actionText = step === 0 ? 'Continue' : 'Create Account';
+  const actionPress = step === 0 ? goToStep1 : handleRegister;
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.root}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
+      <StatusBar barStyle="light-content" backgroundColor="#020001" />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        bounces={false}
       >
-        {/* Top radar */}
-        <RadarSection />
+        <LinearGradient
+          colors={['#000000', '#030002', '#110511', '#1f071d']}
+          locations={[0, 0.45, 0.78, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
 
-        {/* Form section */}
+        <Image
+          source={assets.cloud}
+          style={styles.cloud}
+          resizeMode="contain"
+        />
+        <Image source={assets.book} style={styles.book} resizeMode="contain" />
+        <Image
+          source={assets.butterfly}
+          style={styles.butterfly}
+          resizeMode="contain"
+        />
+
         <Animated.View
           style={[
-            styles.formSection,
+            styles.scene,
             { opacity: fadeIn, transform: [{ translateY: slideUp }] },
           ]}
         >
-          {/* Header */}
-          <View style={styles.formHeader}>
-            <View style={styles.formHeaderLeft}>
-              {step === 1 && (
-                <TouchableOpacity onPress={goBack} style={styles.backBtn}>
-                  <Icon
-                    name="arrow-back"
-                    size={20}
-                    color={COLOR_PALETTE.pink}
-                  />
-                </TouchableOpacity>
-              )}
-              <View>
-                <Text style={styles.formTitle}>Tạo tài khoản</Text>
-                <Text style={styles.formSubtitle}>
-                  {step === 0 ? 'Bước 1 / 2 — Email' : 'Bước 2 / 2 — Mật khẩu'}
-                </Text>
-              </View>
-            </View>
-          </View>
+          <Image
+            source={assets.title}
+            style={styles.title}
+            resizeMode="contain"
+          />
 
-          {/* Progress */}
-          <ProgressBar step={step} />
+          <Image
+            source={assets.butterfly}
+            style={styles.butterflyTop}
+            resizeMode="contain"
+          />
 
-          {/* Fields */}
-          <Animated.View style={{ transform: [{ translateX: step1Anim }] }}>
-            {step === 0 ? (
-              <>
-                <PinkInput
-                  icon="mail-outline"
-                  label="ĐỊA CHỈ EMAIL"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChangeText={setEmail}
-                />
-
-                <TouchableOpacity
-                  style={styles.mainBtn}
-                  onPress={goToStep1}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.mainBtnText}>Tiếp tục</Text>
-                  <Icon
-                    name="arrow-forward"
-                    size={18}
-                    color={COLOR_PALETTE.pink}
-                    style={{ marginLeft: 10 }}
-                  />
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                {/* Email recap */}
-                <TouchableOpacity onPress={goBack} style={styles.emailTag}>
-                  <Icon
-                    name="checkmark-circle"
-                    size={15}
-                    color={COLOR_PALETTE.pink}
-                  />
-                  <Text style={styles.emailTagText} numberOfLines={1}>
-                    {email}
+          <View style={[styles.panel, step === 1 && styles.panelPassword]}>
+            <View style={styles.form}>
+              <View style={styles.headerRow}>
+                {step === 1 ? (
+                  <TouchableOpacity
+                    onPress={goBack}
+                    style={styles.backBtn}
+                    activeOpacity={0.75}
+                  >
+                    <Icon
+                      name="arrow-back"
+                      size={19}
+                      color="rgba(255,221,233,0.78)"
+                    />
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.backBtnPlaceholder} />
+                )}
+                <View style={styles.headerTextWrap}>
+                  <Text style={styles.formTitle}>Create Account</Text>
+                  <Text style={styles.formSubtitle}>
+                    {step === 0
+                      ? 'Step 1 / 2 - Email'
+                      : 'Step 2 / 2 - Password'}
                   </Text>
-                  <Icon
-                    name="pencil-outline"
-                    size={13}
-                    color="rgba(255,194,209,0.4)"
-                  />
-                </TouchableOpacity>
+                </View>
+                <View style={styles.backBtnPlaceholder} />
+              </View>
 
-                <PinkInput
-                  icon="lock-closed-outline"
-                  label="MẬT KHẨU"
-                  placeholder="Tối thiểu 8 ký tự"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={secureText}
-                  rightElement={
-                    <EyeBtn
-                      secure={secureText}
-                      onPress={() => setSecureText(!secureText)}
-                    />
-                  }
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    step === 1 && styles.progressFillComplete,
+                  ]}
                 />
+              </View>
 
-                <PinkInput
-                  icon="shield-checkmark-outline"
-                  label="XÁC NHẬN MẬT KHẨU"
-                  placeholder="Nhập lại mật khẩu"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={secureConfirm}
-                  rightElement={
-                    <EyeBtn
-                      secure={secureConfirm}
-                      onPress={() => setSecureConfirm(!secureConfirm)}
-                    />
-                  }
-                />
-
-                <TouchableOpacity
-                  style={[styles.mainBtn, loading && { opacity: 0.6 }]}
-                  onPress={handleRegister}
-                  disabled={loading}
-                  activeOpacity={0.85}
+              <View
+                style={[
+                  styles.stepWindow,
+                  step === 1 && styles.stepWindowPassword,
+                ]}
+              >
+                <Animated.View
+                  style={{ transform: [{ translateX: step1Anim }] }}
                 >
-                  {loading ? (
-                    <ActivityIndicator color={COLOR_PALETTE.pink} />
-                  ) : (
-                    <>
-                      <Icon
-                        name="heart"
-                        size={17}
-                        color={COLOR_PALETTE.pink}
-                        style={{ marginRight: 10 }}
+                  {step === 0 ? (
+                    <View>
+                      <TextInput
+                        placeholder="Email"
+                        placeholderTextColor="rgba(255,221,233,0.45)"
+                        style={styles.input}
+                        value={email}
+                        onChangeText={setEmail}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
                       />
-                      <Text style={styles.mainBtnText}>Tạo tài khoản</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </>
-            )}
-          </Animated.View>
+                    </View>
+                  ) : (
+                    <View>
+                      <TouchableOpacity
+                        onPress={goBack}
+                        style={styles.emailTag}
+                        activeOpacity={0.75}
+                      >
+                        <Icon
+                          name="checkmark-circle-outline"
+                          size={16}
+                          color="rgba(255,221,233,0.72)"
+                        />
+                        <Text style={styles.emailTagText} numberOfLines={1}>
+                          {email}
+                        </Text>
+                        <Icon
+                          name="pencil-outline"
+                          size={14}
+                          color="rgba(255,221,233,0.5)"
+                        />
+                      </TouchableOpacity>
 
-          {/* Footer */}
-          <View style={styles.footerRow}>
-            <View style={styles.footerDivider} />
-            <TouchableOpacity
-              style={styles.footerLink}
-              onPress={() => navigation.navigate('Login')}
-            >
-              <Text style={styles.footerLinkText}>Đã có tài khoản? </Text>
-              <Text style={styles.footerLinkHighlight}>Đăng nhập</Text>
-            </TouchableOpacity>
-            <View style={styles.footerDivider} />
+                      <View style={styles.passwordRow}>
+                        <TextInput
+                          placeholder="Password"
+                          placeholderTextColor="rgba(255,221,233,0.45)"
+                          style={[styles.input, styles.passwordInput]}
+                          value={password}
+                          onChangeText={setPassword}
+                          secureTextEntry={secureText}
+                          autoCapitalize="none"
+                        />
+                        <TouchableOpacity
+                          onPress={() => setSecureText(!secureText)}
+                          style={styles.eyeBtn}
+                          activeOpacity={0.75}
+                        >
+                          <Icon
+                            name={secureText ? 'eye-off-outline' : 'eye-outline'}
+                            size={20}
+                            color="rgba(255,221,233,0.72)"
+                          />
+                        </TouchableOpacity>
+                      </View>
+
+                      <View style={styles.passwordRow}>
+                        <TextInput
+                          placeholder="Confirm password"
+                          placeholderTextColor="rgba(255,221,233,0.45)"
+                          style={[styles.input, styles.passwordInput]}
+                          value={confirmPassword}
+                          onChangeText={setConfirmPassword}
+                          secureTextEntry={secureConfirm}
+                          autoCapitalize="none"
+                        />
+                        <TouchableOpacity
+                          onPress={() => setSecureConfirm(!secureConfirm)}
+                          style={styles.eyeBtn}
+                          activeOpacity={0.75}
+                        >
+                          <Icon
+                            name={
+                              secureConfirm
+                                ? 'eye-off-outline'
+                                : 'eye-outline'
+                            }
+                            size={20}
+                            color="rgba(255,221,233,0.72)"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                </Animated.View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.openButtonFrame, loading && styles.disabledButton]}
+                onPress={actionPress}
+                disabled={loading}
+                activeOpacity={0.88}
+              >
+                <View pointerEvents="none" style={styles.openButtonImageLayer}>
+                  <Image
+                    source={assets.openButton}
+                    style={styles.openButtonAsset}
+                    resizeMode="contain"
+                  />
+                </View>
+                {loading && step === 1 ? (
+                  <ActivityIndicator
+                    color="#ffe8f1"
+                    style={styles.openButtonContent}
+                  />
+                ) : (
+                  <Text style={[styles.openButtonText, styles.openButtonContent]}>
+                    {actionText}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Login')}
+                activeOpacity={0.75}
+                style={styles.loginLinkBelow}
+              >
+                <Text style={styles.linkText}>Back to Login</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </Animated.View>
       </ScrollView>
+
       <LoadingOverlay visible={loading} message="Creating Account..." />
     </KeyboardAvoidingView>
   );
 };
 
-export default RegisterScreen;
-
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0A0A0A' },
-  scroll: { flexGrow: 1, paddingBottom: 52 },
-
-  radarSection: { height: 240 },
-  heartCircle: {
-    width: HEART_D,
-    height: HEART_D,
-    borderRadius: HEART_D / 2,
-    backgroundColor: '#17050A',
+  root: {
+    flex: 1,
+    backgroundColor: '#020001',
+  },
+  scroll: {
+    minHeight: SCENE_HEIGHT,
+    overflow: 'hidden',
+  },
+  scene: {
+    minHeight: SCENE_HEIGHT,
     alignItems: 'center',
-    justifyContent: 'center',
-    ...({ boxShadow: 'inset 0px -1px 3px 0px #ffc2d1' } as ViewStyle),
+    paddingTop: Math.max(48, SCENE_HEIGHT * 0.06),
+    paddingBottom: 240,
   },
-  heartGlowIcon: {
-    textShadowColor: COLOR_PALETTE.pink,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
+  title: {
+    width: Math.min(SCREEN_WIDTH * 0.58, 330),
+    height: Math.min(SCREEN_WIDTH * 0.4, 145),
+    zIndex: 5,
+    transform: [{ scale: 1.7 }],
   },
-  brandBlock: {
+  butterflyTop: {
     position: 'absolute',
-    left: HX + HEART_D / 2 + 40,
-    top: HY - 28,
+    top: Math.max(150, SCENE_HEIGHT * 0.15),
+    right: Math.max(20, SCREEN_WIDTH * 0.1),
+    width: Math.min(SCREEN_WIDTH * 0.2, 118),
+    height: Math.min(SCREEN_WIDTH * 0.32, 178),
+    zIndex: 7,
+    transform: [{ scale: 1 }],
+    filter: 'drop-shadow(0px 0px 20px rgba(255, 155, 215, 1))',
   },
-  brandTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: COLOR_PALETTE.pink,
-    letterSpacing: 5,
-    marginBottom: 6,
-    textShadowColor: COLOR_PALETTE.roseRed,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
+  panel: {
+    width: PANEL_WIDTH,
+    height: Math.min(Math.max(SCENE_HEIGHT * 0.3, 380), 460),
+    marginTop: Math.max(22, SCENE_HEIGHT * 0.035),
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,212,228,0.38)',
+    backgroundColor: 'rgba(2,0,2,0.82)',
+    shadowColor: '#f9a2cb',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    elevation: 10,
+    justifyContent: 'center',
+    zIndex: 4,
   },
-  brandSub: {
-    fontSize: 14,
-    color: COLOR_PALETTE.amaranthPink,
-    fontWeight: '400',
-    opacity: 0.5,
+  panelPassword: {
+    height: Math.min(Math.max(SCENE_HEIGHT * 0.48, 460), 530),
   },
-
-  formSection: {
-    paddingHorizontal: 24,
-    paddingTop: 8,
+  form: {
+    flex: 1,
+    paddingHorizontal: 28,
+    paddingTop: 36,
+    paddingBottom: 24,
+    justifyContent: 'flex-start',
   },
-
-  formHeader: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  formHeaderLeft: {
-    flexDirection: 'row',
+  headerTextWrap: {
+    flex: 1,
     alignItems: 'center',
-    gap: 12,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,194,209,0.07)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,194,209,0.15)',
+    width: 34,
+    height: 34,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  backBtnPlaceholder: {
+    width: 34,
+    height: 34,
   },
   formTitle: {
     fontSize: 24,
-    fontWeight: '900',
-    color: COLOR_PALETTE.pink,
-    letterSpacing: 0.3,
-    textShadowColor: COLOR_PALETTE.brightPink,
+    fontFamily: 'serif',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#e8c5ce',
+    textShadowColor: '#c12a7f',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
+    textShadowRadius: 9,
   },
   formSubtitle: {
+    marginTop: 4,
+    color: 'rgba(255,221,233,0.55)',
     fontSize: 12,
-    color: 'rgba(255,194,209,0.4)',
-    fontWeight: '500',
-    marginTop: 2,
-    letterSpacing: 0.5,
+    fontFamily: 'serif',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
-
   progressTrack: {
     height: 2,
-    backgroundColor: 'rgba(255,194,209,0.1)',
+    backgroundColor: 'rgba(255,213,229,0.16)',
     borderRadius: 2,
-    marginBottom: 28,
+    marginBottom: 12,
     overflow: 'hidden',
   },
   progressFill: {
+    width: '50%',
     height: '100%',
-    backgroundColor: COLOR_PALETTE.pink,
     borderRadius: 2,
-    ...({ boxShadow: '0px 0px 6px 0px #ffc2d1' } as ViewStyle),
+    backgroundColor: 'rgba(255,184,211,0.86)',
   },
-
-  fieldGroup: {
-    marginBottom: 20,
+  progressFillComplete: {
+    width: '100%',
   },
-  fieldLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
+  stepWindow: {
+    minHeight: 108,
+    overflow: 'hidden',
+    justifyContent: 'flex-start',
+    paddingTop: 14,
   },
-  fieldLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1.5,
+  stepWindowPassword: {
+    minHeight: 180,
   },
-  fieldInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1.5,
-    paddingBottom: 12,
-  },
-  fieldInput: {
-    flex: 1,
-    color: COLOR_PALETTE.lavenderBlush,
+  input: {
+    height: 50,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255,213,229,0.32)',
+    color: '#ffe8f1',
     fontSize: 16,
     fontWeight: '500',
-    padding: 0,
+    paddingHorizontal: 2,
+    paddingVertical: 0,
+    textShadowColor: 'rgba(255,157,205,0.35)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+    fontFamily: 'serif',
   },
-  eyeBtn: { paddingLeft: 8 },
-
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  passwordInput: {
+    flex: 1,
+  },
+  eyeBtn: {
+    width: 42,
+    height: 50,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255,213,229,0.32)',
+  },
   emailTag: {
+    height: 40,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,194,209,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,194,209,0.15)',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: 24,
-    ...({
-      boxShadow: 'inset 0px -1px 4px 0px rgba(255,194,209,0.08)',
-    } as ViewStyle),
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255,213,229,0.25)',
+    marginBottom: 2,
   },
   emailTagText: {
     flex: 1,
-    color: COLOR_PALETTE.pink,
+    color: 'rgba(255,221,233,0.72)',
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'serif',
+    fontWeight: 'bold',
   },
-
-  mainBtn: {
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#17050A',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,194,209,0.3)',
-    flexDirection: 'row',
+  loginLinkBelow: {
+    marginTop: 4,
+    zIndex: 10,
+    elevation: 10,
+    minHeight: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
-    marginBottom: 4,
-    ...({ boxShadow: 'inset 0px -2px 16px 0px #ffc2d1' } as ViewStyle),
   },
-  mainBtnText: {
-    color: COLOR_PALETTE.pink,
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+  linkText: {
+    color: 'rgba(255,221,233,0.66)',
+    fontSize: 14,
+    fontFamily: 'serif',
+    fontWeight: 'bold',
   },
-
-  // ── Footer ──
-  footerRow: {
-    flexDirection: 'row',
+  openButtonFrame: {
+    width: Math.min(SCREEN_WIDTH * 0.58, 342),
+    height: Math.min(SCREEN_WIDTH * 0.16, 96),
+    marginTop: 28,
+    alignSelf: 'center',
+    zIndex: 8,
     alignItems: 'center',
-    marginTop: 32,
-    gap: 12,
+    justifyContent: 'center',
+    overflow: 'visible',
   },
-  footerDivider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255,194,209,0.08)',
-  },
-  footerLink: {
-    flexDirection: 'row',
+  openButtonImageLayer: {
+    width: '100%',
+    height: '100%',
+    zIndex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  footerLinkText: {
-    color: 'rgba(255,194,209,0.35)',
-    fontSize: 13,
+  openButtonContent: {
+    position: 'absolute',
+    zIndex: 2,
   },
-  footerLinkHighlight: {
-    color: COLOR_PALETTE.pink,
-    fontSize: 13,
-    fontWeight: '800',
-    textShadowColor: COLOR_PALETTE.brightPink,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 6,
+  openButtonText: {
+    color: '#934564',
+    fontSize: 18,
+    fontFamily: 'serif',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    transform: [{ translateY: -10 }],
+  },
+  disabledButton: {
+    opacity: 0.75,
+  },
+  openButtonAsset: {
+    width: '100%',
+    height: '100%',
+    zIndex: 1,
+    transform: [{ scale: 1.5 }, { translateY: -6 }],
+  },
+  cloud: {
+    position: 'absolute',
+    left: -60,
+    bottom: -40,
+    width: Math.min(SCREEN_WIDTH * 0.82, 520),
+    height: 260,
+    opacity: 0.5,
+    zIndex: 1,
+    transform: [{ scale: 2 }, {rotate: '-6deg'}],
+  },
+  book: {
+    position: 'absolute',
+    left: 16,
+    bottom: 40,
+    width: Math.min(SCREEN_WIDTH * 0.62, 390),
+    height: Math.min(SCREEN_WIDTH * 0.34, 220),
+    zIndex: 2,
+    transform: [{ scale: 2 }],
+  },
+  butterfly: {
+    position: 'absolute',
+    right: Math.max(24, SCREEN_WIDTH * 0.1),
+    bottom: Math.max(158, SCENE_HEIGHT * 0.18),
+    width: Math.min(SCREEN_WIDTH * 0.12, 70),
+    height: Math.min(SCREEN_WIDTH * 0.12, 70),
+    zIndex: 3,
+    transform: [{ scaleX: -1.2 }, {scaleY: 1.2}],
+    filter: 'drop-shadow(0px 0px 20px rgba(255, 155, 215, 1))',
   },
 });
+
+export default RegisterScreen;
