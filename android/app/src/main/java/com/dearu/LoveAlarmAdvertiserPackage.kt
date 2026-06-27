@@ -1,4 +1,4 @@
-package com.lovealarm
+package com.dearu
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.*

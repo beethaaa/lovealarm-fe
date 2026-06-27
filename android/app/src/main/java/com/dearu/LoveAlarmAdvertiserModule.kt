@@ -1,4 +1,4 @@
-package com.lovealarm
+package com.dearu
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
