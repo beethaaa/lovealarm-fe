@@ -58,7 +58,7 @@ jobs:
 
       - name: Build APK and AAB
         working-directory: android
-        run: ./gradlew clean assembleRelease bundleRelease --stacktrace
+        run: ./gradlew clean assembleRelease bundleRelease -PVERSION_CODE=${{ github.run_number }} --stacktrace
 
       - name: Delete old GitHub Release
         env:
