@@ -25,9 +25,9 @@
     "profile": "Hồ sơ"
   },
   "home": {
-    "title": "Love Alarm",
+    "title": "DearU",
     "subtitle": "Khám phá kết nối lân cận",
-    "welcome": "Chào mừng đến Love Alarm",
+    "welcome": "Chào mừng đến DearU",
     "description": "Tìm người trong phạm vi tín hiệu của bạn",
     "start_scanning": "Bắt đầu quét",
     "stop_scanning": "Dừng quét"
@@ -78,7 +78,7 @@
   },
   "permissions": {
     "bluetooth": "Quyền Bluetooth",
-    "bluetooth_desc": "Cần thiết để phát hiện Love Alarm lân cận",
+    "bluetooth_desc": "Cần thiết để phát hiện người dùng DearU lân cận",
     "location": "Quyền vị trí",
     "location_desc": "Cần thiết để quét Bluetooth trên Android",
     "grant": "Cấp quyền",

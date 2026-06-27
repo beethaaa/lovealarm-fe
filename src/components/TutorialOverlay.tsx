@@ -8,7 +8,7 @@ const { width: W, height: H } = Dimensions.get('window');
 const TUTORIAL_STEPS = [
   {
     target: 'scan',
-    text: 'Chào mừng bạn đến với Love Alarm, bạn đã sẵn sàng "rung chuông" để gặp định mệnh của mình chưa?',
+    text: 'Chào mừng bạn đến với DearU, bạn đã sẵn sàng "rung chuông" để gặp định mệnh của mình chưa?',
   },
   {
     target: 'scan',

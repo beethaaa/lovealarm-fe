@@ -301,7 +301,7 @@ const ChatListScreen = () => {
               </LinearGradient>
               <Text style={styles.emptyText}>The radar is quiet...</Text>
               <Text style={styles.emptySubtext}>
-                Turn on your Love Alarm radar to find someone special nearby!
+                Turn on your DearU radar to find someone special nearby!
               </Text>
             </View>
           ) : null

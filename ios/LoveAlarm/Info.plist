@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>LoveAlarm</string>
+	<string>DearU</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -35,11 +35,11 @@
 		<true/>
 	</dict>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Love Alarm needs Bluetooth to detect nearby Love Alarms from other users.</string>
+	<string>DearU needs Bluetooth to detect nearby DearU users.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>Love Alarm needs Bluetooth to detect nearby Love Alarms from other users.</string>
+	<string>DearU needs Bluetooth to detect nearby DearU users.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Love Alarm needs your location permission to enable Bluetooth scanning.</string>
+	<string>DearU needs your location permission to enable Bluetooth scanning.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

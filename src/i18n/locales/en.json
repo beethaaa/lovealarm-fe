@@ -25,9 +25,9 @@
     "profile": "Profile"
   },
   "home": {
-    "title": "Love Alarm",
+    "title": "DearU",
     "subtitle": "Discover nearby connections",
-    "welcome": "Welcome to Love Alarm",
+    "welcome": "Welcome to DearU",
     "description": "Find people within your signal range",
     "start_scanning": "Start Scanning",
     "stop_scanning": "Stop Scanning"
@@ -78,7 +78,7 @@
   },
   "permissions": {
     "bluetooth": "Bluetooth Permission",
-    "bluetooth_desc": "Required to detect nearby Love Alarms",
+    "bluetooth_desc": "Required to detect nearby DearU users",
     "location": "Location Permission",
     "location_desc": "Required for Bluetooth scanning on Android",
     "grant": "Grant Permission",

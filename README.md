@@ -1,11 +1,11 @@
-# 💗 Love Alarm - React Native CLI Project
+# DearU - React Native CLI Project
 
 A production-ready React Native CLI project with BLE, NativeWind (Tailwind CSS), and i18n support.
 
 ## 🏗 Architecture
 
 ```
-LoveAlarm/
+DearU/
 ├── src/
 │   ├── components/          # Reusable UI components
 │   ├── screens/             # App screens
