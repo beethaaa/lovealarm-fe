@@ -73,6 +73,8 @@ def enableProguardInReleaseBuilds = false
  * this variant is about 6MiB larger per architecture than default.
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
+def releaseVersionCode = providers.gradleProperty("VERSION_CODE").orNull
+def releaseVersionName = providers.gradleProperty("VERSION_NAME").orElse("1.0.0").get()
 
 android {
     ndkVersion rootProject.ext.ndkVersion
@@ -84,8 +86,8 @@ android {
         applicationId "com.dearu"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode project.hasProperty("VERSION_CODE") ? project.VERSION_CODE.toInteger() : 1 
-        versionName "1.0.0"
+        versionCode releaseVersionCode ? releaseVersionCode.toInteger() : 1
+        versionName releaseVersionName
     }
 //    signingConfigs {
 //        debug {
@@ -139,6 +141,12 @@ android {
             minifyEnabled false
             shrinkResources false
         }
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    if ((graph.hasTask(":app:assembleRelease") || graph.hasTask(":app:bundleRelease")) && !releaseVersionCode) {
+        throw new GradleException("VERSION_CODE is required for release builds. Example: ./gradlew -PVERSION_CODE=2 bundleRelease")
     }
 }
 
