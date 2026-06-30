@@ -8,35 +8,35 @@ const { width: W, height: H } = Dimensions.get('window');
 const TUTORIAL_STEPS = [
   {
     target: 'scan',
-    text: 'Chào mừng bạn đến với DearU, bạn đã sẵn sàng "rung chuông" để gặp định mệnh của mình chưa?',
+    text: 'Welcome to DearU! Are you ready to "ring the bell" and meet your destiny?',
   },
   {
     target: 'scan',
-    text: 'Nhấn giữ "trái tim" để mở ra menu các tính năng khác',
+    text: 'Press and hold the "heart" to open the menu of other features',
   },
   {
     target: 'home',
     angle: 150,
     icon: 'home-outline',
-    text: 'Trang chủ: Xem radar dò tìm và kết nối các trái tim xung quanh bạn',
+    text: 'Home: View the radar and discover hearts around you',
   },
   {
     target: 'matched',
     angle: 110,
     icon: 'people-outline',
-    text: 'Đã ghép đôi: Danh sách những người đang "rung chuông" với bạn',
+    text: 'Matched: See the list of people who are "ringing the bell" with you',
   },
   {
     target: 'profile',
     angle: 70,
     icon: 'person-outline',
-    text: 'Hồ sơ: Cập nhật thông tin cá nhân và hình ảnh của bạn',
+    text: 'Profile: Update your personal information and photos',
   },
   {
     target: 'settings',
     angle: 30,
     icon: 'settings-outline',
-    text: 'Cài đặt: Tùy chỉnh ngôn ngữ, thông báo, và trợ giúp',
+    text: 'Settings: Customize language, notifications, and help',
   }
 ];
 

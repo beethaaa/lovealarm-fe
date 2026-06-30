@@ -2,7 +2,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Dimensions,
   Image,
@@ -18,6 +17,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import AppAlert, { AppAlertConfig } from '@/components/AppAlert';
 import LoadingOverlay from '@/components/LoadingOverlay';
 import { authApi } from '../services/authService';
 
@@ -42,10 +42,21 @@ const ForgotPasswordScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [secureText, setSecureText] = useState(true);
   const [secureConfirm, setSecureConfirm] = useState(true);
+  const [alertConfig, setAlertConfig] = useState<AppAlertConfig | null>(null);
 
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideUp = useRef(new Animated.Value(32)).current;
   let otpInputRef: TextInput | null = null;
+
+  const showAlert = (config: AppAlertConfig) => {
+    setAlertConfig(config);
+  };
+
+  const closeAlert = () => {
+    const nextAction = alertConfig?.onConfirm;
+    setAlertConfig(null);
+    nextAction?.();
+  };
 
   useEffect(() => {
     fadeIn.setValue(0);
@@ -67,7 +78,11 @@ const ForgotPasswordScreen = ({ navigation }: any) => {
 
   const handleSendOtp = async () => {
     if (!email.trim()) {
-      Alert.alert('Thông báo', 'Vui lòng nhập địa chỉ email');
+      showAlert({
+        title: 'Thông báo',
+        message: 'Vui lòng nhập địa chỉ email',
+        variant: 'info',
+      });
       return;
     }
     setLoading(true);
@@ -75,7 +90,11 @@ const ForgotPasswordScreen = ({ navigation }: any) => {
       await authApi.sendOtp(email);
       setStep(2);
     } catch (err: any) {
-      Alert.alert('Lỗi', err.message || 'Không thể gửi OTP');
+      showAlert({
+        title: 'Lỗi',
+        message: err.message || 'Không thể gửi OTP',
+        variant: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -83,7 +102,11 @@ const ForgotPasswordScreen = ({ navigation }: any) => {
 
   const handleVerifyOtp = async () => {
     if (!otp.trim()) {
-      Alert.alert('Thông báo', 'Vui lòng nhập mã OTP');
+      showAlert({
+        title: 'Thông báo',
+        message: 'Vui lòng nhập mã OTP',
+        variant: 'info',
+      });
       return;
     }
     setLoading(true);
@@ -93,7 +116,11 @@ const ForgotPasswordScreen = ({ navigation }: any) => {
       setStep(3);
     } catch (err: any) {
       console.log(otp)
-      Alert.alert('Lỗi', err.message || 'Mã OTP không đúng');
+      showAlert({
+        title: 'Lỗi',
+        message: err.message || 'Mã OTP không đúng',
+        variant: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -101,21 +128,45 @@ const ForgotPasswordScreen = ({ navigation }: any) => {
 
   const handleResetPassword = async () => {
     if (!password.trim() || !confirmPassword.trim()) {
-      Alert.alert('Thông báo', 'Vui lòng nhập mật khẩu mới');
+      showAlert({
+        title: 'Thông báo',
+        message: 'Vui lòng nhập mật khẩu mới',
+        variant: 'info',
+      });
+      return;
+    }
+    if (password.length < 8) {
+      showAlert({
+        title: 'Mật khẩu chưa đủ mạnh',
+        message: 'Mật khẩu phải có ít nhất 8 ký tự.',
+        variant: 'error',
+      });
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Thông báo', 'Mật khẩu xác nhận không khớp');
+      showAlert({
+        title: 'Thông báo',
+        message: 'Mật khẩu xác nhận không khớp',
+        variant: 'info',
+      });
       return;
     }
     setLoading(true);
     try {
       await authApi.resetPassword(email, password);
-      Alert.alert('Thành công', 'Mật khẩu của bạn đã được cập nhật', [
-        { text: 'Đăng nhập ngay', onPress: () => navigation.navigate('Login') },
-      ]);
+      showAlert({
+        title: 'Thành công',
+        message: 'Mật khẩu của bạn đã được cập nhật',
+        variant: 'success',
+        confirmText: 'Đăng nhập ngay',
+        onConfirm: () => navigation.navigate('Login'),
+      });
     } catch (err: any) {
-      Alert.alert('Lỗi', err.message || 'Không thể đặt lại mật khẩu');
+      showAlert({
+        title: 'Lỗi',
+        message: err.message || 'Không thể đặt lại mật khẩu',
+        variant: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -392,6 +443,14 @@ const ForgotPasswordScreen = ({ navigation }: any) => {
       </ScrollView>
 
       <LoadingOverlay visible={loading} message="Processing Request..." />
+      <AppAlert
+        visible={!!alertConfig}
+        title={alertConfig?.title || ''}
+        message={alertConfig?.message || ''}
+        variant={alertConfig?.variant}
+        confirmText={alertConfig?.confirmText}
+        onClose={closeAlert}
+      />
     </KeyboardAvoidingView>
   );
 };

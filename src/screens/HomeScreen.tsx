@@ -9,6 +9,7 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { useLoveAlarm, ScanResult } from '@hooks/useLoveAlarm';
 import messaging from '@react-native-firebase/messaging';
@@ -28,6 +29,8 @@ import CoupleScreen from './CoupleScreen';
 import { getFcmToken, requestUserPermission } from '@/services/notifService';
 
 const TYPEWRITER_TEXT = 'Are you crushing on anyone...';
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const SCENE_HEIGHT = Math.max(SCREEN_HEIGHT, 820);
 
 const COLORS = {
   bg: '#0A0A0A',
@@ -41,6 +44,16 @@ const COLORS = {
   textMuted: COLOR_PALETTE.amaranthPink,
   green: '#22c55e',
   red: '#ef4444',
+};
+
+const assets = {
+  sync: require('../assets/sync.webp'),
+  button: require('../assets/button.webp'),
+  light: require('../assets/light.webp'),
+  table: require('../assets/table.webp'),
+  cloud: require('../assets/cloud.webp'),
+  butterfly: require('../assets/butterfly_light.webp'),
+  openButton: require('../assets/button.webp'),
 };
 
 const PulseRing = ({
@@ -230,7 +243,7 @@ const HomeScreen = (props: HomeScreenProps) => {
         } catch (error) {
           console.error('[HomeScreen] Failed to fetch profile:', error);
         }
-      } 
+      }
     };
     fetchProfile();
   }, [currentUser, setCurrentUser]);
@@ -266,7 +279,10 @@ const HomeScreen = (props: HomeScreenProps) => {
       const currentId = currentUser._id || currentUser.id || currentUser.userId;
       const partnerId = selectedUser.userId;
 
-      const conv = await chatService.getOrCreateConversation(currentId, partnerId);
+      const conv = await chatService.getOrCreateConversation(
+        currentId,
+        partnerId,
+      );
       const conversationId =
         conv?._id ||
         conv?.id ||
@@ -325,14 +341,14 @@ const HomeScreen = (props: HomeScreenProps) => {
 
       if (!conversationId) {
         try {
-          const res = await chatService.getOrCreateConversation(currentId, partnerId);
+          const res = await chatService.getOrCreateConversation(
+            currentId,
+            partnerId,
+          );
           conversationId =
             res?._id || res?.id || res?.data?._id || res?.data?.id;
         } catch (err) {
-          console.error(
-            '[HomeScreen] Error ensuring conversation exists',
-            err,
-          );
+          console.error('[HomeScreen] Error ensuring conversation exists', err);
         }
       }
 
@@ -509,8 +525,44 @@ const HomeScreen = (props: HomeScreenProps) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+      <StatusBar barStyle="light-content" backgroundColor="#020001" />
+      <LinearGradient
+        colors={['#000000', '#030002', '#110511', '#1f071d']}
+        locations={[0, 0.45, 0.78, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      <View pointerEvents="none" style={styles.backgroundAssets}>
+           <Image
+          source={assets.butterfly}
+          style={styles.butterflyTop}
+          resizeMode="contain"
+        />
+        <Image
+          source={assets.cloud}
+          style={styles.cloudLeft}
+          resizeMode="contain"
+        />
+        <Image
+          source={assets.cloud}
+          style={styles.cloudRight}
+          resizeMode="contain"
+        />
+
+        <Image
+          source={assets.butterfly}
+          style={styles.butterflyBottom}
+          resizeMode="contain"
+        />
+        <Image
+          source={assets.light}
+          style={styles.lantern}
+          resizeMode="contain"
+        />
+      </View>
+
       <ScrollView
+        style={styles.contentLayer}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -519,25 +571,47 @@ const HomeScreen = (props: HomeScreenProps) => {
             <TouchableOpacity
               disabled={loveRequests.length === 0}
               onPress={() => setReceivedModalVisible(true)}
-              style={styles.welcomeTextContainer}
+              style={[
+                styles.openButtonFrame,
+                !isBluetoothOn && styles.disabledButton,
+              ]}
             >
-              <Icon
-                name={
-                  loveRequests.length > 0 ? 'heart-circle' : 'radio-outline'
-                }
-                size={24}
-                color={COLOR_PALETTE.pink}
-              />
-              <Text style={styles.welcomeText}>{displayedText}</Text>
+              <View pointerEvents="none" style={styles.openButtonImageLayer}>
+                <Image
+                  source={assets.openButton}
+                  style={styles.openButtonAsset}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={styles.openButtonContent}>
+                <Text style={[styles.openButtonText, styles.openButtonContent]}>
+                  {displayedText}
+                </Text>
+              </View>
             </TouchableOpacity>
           </Animated.View>
         ) : (
-          <View style={styles.bluetoothContainer}>
-            <Icon name="bluetooth" size={24} color={COLOR_PALETTE.pink} />
-            <Text style={styles.welcomeText}>
-              Bluetooth is {isBluetoothOn ? 'active' : 'offline'}
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={[
+              styles.openButtonFrame,
+              !isBluetoothOn && styles.disabledButton,
+            ]}
+            onPress={() => {}}
+            activeOpacity={0.88}
+          >
+            <View pointerEvents="none" style={styles.openButtonImageLayer}>
+              <Image
+                source={assets.openButton}
+                style={styles.openButtonAsset}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.openButtonContent}>
+              <Text style={[styles.openButtonText, styles.openButtonContent]}>
+                Bluetooth is {isBluetoothOn ? 'active' : 'offline'}
+              </Text>
+            </View>
+          </TouchableOpacity>
         )}
 
         <View style={styles.radarContainer}>
@@ -577,7 +651,7 @@ const HomeScreen = (props: HomeScreenProps) => {
                   style={styles.heartIcon}
                   name="heart"
                   size={80}
-                  color={COLOR_PALETTE.cherryBlossomPink}
+                  color={COLOR_PALETTE.pink}
                 />
               </Animated.View>
             </View>
@@ -670,7 +744,15 @@ export default HomeScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.bg,
+    backgroundColor: '#020001',
+    overflow: 'hidden',
+  },
+  backgroundAssets: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  contentLayer: {
+    zIndex: 2,
   },
   scrollContent: {
     flexGrow: 1,
@@ -692,20 +774,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 14,
     gap: 12,
-    boxShadow: 'inset 0px -1px 4px 0px #FFB2C5',
-  },
-  bluetoothContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#0A0A0A',
-    borderRadius: 16,
-    marginTop: 80,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    gap: 12,
-    marginLeft: 56,
-    marginRight: 56,
     boxShadow: 'inset 0px -1px 4px 0px #FFB2C5',
   },
   welcomeText: {
@@ -733,8 +801,10 @@ const styles = StyleSheet.create({
   },
   pulseRing: {
     position: 'absolute',
-    borderWidth: 4,
+    borderWidth: 1,
+    backgroundColor: 'black',
     borderColor: COLOR_PALETTE.cherryBlossomPink,
+    filter: 'drop-shadow(0px 0px 20px rgba(255, 155, 215, 1))',
   },
   centerCircle: {
     width: 200,
@@ -795,5 +865,104 @@ const styles = StyleSheet.create({
     color: COLOR_PALETTE.amaranthPink,
     fontSize: 18,
     fontWeight: '700',
+  },
+  openButtonFrame: {
+    width: 300,
+    height: 85,
+    marginTop: 80,
+    alignSelf: 'center',
+    zIndex: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'visible',
+  },
+  openButtonImageLayer: {
+    width: '100%',
+    height: '100%',
+    zIndex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  openButtonContent: {
+    position: 'absolute',
+    zIndex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  openButtonText: {
+    color: '#934564',
+    fontSize: 16,
+    fontFamily: 'serif',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    transform: [{ translateY: -10 }],
+  },
+  disabledButton: {
+    opacity: 0.75,
+  },
+  openButtonAsset: {
+    width: '100%',
+    height: '100%',
+    zIndex: 1,
+    transform: [{ scale: 1.5 }, { translateY: -6 }],
+  },
+  cloudLeft: {
+    position: 'absolute',
+    left: -40,
+    bottom: -20,
+    width: Math.min(SCREEN_WIDTH * 0.8, 520),
+    height: 220,
+    opacity: 0.2,
+    zIndex: 1,
+    transform: [{ scale: 2 }],
+  },
+  cloudRight: {
+    position: 'absolute',
+    right: -40,
+    bottom: -30,
+    width: Math.min(SCREEN_WIDTH * 0.5, 520),
+    height: 220,
+    opacity: 0.4,
+    zIndex: 2,
+    transform: [{ scaleX: -2 }, { scaleY: 2 }],
+  },
+  table: {
+    position: 'absolute',
+    left: -22,
+    bottom: -10,
+    width: Math.min(SCREEN_WIDTH * 0.62, 390),
+    height: Math.min(SCREEN_WIDTH * 0.34, 220),
+    zIndex: 2,
+    transform: [{ scale: 2.4 }],
+  },
+  butterflyBottom: {
+    position: 'absolute',
+    right: Math.max(24, SCREEN_WIDTH * 0.1),
+    bottom: Math.max(158, SCENE_HEIGHT * 0.18),
+    width: Math.min(SCREEN_WIDTH * 0.12, 70),
+    height: Math.min(SCREEN_WIDTH * 0.12, 70),
+    zIndex: 3,
+    transform: [{ scaleX: -1 }],
+    filter: 'drop-shadow(0px 0px 10px rgba(255, 155, 215, 1))',
+  },
+  butterflyTop: {
+    position: 'absolute',
+    left: Math.max(24, SCREEN_WIDTH * 0.1),
+    top: Math.max(158, SCENE_HEIGHT * 0.2),
+    width: Math.min(SCREEN_WIDTH * 0.12, 70),
+    height: Math.min(SCREEN_WIDTH * 0.12, 70),
+    zIndex: 3,
+    filter: 'drop-shadow(0px 0px 10px rgba(255, 155, 215, 1))',
+  },
+  lantern: {
+    position: 'absolute',
+    top: Math.max(150, SCENE_HEIGHT * 0.15),
+    right: Math.max(20, SCREEN_WIDTH * 0.12),
+    width: Math.min(SCREEN_WIDTH * 0.2, 118),
+    height: Math.min(SCREEN_WIDTH * 0.32, 178),
+    zIndex: 3,
+    transform: [{ scale: 2 }],
+    filter: 'drop-shadow(0px 0px 20px rgba(255, 155, 215, 1))',
   },
 });

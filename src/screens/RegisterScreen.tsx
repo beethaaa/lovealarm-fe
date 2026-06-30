@@ -2,7 +2,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Dimensions,
   Image,
@@ -18,6 +17,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import AppAlert, { AppAlertConfig } from '@/components/AppAlert';
 import LoadingOverlay from '@/components/LoadingOverlay';
 import { authApi } from '../services/authService';
 
@@ -41,6 +41,7 @@ const RegisterScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [secureText, setSecureText] = useState(true);
   const [secureConfirm, setSecureConfirm] = useState(true);
+  const [alertConfig, setAlertConfig] = useState<AppAlertConfig | null>(null);
 
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideUp = useRef(new Animated.Value(32)).current;
@@ -62,9 +63,23 @@ const RegisterScreen = ({ navigation }: any) => {
     ]).start();
   }, [fadeIn, slideUp]);
 
+  const showAlert = (config: AppAlertConfig) => {
+    setAlertConfig(config);
+  };
+
+  const closeAlert = () => {
+    const nextAction = alertConfig?.onConfirm;
+    setAlertConfig(null);
+    nextAction?.();
+  };
+
   const goToStep1 = () => {
     if (!email.trim() || !email.includes('@')) {
-      Alert.alert('Thông báo', 'Vui lòng nhập email hợp lệ');
+      showAlert({
+        title: 'Thông báo',
+        message: 'Vui lòng nhập email hợp lệ',
+        variant: 'info',
+      });
       return;
     }
     Animated.sequence([
@@ -104,21 +119,45 @@ const RegisterScreen = ({ navigation }: any) => {
 
   const handleRegister = async () => {
     if (!password.trim() || !confirmPassword.trim()) {
-      Alert.alert('Thông báo', 'Vui lòng điền đầy đủ thông tin');
+      showAlert({
+        title: 'Thông báo',
+        message: 'Vui lòng điền đầy đủ thông tin',
+        variant: 'info',
+      });
+      return;
+    }
+    if (password.length < 8) {
+      showAlert({
+        title: 'Mật khẩu chưa đủ mạnh',
+        message: 'Mật khẩu phải có ít nhất 8 ký tự.',
+        variant: 'error',
+      });
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Thông báo', 'Mật khẩu xác nhận không khớp');
+      showAlert({
+        title: 'Thông báo',
+        message: 'Mật khẩu xác nhận không khớp',
+        variant: 'info',
+      });
       return;
     }
     setLoading(true);
     try {
       await authApi.register(email, password);
-      Alert.alert('Thành công 🎉', 'Tài khoản đã được tạo thành công!', [
-        { text: 'Đăng nhập ngay', onPress: () => navigation.navigate('Login') },
-      ]);
+      showAlert({
+        title: 'Thành công',
+        message: 'Tài khoản đã được tạo thành công!',
+        variant: 'success',
+        confirmText: 'Đăng nhập ngay',
+        onConfirm: () => navigation.navigate('Login'),
+      });
     } catch (error: any) {
-      Alert.alert('Đăng ký thất bại', error.message || 'Lỗi kết nối máy chủ');
+      showAlert({
+        title: 'Đăng ký thất bại',
+        message: error.message || 'Lỗi kết nối máy chủ',
+        variant: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -355,6 +394,14 @@ const RegisterScreen = ({ navigation }: any) => {
       </ScrollView>
 
       <LoadingOverlay visible={loading} message="Creating Account..." />
+      <AppAlert
+        visible={!!alertConfig}
+        title={alertConfig?.title || ''}
+        message={alertConfig?.message || ''}
+        variant={alertConfig?.variant}
+        confirmText={alertConfig?.confirmText}
+        onClose={closeAlert}
+      />
     </KeyboardAvoidingView>
   );
 };
