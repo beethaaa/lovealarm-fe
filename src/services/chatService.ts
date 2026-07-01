@@ -109,6 +109,60 @@ export const chatService = {
     }
   },
 
+
+  recommendGift: async (payload: {
+    interests: string;
+    event: string;
+    budget: string;
+    gender: string;
+    age: string;
+  }) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await axios.post(
+          `${SERVER_URL}/api/ai/recommend-gift`,
+          payload,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          },
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Error recommending gift:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to recommend gift');
+    }
+  },
+
+  recommendEntertainmentAddress: async (payload: {
+    interests: string;
+    event: string;
+    budget: string;
+    gender: string;
+    age: string;
+    address: string;
+  }) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await axios.post(
+          `${SERVER_URL}/api/ai/recommend-entertainment-address`,
+          payload,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          },
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Error recommending entertainment address:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to recommend address');
+    }
+  },
+
   startAIConversation: async (interests: string[] = ['any']) => {
     try {
       const token = await AsyncStorage.getItem('token');

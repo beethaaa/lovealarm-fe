@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppStore } from '../store/appStore';
@@ -21,6 +22,7 @@ import { coupleService } from '../services/coupleService';
 import { userService } from '../services/userService';
 import { LANGUAGES, changeLanguage as i18nChangeLanguage } from '../i18n';
 import COLOR_PALETTE from '../styles/colorPalette';
+import { extractUserFromResponse, isCoupleMode } from '../utils/userResponse';
 
 const COLORS = {
   bg: '#0A0A0A',
@@ -170,7 +172,8 @@ const SettingRow = ({
 
 const SettingsScreen = () => {
   const { t } = useTranslation();
-  const { language, setLanguage, theme, setTheme, setLogout, user, setUser } = useAppStore();
+  const { language, setLanguage, theme, setTheme, setLogout, user, setUser } =
+    useAppStore();
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const isDark = theme === 'dark';
@@ -207,6 +210,67 @@ const SettingsScreen = () => {
     setTheme(value ? 'dark' : 'light');
   };
 
+  const syncUserAfterLeavingCoupleMode = useCallback(
+    async (forceNormalMode = false) => {
+      let userData = null;
+
+      try {
+        const profileRes = await userService.getProfile();
+        userData = extractUserFromResponse(profileRes);
+      } catch (error) {
+        if (!forceNormalMode) {
+          throw error;
+        }
+      }
+
+      if (!userData && forceNormalMode && user) {
+        userData = user;
+      }
+
+      if (!userData) {
+        throw new Error('Failed to refresh profile after leaving couple mode');
+      }
+
+      await setUser(forceNormalMode ? { ...userData, mode: 1 } : userData);
+    },
+    [setUser, user],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const refreshCoupleModeStatus = async () => {
+        if (!isCoupleMode(user)) {
+          return;
+        }
+
+        try {
+          const profileRes = await userService.getProfile();
+          const latestUser = extractUserFromResponse(profileRes);
+
+          if (isActive && latestUser && !isCoupleMode(latestUser)) {
+            await setUser(latestUser);
+          }
+        } catch (error) {
+          console.error(
+            '[SettingsScreen] Failed to refresh couple mode:',
+            error,
+          );
+        }
+      };
+
+      refreshCoupleModeStatus();
+
+      return () => {
+        isActive = false;
+      };
+    }, [setUser, user]),
+  );
+
+  const isAlreadyOutOfCoupleModeError = (error: any) =>
+    /not in couple mode/i.test(error?.message || '');
+
   const handleLogout = () => {
     Alert.alert(
       t('settings.logout_confirm_title'),
@@ -241,14 +305,27 @@ const SettingsScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await coupleService.leaveCoupleMode();
-              // After leaving, we need to refresh the profile to update the mode
-              const profileRes = await userService.getProfile();
-              const userData = profileRes.user || profileRes.data?.user || profileRes;
-              await setUser(userData);
+              const leaveRes = await coupleService.leaveCoupleMode();
+              const userData = extractUserFromResponse(leaveRes);
+
+              if (userData) {
+                await setUser(userData);
+              } else {
+                await syncUserAfterLeavingCoupleMode();
+              }
+
               Alert.alert('Success', 'You have left the couple mode.');
             } catch (error: any) {
-              Alert.alert('Error', error.message || 'Failed to leave couple mode');
+              if (isAlreadyOutOfCoupleModeError(error)) {
+                await syncUserAfterLeavingCoupleMode(true);
+                Alert.alert('Success', 'You are already out of couple mode.');
+                return;
+              }
+
+              Alert.alert(
+                'Error',
+                error.message || 'Failed to leave couple mode',
+              );
             }
           },
         },
@@ -350,7 +427,7 @@ const SettingsScreen = () => {
             onPress={() => {}}
             iconColor={COLOR_PALETTE.lavenderBlush}
           />
-          {user?.mode === 2 && (
+          {isCoupleMode(user) && (
             <SettingRow
               iconName="heart-dislike-outline"
               label="Leave Couple Mode"
