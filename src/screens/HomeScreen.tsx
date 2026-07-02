@@ -651,7 +651,7 @@ const HomeScreen = (props: HomeScreenProps) => {
                   style={styles.heartIcon}
                   name="heart"
                   size={80}
-                  color={COLOR_PALETTE.pink}
+                  color={COLOR_PALETTE.mimiPink}
                 />
               </Animated.View>
             </View>

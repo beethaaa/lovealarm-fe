@@ -25,7 +25,8 @@ jobs:
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-
+      VERSION_CODE: ${{github.run_number}}
+      VERSION_NAME: 1.0.${{github.run_number}}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -58,26 +59,15 @@ jobs:
 
       - name: Build APK and AAB
         working-directory: android
-        run: ./gradlew -PVERSION_CODE=${{ github.run_number }} -PVERSION_NAME=1.0.${{ github.run_number }} clean assembleRelease bundleRelease --stacktrace
-
-      - name: Delete old GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="latest-android"
-
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release delete "$TAG" --yes --cleanup-tag
-          else
-            git push origin ":refs/tags/$TAG" || true
-          fi
+        run: ./gradlew -PVERSION_CODE=${{ env.VERSION_CODE }} -PVERSION_NAME=${{ env.VERSION_NAME }} clean assembleRelease bundleRelease --stacktrace
 
       - name: Create new GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
         run: |
-          TAG="latest-android"
-          TITLE="Latest Android Build"
+          TAG="android-v${VERSION_NAME}"
+          TITLE="DearU Build c${VERSION_NAME}}"
           NOTES="Automatic release from commit ${{ github.sha }}"
 
           git config user.name "github-actions[bot]"
@@ -91,27 +81,15 @@ jobs:
           APK_PATH="${APK_FILES[0]}"
           AAB_PATH="${AAB_FILES[0]}"
 
-          cp "$APK_PATH" dearu-android-latest.apk
-          cp "$AAB_PATH" dearu-android-latest.aab
+          cp "$APK_PATH" dearu-android-${{env.VERSION_NAME}}.apk
+          cp "$AAB_PATH" dearu-android-${{env.VERSION_NAME}}.aab
 
           gh release create "$TAG" \
-            dearu-android-latest.apk \
-            dearu-android-latest.aab \
+            dearu-android-${{env.VERSION_NAME}}.apk \
+            dearu-android-${{env.VERSION_NAME}}.aab \
             --target "${{ github.sha }}" \
             --title "$TITLE" \
             --notes "$NOTES" \
             --latest
 
-      # - name: Upload APK
-      #   uses: actions/upload-artifact@v7
-      #   with:
-      #     name: dearu-android-apk-${{ github.run_number }}
-      #     path: android/app/build/outputs/apk/release/*.apk
-      #     if-no-files-found: error
-
-      # - name: Upload AAB
-      #   uses: actions/upload-artifact@v7
-      #   with:
-      #     name: dearu-android-aab-${{ github.run_number }}
-      #     path: android/app/build/outputs/bundle/release/*.aab
-      #     if-no-files-found: error
+    
