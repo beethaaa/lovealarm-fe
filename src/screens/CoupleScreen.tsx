@@ -420,8 +420,6 @@ const CoupleScreen = () => {
         </View>
       </View>
 
-
-
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <View style={{ flex: 1, alignItems: 'center' }}>
           {hearts.map(h => (
@@ -865,7 +863,7 @@ const styles = StyleSheet.create({
     height: 108,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateX: 6 }],
+    transform: [{ translateX: 6 }, { translateY: 16 }],
     zIndex: 5,
   },
   book: {
@@ -896,7 +894,7 @@ const styles = StyleSheet.create({
     bottom: 22,
   },
   bookHintText: {
-    marginTop: 8,
+    marginTop: -8,
     color: COLOR_PALETTE.pink,
     fontSize: 12,
     fontWeight: '700',
