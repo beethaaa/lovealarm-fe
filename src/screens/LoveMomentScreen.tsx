@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   ScrollView,
   RefreshControl,
-  Alert,
 } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -30,11 +29,9 @@ const LoveMomentScreen = () => {
   const { user: currentUser, setNotification } = useAppStore();
   const { socket } = useSocket();
 
-  const [partner, setPartner] = useState<any>(null);
   const [moments, setMoments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const fetchCurrentMoments = useCallback(async () => {
     try {
@@ -48,7 +45,7 @@ const LoveMomentScreen = () => {
 
       const res = await momentService.getCurrentMoments(
         start.toISOString(),
-        end.toISOString()
+        end.toISOString(),
       );
       setMoments(res.moments || []);
     } catch (error) {
@@ -60,20 +57,21 @@ const LoveMomentScreen = () => {
     try {
       // 1. Fetch couple details
       const coupleInfo = await coupleService.getCoupleInfo();
-      setPartner(coupleInfo.partner);
 
       // 2. Fetch moments of the current hour slot
       await fetchCurrentMoments();
 
       // 3. Pre-fetch conversation for chat navigation
       if (coupleInfo.partner && currentUser) {
-        const currentId = currentUser._id || currentUser.id || currentUser.userId;
-        const partnerId = coupleInfo.partner._id || coupleInfo.partner.id || coupleInfo.partner.userId;
-        
+        const currentId =
+          currentUser._id || currentUser.id || currentUser.userId;
+        const partnerId =
+          coupleInfo.partner._id ||
+          coupleInfo.partner.id ||
+          coupleInfo.partner.userId;
+
         try {
-          const conv = await chatService.getOrCreateConversation(currentId, partnerId);
-          const cid = conv?._id || conv?.id || conv?.data?._id || conv?.data?.id || conv?.conversation?._id;
-          setConversationId(cid || 'fallback');
+          await chatService.getOrCreateConversation(currentId, partnerId);
         } catch (err) {
           console.warn('Failed to pre-fetch conversation:', err);
         }
@@ -98,9 +96,9 @@ const LoveMomentScreen = () => {
     if (!socket || !isFocused) return;
     const handler = (newMoment: any) => {
       console.log('[LoveMomentScreen] moment:new received, adding to list...');
-      setMoments((prev) => {
+      setMoments(prev => {
         // Avoid duplicate if the moment already exists (e.g., sent by self)
-        if (prev.find((m) => m._id === newMoment._id)) return prev;
+        if (prev.find(m => m._id === newMoment._id)) return prev;
         return [...prev, newMoment];
       });
       // Show toast and auto-dismiss after 5s
@@ -118,25 +116,6 @@ const LoveMomentScreen = () => {
   const onRefresh = () => {
     setRefreshing(true);
     fetchAllData();
-  };
-
-  // Navigate to Chat Screen
-  const handleChatPress = async () => {
-    if (!partner) {
-      Alert.alert('Oops!', 'Không tìm thấy thông tin đối phương');
-      return;
-    }
-    const targetUserId = partner._id || partner.id || partner.userId;
-    const cid = conversationId || 'fallback';
-
-    navigation.navigate('Chat', {
-      targetUser: {
-        _id: targetUserId,
-        name: partner.profile?.name || partner.name || 'Partner',
-        avatarUrl: partner.avatarUrl || partner.profile?.avatarUrl,
-      },
-      conversationId: cid,
-    });
   };
 
   // Get current hour text (e.g. 10:00)
@@ -200,7 +179,10 @@ const LoveMomentScreen = () => {
             <View style={styles.sleepingContainer}>
               <View style={styles.sleepingIconGlow}>
                 <LinearGradient
-                  colors={['rgba(255, 141, 161, 0.2)', 'rgba(255, 78, 114, 0.05)']}
+                  colors={[
+                    'rgba(255, 141, 161, 0.2)',
+                    'rgba(255, 78, 114, 0.05)',
+                  ]}
                   style={styles.sleepingGlowCircle}
                 >
                   <Icon name="moon" size={80} color="#FF9DB2" />
@@ -208,13 +190,14 @@ const LoveMomentScreen = () => {
               </View>
               <Text style={styles.sleepingTitle}>Đang ngủ...</Text>
               <Text style={styles.sleepingSub}>
-                Chưa có ảnh nào được chia sẻ trong khung giờ hiện tại. Hãy gửi một khoảnh khắc của bạn nhé!
+                Chưa có ảnh nào được chia sẻ trong khung giờ hiện tại. Hãy gửi
+                một khoảnh khắc của bạn nhé!
               </Text>
             </View>
           ) : (
             /* Moments Cards */
             <View style={styles.momentsList}>
-              {moments.map((moment) => (
+              {moments.map(moment => (
                 <View key={moment._id} style={styles.momentCardBorder}>
                   <LinearGradient
                     colors={['#FFB2C5', 'rgba(255, 78, 114, 0.2)', '#FFB2C5']}
@@ -226,7 +209,7 @@ const LoveMomentScreen = () => {
                         style={styles.momentImage}
                         resizeMode="cover"
                       />
-                      
+
                       {/* Dark overlay for text readability */}
                       <LinearGradient
                         colors={['transparent', 'rgba(0, 0, 0, 0.8)']}
@@ -235,7 +218,9 @@ const LoveMomentScreen = () => {
 
                       {/* Overlaid Texts */}
                       <View style={styles.momentTexts}>
-                        <Text style={styles.momentTime}>{getCurrentHourText()}</Text>
+                        <Text style={styles.momentTime}>
+                          {getCurrentHourText()}
+                        </Text>
                         <Text style={styles.momentCaption} numberOfLines={1}>
                           {moment.caption || 'Chia sẻ một khoảnh khắc'}
                         </Text>
@@ -279,13 +264,13 @@ const LoveMomentScreen = () => {
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Right: Messages Chat Button */}
+        {/* Right: Back to Home Button */}
         <TouchableOpacity
           style={styles.navButton}
-          onPress={handleChatPress}
+          onPress={() => navigation.navigate('Main')}
           activeOpacity={0.7}
         >
-          <Icon name="chatbubble-outline" size={28} color="#FFE0EA" />
+          <Icon name="home-outline" size={28} color="#FFE0EA" />
         </TouchableOpacity>
       </View>
     </View>

@@ -398,7 +398,11 @@ const CoupleScreen = () => {
             <Text style={styles.daysLabel}>days</Text>
           </Animated.View>
 
-          <View pointerEvents="none" style={styles.bookStage}>
+          <TouchableOpacity
+            style={styles.bookStage}
+            onPress={() => navigation.navigate('LoveMoment')}
+            activeOpacity={0.75}
+          >
             <BookSparkle delay={0} size={17} style={styles.bookSparkleOne} />
             <BookSparkle delay={380} size={12} style={styles.bookSparkleTwo} />
             <BookSparkle
@@ -411,25 +415,12 @@ const CoupleScreen = () => {
               style={styles.book}
               resizeMode="contain"
             />
-          </View>
+            <Text style={styles.bookHintText}>Love Moment ♡</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.momentsButton}
-        onPress={() => navigation.navigate('LoveMoment')}
-        activeOpacity={0.88}
-      >
-        <LinearGradient
-          colors={['#FF8DA1', '#FF4E72']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.momentsButtonGradient}
-        >
-          <Icon name="heart" size={18} color="#FFF" />
-          <Text style={styles.momentsButtonText}>Love moments</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+
 
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <View style={{ flex: 1, alignItems: 'center' }}>
@@ -904,32 +895,15 @@ const styles = StyleSheet.create({
     left: '48%',
     bottom: 22,
   },
-  momentsButton: {
-    position: 'absolute',
-    bottom: 60,
-    alignSelf: 'center',
-    zIndex: 10,
-    shadowColor: COLOR_PALETTE.pink,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  momentsButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingHorizontal: 28,
-    paddingVertical: 13,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  momentsButtonText: {
-    color: '#FFF',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+  bookHintText: {
+    marginTop: 8,
+    color: COLOR_PALETTE.pink,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    opacity: 0.85,
+    textShadowColor: 'rgba(255, 100, 155, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
   },
 });
