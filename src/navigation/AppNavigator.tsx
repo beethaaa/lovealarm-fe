@@ -12,6 +12,9 @@ import RegisterScreen from '@/screens/RegisterScreen';
 import ForgotPasswordScreen from '@/screens/ForgotPasswordScreen';
 import OnboardingScreen from '@/screens/OnboardingScreen';
 import ChatScreen from '@/screens/ChatScreen';
+import LoveMomentScreen from '@/screens/LoveMomentScreen';
+import MomentTakingScreen from '@/screens/MomentTakingScreen';
+import LoveHistoryScreen from '@/screens/LoveHistoryScreen';
 import { SocketProvider } from '../context/SocketContext';
 import NotificationBanner from '@/components/NotificationBanner';
 
@@ -151,6 +154,9 @@ const AppNavigator = () => {
                 <>
                   <Stack.Screen name="Main" component={MainTabsWithGNB} />
                   <Stack.Screen name="Chat" component={ChatScreen} />
+                  <Stack.Screen name="LoveMoment" component={LoveMomentScreen} />
+                  <Stack.Screen name="MomentTaking" component={MomentTakingScreen} />
+                  <Stack.Screen name="LoveHistory" component={LoveHistoryScreen} />
                   <Stack.Screen
                     name="EditProfile"
                     component={EditProfileScreen}

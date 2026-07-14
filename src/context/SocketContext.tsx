@@ -70,6 +70,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setTimeout(() => setNotification(null), 5000);
       });
 
+      newSocket.on('moment:new', (data: any) => {
+        console.log('Received new moment:', data);
+        const { setNotification } = useAppStore.getState();
+        setNotification('Đối phương vừa gửi một khoảnh khắc mới!');
+        setTimeout(() => setNotification(null), 5000);
+      });
+
       setSocket(newSocket);
 
       return () => {

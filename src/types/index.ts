@@ -8,6 +8,9 @@ export type RootStackParamList = {
   Chat: { targetUser: any; conversationId: string };
   EditProfile: { user: any };
   ChangePassword: undefined;
+  LoveMoment: undefined;
+  MomentTaking: undefined;
+  LoveHistory: undefined;
 };
 
 export type BottomTabParamList = {

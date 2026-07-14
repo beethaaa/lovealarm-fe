@@ -15,6 +15,7 @@ import COLOR_PALETTE from '../styles/colorPalette';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useAppStore } from '../store/appStore';
 import { coupleService } from '../services/coupleService';
+import { useNavigation } from '@react-navigation/native';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 const SCENE_HEIGHT = Math.max(SH, 820);
@@ -207,6 +208,7 @@ const FloatingHeart = ({ onComplete }: { onComplete: () => void }) => {
 };
 
 const CoupleScreen = () => {
+  const navigation = useNavigation<any>();
   const { user: currentUser, heartTrigger } = useAppStore();
   const [partner, setPartner] = useState<any>(null);
   const [days, setDays] = useState<number>(0);
@@ -412,6 +414,22 @@ const CoupleScreen = () => {
           </View>
         </View>
       </View>
+
+      <TouchableOpacity
+        style={styles.momentsButton}
+        onPress={() => navigation.navigate('LoveMoment')}
+        activeOpacity={0.88}
+      >
+        <LinearGradient
+          colors={['#FF8DA1', '#FF4E72']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.momentsButtonGradient}
+        >
+          <Icon name="heart" size={18} color="#FFF" />
+          <Text style={styles.momentsButtonText}>Love moments</Text>
+        </LinearGradient>
+      </TouchableOpacity>
 
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <View style={{ flex: 1, alignItems: 'center' }}>
@@ -885,5 +903,33 @@ const styles = StyleSheet.create({
   bookSparkleThree: {
     left: '48%',
     bottom: 22,
+  },
+  momentsButton: {
+    position: 'absolute',
+    bottom: 60,
+    alignSelf: 'center',
+    zIndex: 10,
+    shadowColor: COLOR_PALETTE.pink,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  momentsButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 28,
+    paddingVertical: 13,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  momentsButtonText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });
