@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import './src/i18n';
@@ -15,6 +15,7 @@ import notifee, { AndroidImportance } from '@notifee/react-native';
 
 import { handleNotificationOpen } from './src/utils/notificationHandler';
 import { EventType } from '@notifee/react-native';
+import { analyticsService } from './src/services/analyticsService';
 
 axios.interceptors.response.use(
   response => response,
@@ -28,7 +29,33 @@ axios.interceptors.response.use(
 );
 
 const App = () => {
-  const { setIsInitialized } = useAppStore();
+  const { setIsInitialized, isLoggedIn } = useAppStore();
+
+  // Analytics session lifecycle
+  useEffect(() => {
+    if (!isLoggedIn) {
+      return;
+    }
+
+    // Start session when app first opens
+    analyticsService.startSession();
+
+    const subscription = AppState.addEventListener(
+      'change',
+      (nextState: AppStateStatus) => {
+        if (nextState === 'active') {
+          analyticsService.startSession();
+        } else if (nextState === 'background') {
+          analyticsService.endSession();
+        }
+      },
+    );
+
+    return () => {
+      subscription.remove();
+      analyticsService.endSession();
+    };
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const init = async () => {

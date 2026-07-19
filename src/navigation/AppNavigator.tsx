@@ -29,6 +29,7 @@ import ProfileScreen from '@/screens/ProfileSreen';
 import EditProfileScreen from '@/screens/EditProfileScreen';
 import ChangePasswordScreen from '@/screens/ChangePasswordScreen';
 import { navigationRef } from './NavigationService';
+import { analyticsService } from '../services/analyticsService';
 
 type TabKey = NonNullable<GNBProps['activeTab']>;
 
@@ -71,6 +72,7 @@ const MainTabsWithGNB = () => {
   const handleTabPress = (tab: TabKey) => {
     if (tab !== 'scan') {
       setActiveTab(tab);
+      analyticsService.trackEvent('screen_view', { screen: tab });
     }
   };
 
@@ -137,7 +139,17 @@ const AppNavigator = () => {
   return (
     <SocketProvider>
       <NotificationBanner />
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer
+        ref={navigationRef}
+        onStateChange={(state) => {
+          if (state) {
+            const currentRoute = state.routes[state.index]?.name;
+            if (currentRoute) {
+              analyticsService.trackEvent('screen_view', { screen: currentRoute });
+            }
+          }
+        }}
+      >
         <Stack.Navigator
           screenOptions={{
             headerStyle: { backgroundColor: '#0A0A0A' },
