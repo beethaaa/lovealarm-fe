@@ -67,7 +67,7 @@ jobs:
           
         run: |
           TAG="android-v${VERSION_NAME}"
-          TITLE="DearU Build c${VERSION_NAME}}"
+          TITLE="DearU Build c.${VERSION_NAME}"
           NOTES="Automatic release from commit ${{ github.sha }}"
 
           git config user.name "github-actions[bot]"
