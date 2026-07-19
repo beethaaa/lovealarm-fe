@@ -28,6 +28,7 @@ import { useAppStore } from '@/store/appStore';
 import { chatService } from '@/services/chatService';
 import { userService } from '@/services/userService';
 import LoadingOverlay from '@/components/LoadingOverlay';
+import { analyticsService } from '@/services/analyticsService';
 import { coupleService } from '@/services/coupleService';
 import { extractUserFromResponse, isCoupleMode } from '@/utils/userResponse';
 
@@ -772,6 +773,12 @@ const ChatScreen = () => {
                 value={inputText}
                 onChangeText={setInputText}
                 multiline
+                onFocus={() => {
+                  analyticsService.trackEvent('text_input', {
+                    screen: 'Chat',
+                    target: 'message_input',
+                  });
+                }}
               />
             </View>
             <TouchableOpacity
